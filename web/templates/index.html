@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}IAC · Inicio{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Sitio web IAC</p>
+  <h1>Una sola aplicación para el producto web.</h1>
+  <p class="lede">
+    Este repositorio deja de ser un clasificador aislado y pasa a ser el sitio:
+    páginas, API y servicios conviven en un monolito Flask, listo para sumar
+    más módulos sin partir el proyecto.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('pages.clasificador') }}">Abrir clasificador</a>
+    <a class="btn ghost" href="{{ url_for('pages.acerca') }}">Ver estructura</a>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Clasificador</h2>
+    <p>Identifica si un texto describe IaaS, PaaS, SaaS o FaaS usando un modelo de lenguaje.</p>
+    <a href="{{ url_for('pages.clasificador') }}">Usar módulo →</a>
+  </article>
+  <article class="card muted">
+    <h2>Cuentas y sesión</h2>
+    <p>Espacio reservado para autenticación y perfiles cuando el monolito lo necesite.</p>
+    <span>Próximamente</span>
+  </article>
+  <article class="card muted">
+    <h2>Datos</h2>
+    <p>Los modelos ORM viven en <code>web/models</code>. Aún no hay base de datos.</p>
+    <span>Listo para conectar</span>
+  </article>
+</section>
+{% endblock %}

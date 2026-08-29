@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}IAC · Acerca{% endblock %}
+{% block content %}
+<section class="hero compact">
+  <p class="eyebrow">Repositorio</p>
+  <h1>Cómo está organizado el proyecto</h1>
+  <p class="lede">
+    La carpeta del clasificador se convirtió en <code>web/</code>: el sitio completo.
+    El clasificador quedó como un servicio interno, no como el nombre del producto.
+  </p>
+</section>
+
+<section class="prose">
+  <h2>Monolito</h2>
+  <p>
+    Una sola aplicación Flask sirve HTML, estáticos y API JSON. Para agregar
+    un módulo nuevo: ruta en <code>web/blueprints</code>, lógica en
+    <code>web/services</code> y, si hace falta persistencia, modelo en
+    <code>web/models</code>.
+  </p>
+  <h2>Clasificador</h2>
+  <p>
+    Sigue clasificando texto en IaaS, PaaS, SaaS y FaaS. Se usa desde la
+    página <a href="{{ url_for('pages.clasificador') }}">/clasificador</a>
+    o por consola con <code>python -m web.cli --cli</code>.
+  </p>
+  <h2>Secretos</h2>
+  <p>
+    Las claves van en <code>.env</code> (no se versiona). El archivo
+    <code>.env.example</code> documenta las variables sin valores reales.
+  </p>
+</section>
+{% endblock %}
