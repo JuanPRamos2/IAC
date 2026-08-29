@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360" role="img" aria-label="Foto pendiente">
+  <rect width="360" height="360" fill="#e4d3bc"/>
+  <circle cx="180" cy="140" r="58" fill="#c4a27a"/>
+  <path d="M60 330c20-70 80-110 120-110s100 40 120 110" fill="#c4a27a"/>
+  <text x="180" y="48" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#6a4e32">foto.jpg</text>
+</svg>

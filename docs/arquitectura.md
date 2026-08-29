@@ -1,38 +1,35 @@
-# Arquitectura de IAC
+# Arquitectura
 
-El repositorio es un **sitio web monolítico**. La carpeta `web/` reemplaza a
-`cloud_models_classifier`: ya no es un script suelto, es la aplicación.
-
-## Capas
+El repositorio es el curso SC3705, no un clasificador con nombre de producto.
 
 ```
-navegador  →  blueprints (páginas + API)
-                    ↓
-              services (lógica de negocio)
-                    ↓
-              models (persistencia, cuando exista)
+IAC
+├── web/     sitio del curso (HTML/CSS/JS)
+└── app/     aplicación Java (antes cloud_models_classifier)
 ```
 
-| Ruta | Rol |
-| --- | --- |
-| `web/factory.py` | Crea la app Flask |
-| `web/blueprints/pages.py` | HTML |
-| `web/blueprints/api.py` | JSON (`/api/salud`, `/api/clasificar`) |
-| `web/services/classifier/` | Clasificador IaaS / PaaS / SaaS / FaaS |
-| `web/models/` | Futuras entidades de base de datos |
-| `web/extensions.py` | Futuras extensiones (SQLAlchemy, login, etc.) |
-| `web/templates/` y `web/static/` | Interfaz |
+## Sitio (`web/`)
 
-## Cómo agregar un módulo
+Páginas estáticas con chrome compartido (`js/app.js` inyecta encabezado y pie).
+El simulador (`simulador.html`) clasifica en el navegador con las mismas reglas
+que la app Java, para poder entregarlo en un servidor tipo ubiquitous sin
+compilar.
 
-1. Servicio en `web/services/<modulo>/`.
-2. Rutas en un blueprint nuevo o en los existentes.
-3. Plantilla en `web/templates/` si hay UI.
-4. Pruebas en `tests/`.
+Para convertir esto en un **monolito**: un proceso (Java o el que se elija)
+puede servir `web/` como estáticos y exponer un endpoint que llame a
+`ClassifierService`. No hace falta otro repositorio.
 
-No hace falta un microservicio nuevo para cada feature.
+## App (`app/`)
 
-## Configuración
+```
+Usuario
+  ├─ GUI  (ClassifierWindow / CloudClassifierApp)
+  └─ CLI  (CloudClassifier)
+        ▼
+ ClassifierService
+        ├─ RegexClassifier
+        └─ NlpClassifier
+```
 
-Las variables viven en `.env` (ignorado por git). `.env.example` es la plantilla
-pública. El clasificador necesita `OPENROUTER_API_KEY` para las llamadas reales.
+La GUI no contiene las reglas: captura nombre, apellido y texto, llama al
+servicio y muestra el modelo y las puntuaciones.

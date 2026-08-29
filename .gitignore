@@ -1,61 +1,27 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
+# Bytecode and build
+*.class
+*.jar
+*.war
+app/bin/
+app/out/
+target/
 
-# Virtual environments
+# Bundled JDK and local binaries (the original project kept these locally)
+.jdk/
+bin/
+
+# Python leftovers
 .venv/
 venv/
-env/
-ENV/
+__pycache__/
+.pytest_cache/
 
-# Secrets and local config
+# Secrets and OS/editor noise
 .env
-.env.local
-*.pem
-
-# Databases
-*.db
-*.sqlite3
-instance/
-
-# Flask / uploads (future monolith storage)
-web/uploads/
-web/instance/
-
-# Editors and OS
-.idea/
-.vscode/
-*.swp
-*.swo
 .DS_Store
 Thumbs.db
+*.swp
+.idea/
 
-# Logs
-*.log
-logs/
+# Compiled test listings
+app/bin/sources.txt

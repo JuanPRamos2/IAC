@@ -1,0 +1,14 @@
+{
+  "name": "IAC",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8000 --directory web --bind 127.0.0.1",
+      "description": "Sitio del curso en http://127.0.0.1:8000"
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 8000 }
+  ]
+}
