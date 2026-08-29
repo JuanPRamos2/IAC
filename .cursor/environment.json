@@ -1,0 +1,14 @@
+{
+  "name": "IAC web",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "flask",
+      "command": "cd /workspace && ./.venv/bin/python run.py",
+      "description": "Servidor de desarrollo Flask en http://127.0.0.1:5000"
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 5000 }
+  ]
+}
