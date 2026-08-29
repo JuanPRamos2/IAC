@@ -1,53 +1,72 @@
-# IAC — Integración de Aplicaciones Computacionales (SC3705)
+# Bienestar Nexum
 
-Portafolio y aplicación del curso. La carpeta que se llamaba
-`cloud_models_classifier` quedó repartida así:
+Monolito web del primer parcial: bienestar laboral y prevención de burnout.
+`cloud_models_classifier` queda como el sitio genérico en `web/` más el backend en `src/`.
 
-| Antes | Ahora |
-| --- | --- |
-| Proyecto Java `cloud_models_classifier` | `app/` |
-| Sitio HTML del curso | `web/` |
+No hay JOIN entre MongoDB y PostgreSQL. Mongo solo guarda identificadores.
+El único pivote identidad real ↔ operativa es `consentimiento.seudonimo`.
 
-`web/` es el sitio general (inicio, ejercicios, simulador). `app/` es la
-aplicación Java (GUI + CLI) y el sitio donde encaja un monolito posterior
-(por ejemplo un servidor que sirva `web/` y reutilice `classifier`).
-
-## Sitio
+## Arranque con contenedores
 
 ```bash
-python3 -m http.server 8000 --directory web
+cp .env.example .env
+docker compose up --build
 ```
 
-Abre [http://127.0.0.1:8000](http://127.0.0.1:8000).
+Abre [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
-- Inicio: `web/index.html`
-- Ejercicios: `web/ejercicios.html`
-- Ejercicio guiado 1: `web/ejercicios/eg01.html`
-- Simulador en el navegador: `web/simulador.html`
+| Correo | Perfil | Clave |
+| --- | --- | --- |
+| ana.perez@empresa.com | COLAB | demo123 |
+| lucia.hernandez@empresa.com | LIDER_TURNO | demo123 |
+| roberto.garcia@empresa.com | AUDITOR | demo123 |
+| carlos.ramirez@empresa.com | ADMIN_SISTEMA | demo123 |
 
-Copia tu foto a `web/img/foto.jpg` y las capturas a `web/img/screenshots/`
-(nombres en el ejercicio 1).
+Las contraseñas se verifican en PostgreSQL con `pgcrypto` (`crypt` + Blowfish).
 
-## Aplicación Java
+## API
 
-Hace falta JDK 17 o superior.
+| Método | Ruta | Quién |
+| --- | --- | --- |
+| POST | `/api/auth/login` | público |
+| POST | `/api/auth/logout` | sesión |
+| GET | `/api/auth/me` | sesión |
+| GET | `/api/catalogos/unidades` | autenticado |
+| GET | `/api/catalogos/campanias` | autenticado |
+| POST | `/api/encuestas/respuestas` | COLAB |
+| GET | `/api/agregados/:unidad/:campania` | LIDER / AUDITOR / ADMIN |
+| PATCH | `/api/agregados/parametros/k` | ADMIN |
+| GET | `/api/auditoria` | AUDITOR / ADMIN |
+
+POST encuesta:
+
+1. Valida `seudonimo_id` y `campania_id` en PostgreSQL.
+2. Inserta en MongoDB `respuestas_encuesta` (sin `empleado_id`).
+3. Escribe en segundo plano `CREACION_RESPUESTA` en `bitacora_auditoria`.
+
+Si hay menos de **k** respuestas (k=5), el agregado responde `GRUPO_INSUFICIENTE` sin totales ni promedios.
+
+## Redis
+
+| Clave | Tipo | TTL |
+| --- | --- | --- |
+| `session:{jti}` | Hash | 15 min |
+| `revoked:{jti}` | String | resto de vida del JWT |
+| `cache:agregado:{unidad}:{campania}` | String JSON | 5 min |
+| `contador:login_fallido:{usuario_id}` | String int | 15 min |
+| `lock:calculo_agregado:{unidad}` | String | 10 s |
+
+## Estructura
+
+```
+src/controladores  src/servicios  src/modelos  src/middlewares  src/rutas  src/config
+web/               interfaz del monolito
+db/postgres        esquema oficial + enlaces demo
+db/mongo           índices
+```
+
+## Pruebas
 
 ```bash
-bash app/compile.sh
-bash app/run-tests.sh
-bash app/run-cli.sh
-bash app/run-gui.sh
+npm test
 ```
-
-Clases (las mismas del ejercicio guiado 1):
-
-- `ui.CloudClassifierApp` / `ui.ClassifierWindow` — GUI
-- `cli.CloudClassifier` — CLI
-- `classifier.ClassifierService` — validación y orquestación
-- `classifier.RegexClassifier` / `classifier.NlpClassifier`
-- `classifier.TextPreprocessor`
-- `util.InputValidator`
-
-## Qué no se sube a GitHub
-
-`.jdk/`, `bin/`, `*.class` y secretos. Ver `.gitignore`.

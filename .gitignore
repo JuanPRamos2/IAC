@@ -1,27 +1,13 @@
-# Bytecode and build
-*.class
-*.jar
-*.war
-app/bin/
-app/out/
-target/
-
-# Bundled JDK and local binaries (the original project kept these locally)
-.jdk/
-bin/
-
-# Python leftovers
-.venv/
-venv/
-__pycache__/
-.pytest_cache/
-
-# Secrets and OS/editor noise
+# Dependencies
+node_modules/
 .env
+*.log
+coverage/
 .DS_Store
 Thumbs.db
-*.swp
 .idea/
+.vscode/
+*.swp
 
-# Compiled test listings
-app/bin/sources.txt
+# Local data (containers)
+data/
