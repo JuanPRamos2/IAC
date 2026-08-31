@@ -5,7 +5,14 @@ let client;
 let db;
 
 export async function conectarMongo() {
-  if (db) return db;
+  if (db) {
+    try {
+      await db.command({ ping: 1 });
+      return db;
+    } catch {
+      await cerrarMongo().catch(() => {});
+    }
+  }
   client = new MongoClient(env.mongoUrl, {
     maxPoolSize: 10,
     minPoolSize: 1,
@@ -26,10 +33,14 @@ export function mongoDb() {
 }
 
 export async function verificarMongo() {
+  await conectarMongo();
   await mongoDb().command({ ping: 1 });
   return true;
 }
 
 export async function cerrarMongo() {
-  if (client) await client.close();
+  const actual = client;
+  client = undefined;
+  db = undefined;
+  if (actual) await actual.close();
 }

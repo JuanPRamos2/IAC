@@ -1,15 +1,17 @@
-import { mongoDb } from "../config/mongo.js";
+import { mongoDb, conectarMongo } from "../config/mongo.js";
 
 export function colRespuestas() {
   return mongoDb().collection("respuestas_encuesta");
 }
 
 export async function insertarRespuesta(doc) {
+  await conectarMongo();
   const result = await colRespuestas().insertOne(doc);
   return { ...doc, _id: result.insertedId };
 }
 
 export async function existeRespuesta(seudonimoId, campaniaId) {
+  await conectarMongo();
   const n = await colRespuestas().countDocuments({
     seudonimo_id: seudonimoId,
     campania_id: campaniaId,
@@ -18,6 +20,7 @@ export async function existeRespuesta(seudonimoId, campaniaId) {
 }
 
 export async function respuestasPorUnidadCampania(unidadId, campaniaId) {
+  await conectarMongo();
   return colRespuestas()
     .find(
       { unidad_organizacional_id: unidadId, campania_id: campaniaId },

@@ -20,6 +20,9 @@ const MENSAJES = {
   SIN_SEUDONIMO: "Su cuenta no está habilitada para esta evaluación.",
   VALOR_FUERA_DE_ESCALA: "Alguna respuesta quedó fuera del rango permitido.",
   REACTIVO_FALTANTE: "Complete todas las preguntas obligatorias.",
+  REACTIVO_DESCONOCIDO: "El cuestionario no coincide con la evaluación actual.",
+  ERROR_TECNICO: "El servicio no está disponible por un momento. Intente de nuevo.",
+  SIN_SESION: "Inicie sesión para continuar.",
 };
 
 const PERFIL_ETIQUETA = {
@@ -108,7 +111,8 @@ function formatFecha(iso) {
 }
 
 async function api(path, opts = {}) {
-  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  const headers = { ...(opts.headers || {}) };
+  if (opts.body) headers["Content-Type"] = "application/json";
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   let res;
   try {
@@ -184,14 +188,17 @@ async function renderPanel(id) {
     if (id === "consentimiento") return await panelConsentimiento(panel);
     if (id === "privacidad") return await panelPrivacidad(panel);
   } catch (e) {
-    panel.innerHTML = `<p class="empty">${esc(e.message)}</p>`;
-    aviso(e.message, true);
+    panel.innerHTML = `<h2>No se pudo abrir esta sección</h2>
+      <p class="intro">${esc(e.message)}</p>
+      <div class="actions"><button type="button" class="btn btn-primary" id="reintentar">Reintentar</button></div>`;
+    $("reintentar").onclick = () => renderPanel(id);
   }
 }
 
 async function panelEvaluacion(panel) {
   const camps = await api("/catalogos/campanias");
-  if (!camps.data.length) {
+  const lista = Array.isArray(camps.data) ? camps.data : [];
+  if (!lista.length) {
     panel.innerHTML = `<h2>Mi evaluación</h2>
       <p class="empty">Por ahora no hay evaluaciones abiertas para su equipo.</p>`;
     return;
@@ -201,7 +208,7 @@ async function panelEvaluacion(panel) {
     <div class="note">La información se usa solo para entender el bienestar del equipo, nunca para identificar a una persona.</div>
     <form id="f-enc">
       <label for="campania">Evaluación</label>
-      <select id="campania" name="campania_id">${opciones(camps.data, "campania_id", "nombre")}</select>
+      <select id="campania" name="campania_id">${opciones(lista, "campania_id", "nombre")}</select>
       <p id="estado-campania" class="intro"></p>
       <div id="reactivos"></div>
       <div class="actions">
@@ -210,11 +217,27 @@ async function panelEvaluacion(panel) {
     </form>`;
   const sel = $("campania");
   const pintar = async () => {
-    const c = camps.data.find((x) => x.campania_id === sel.value);
-    const r = await api(`/catalogos/instrumentos/${c.instrumento_id}/versiones/${c.version_instrumento}/reactivos`);
-    $("reactivos").innerHTML = r.data
-      .map(
-        (item) => `<div class="reactivo">
+    const c = lista.find((x) => x.campania_id === sel.value);
+    const btn = $("btn-enviar");
+    const avisoEstado = $("estado-campania");
+    if (!c) {
+      $("reactivos").innerHTML = `<p class="intro">Seleccione una evaluación.</p>`;
+      return;
+    }
+    try {
+      const version = Number(c.version_instrumento);
+      const r = await api(
+        `/catalogos/instrumentos/${encodeURIComponent(c.instrumento_id)}/versiones/${encodeURIComponent(version)}/reactivos`
+      );
+      const preguntas = Array.isArray(r.data) ? r.data : [];
+      if (!preguntas.length) {
+        $("reactivos").innerHTML = `<p class="intro">Esta evaluación todavía no tiene preguntas publicadas.</p>`;
+        btn.disabled = true;
+        return;
+      }
+      $("reactivos").innerHTML = preguntas
+        .map(
+          (item) => `<div class="reactivo">
           <p>${esc(item.orden)}. ${esc(item.texto)}</p>
           <div class="escala">
             <small>En desacuerdo</small>
@@ -223,23 +246,31 @@ async function panelEvaluacion(panel) {
           </div>
           <p class="escala-valor">Su valoración: <strong>3</strong> de ${esc(item.escala_max)}</p>
         </div>`
-      )
-      .join("");
-    panel.querySelectorAll("input[type=range]").forEach((input) => {
-      const etiqueta = input.closest(".reactivo").querySelector(".escala-valor strong");
-      input.addEventListener("input", () => {
-        etiqueta.textContent = input.value;
+        )
+        .join("");
+      panel.querySelectorAll("input[type=range]").forEach((input) => {
+        const etiqueta = input.closest(".reactivo").querySelector(".escala-valor strong");
+        input.addEventListener("input", () => {
+          etiqueta.textContent = input.value;
+        });
       });
-    });
-    const est = await api(`/encuestas/estado?campania_id=${encodeURIComponent(sel.value)}`);
-    const avisoEstado = $("estado-campania");
-    const btn = $("btn-enviar");
-    if (est.ya_respondio) {
-      avisoEstado.textContent = "Ya envió esta evaluación. Gracias por participar.";
-      btn.disabled = true;
-    } else {
-      avisoEstado.textContent = "Aún no ha enviado esta evaluación.";
       btn.disabled = false;
+    } catch (e) {
+      $("reactivos").innerHTML = `<p class="intro">${esc(e.message)}</p>`;
+      btn.disabled = true;
+      return;
+    }
+    try {
+      const est = await api(`/encuestas/estado?campania_id=${encodeURIComponent(sel.value)}`);
+      if (est.ya_respondio) {
+        avisoEstado.textContent = "Ya envió esta evaluación. Gracias por participar.";
+        btn.disabled = true;
+      } else {
+        avisoEstado.textContent = "Aún no ha enviado esta evaluación.";
+        btn.disabled = false;
+      }
+    } catch {
+      avisoEstado.textContent = "Puede responder el cuestionario y enviarlo cuando termine.";
     }
   };
   sel.onchange = pintar;

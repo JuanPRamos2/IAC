@@ -1,4 +1,4 @@
-import { mongoDb } from "../config/mongo.js";
+import { mongoDb, conectarMongo } from "../config/mongo.js";
 import { validarCodigosAuditoria } from "./Catalogo.js";
 
 export function colBitacora() {
@@ -17,6 +17,7 @@ export async function registrarBitacora(doc) {
     );
   }
 
+  await conectarMongo();
   await colBitacora().insertOne({
     actor_id: doc.actor_id,
     actor_perfil: doc.actor_perfil,
@@ -29,6 +30,7 @@ export async function registrarBitacora(doc) {
 }
 
 export async function listarBitacora({ limite = 50 } = {}) {
+  await conectarMongo();
   return colBitacora()
     .find({}, { projection: {} })
     .sort({ timestamp: -1 })

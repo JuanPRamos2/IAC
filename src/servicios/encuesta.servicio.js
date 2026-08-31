@@ -107,6 +107,11 @@ export async function estadoRespuesta({ actor, campaniaId }) {
   if (!ctx?.seudonimo_id) {
     throw new HttpError(403, "SIN_SEUDONIMO", "El colaborador no tiene seudónimo operativo");
   }
-  const ya = await Encuesta.existeRespuesta(ctx.seudonimo_id, campaniaId);
-  return { campania_id: campaniaId, ya_respondio: ya };
+  try {
+    const ya = await Encuesta.existeRespuesta(ctx.seudonimo_id, campaniaId);
+    return { campania_id: campaniaId, ya_respondio: ya };
+  } catch (err) {
+    console.error("estadoRespuesta", err.message);
+    return { campania_id: campaniaId, ya_respondio: false };
+  }
 }
