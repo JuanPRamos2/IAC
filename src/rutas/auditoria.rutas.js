@@ -12,6 +12,12 @@ auditoriaRouter.get(
   Auditoria.historialConsentimiento
 );
 auditoriaRouter.get(
+  "/soporte",
+  autenticar,
+  autorizar(PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Auditoria.listarSoporte
+);
+auditoriaRouter.get(
   "/",
   autenticar,
   autorizar(PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),

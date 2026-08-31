@@ -18,6 +18,18 @@ agregadoRouter.patch(
   Agregado.cambiarK
 );
 agregadoRouter.get(
+  "/parametros",
+  autenticar,
+  autorizar(PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Agregado.leerParametros
+);
+agregadoRouter.patch(
+  "/parametros",
+  autenticar,
+  autorizar(PERFILES.ADMIN_SISTEMA),
+  Agregado.guardarParametros
+);
+agregadoRouter.get(
   "/:unidadId/:campaniaId",
   autenticar,
   autorizar(PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),

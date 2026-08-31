@@ -16,6 +16,14 @@ export const reactivos = asyncHandler(async (req, res) => {
   });
 });
 
-export const instrumentos = asyncHandler(async (req, res) => {
+export const instrumentos = asyncHandler(async (_req, res) => {
   res.json({ data: await Catalogos.instrumentos() });
+});
+
+export const versionesConsentimiento = asyncHandler(async (_req, res) => {
+  res.json({ data: await Catalogos.versionesConsentimiento() });
+});
+
+export const cuentas = asyncHandler(async (_req, res) => {
+  res.json(await Catalogos.cuentas());
 });

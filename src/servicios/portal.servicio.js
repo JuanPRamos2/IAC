@@ -1,8 +1,9 @@
 import * as Catalogo from "../modelos/Catalogo.js";
 import * as Usuario from "../modelos/Usuario.js";
-import * as Encuesta from "../modelos/Encuesta.js";
 import * as Soporte from "../modelos/Soporte.js";
 import * as Catalogos from "./catalogo.servicio.js";
+import * as Consentimiento from "./consentimiento.servicio.js";
+import * as Encuesta from "./encuesta.servicio.js";
 import { registrarAsync } from "./auditoria.servicio.js";
 import { HttpError } from "../utilidades/errores.js";
 import { ACCIONES, RESULTADOS, RECURSOS, PERFILES } from "../utilidades/catalogos-auditoria.js";
@@ -39,65 +40,15 @@ export async function escritorio(actor) {
 }
 
 export async function miConsentimiento(actor) {
-  const ctx = await Usuario.contextoOperativo(actor.usuario_id);
-  if (!ctx?.seudonimo_id) {
-    throw new HttpError(403, "SIN_SEUDONIMO", "Su cuenta no tiene participación operativa");
-  }
-  const vigente = await Catalogo.consentimientoVigente(ctx.seudonimo_id);
-  const historial = historialConsentimientoPublico(
-    await Catalogo.historialConsentimiento(ctx.seudonimo_id)
-  );
-  const versionActiva = (await Catalogo.leerParametros()).version_activa_consentimiento || null;
-  return {
-    participando: Boolean(vigente),
-    version_vigente: vigente?.version_consentimiento_id || null,
-    version_activa: versionActiva,
-    historial,
-  };
+  return Consentimiento.mio(actor);
 }
 
 export async function cambiarMiConsentimiento({ actor, aceptar, correlacionId }) {
-  const ctx = await Usuario.contextoOperativo(actor.usuario_id);
-  if (!ctx?.seudonimo_id) {
-    throw new HttpError(403, "SIN_SEUDONIMO", "Su cuenta no tiene participación operativa");
-  }
-  if (aceptar) {
-    const version =
-      (await Catalogo.leerParametros()).version_activa_consentimiento ||
-      (await Catalogo.listarVersionesConsentimiento())[0]?.version_consentimiento_id;
-    if (!version) throw new HttpError(400, "PAYLOAD_INVALIDO", "No hay aviso de privacidad activo");
-    await Catalogo.aceptarConsentimiento(ctx.seudonimo_id, version);
-  } else {
-    await Catalogo.revocarConsentimientosVigentes(ctx.seudonimo_id);
-  }
-  await registrarAsync({
-    actor_id: actor.usuario_id,
-    actor_perfil: actor.perfil,
-    accion: ACCIONES.CAMBIO_CONSENTIMIENTO,
-    recurso: RECURSOS.VERSION_CONSENTIMIENTO,
-    resultado: RESULTADOS.EXITO,
-    correlacion_id: correlacionId,
-  });
-  return miConsentimiento(actor);
+  return Consentimiento.cambiarMio({ actor, aceptar, correlacionId });
 }
 
 export async function misEvaluaciones(actor) {
-  const ctx = await Usuario.contextoOperativo(actor.usuario_id);
-  if (!ctx?.seudonimo_id) {
-    throw new HttpError(403, "SIN_SEUDONIMO", "Su cuenta no tiene participación operativa");
-  }
-  const docs = await Encuesta.respuestasDeSeudonimo(ctx.seudonimo_id);
-  return {
-    data: docs.map((d) => {
-      const valores = (d.respuestas || []).map((x) => x.valor);
-      const n = valores.length;
-      return {
-        campania_id: d.campania_id,
-        fecha_respuesta: d.fecha_respuesta,
-        promedio: n ? Number((valores.reduce((a, b) => a + b, 0) / n).toFixed(2)) : null,
-      };
-    }),
-  };
+  return Encuesta.mias(actor);
 }
 
 export async function solicitarApoyo({ actor, mensaje, correlacionId }) {

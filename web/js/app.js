@@ -149,6 +149,112 @@ async function api(path, opts = {}) {
   return data;
 }
 
+async function apiOpcional(path, opts = {}) {
+  try {
+    return await api(path, opts);
+  } catch {
+    return null;
+  }
+}
+
+function asList(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.data)) return value.data;
+  return [];
+}
+
+async function listaCatalogo(path) {
+  return asList(await apiOpcional(path));
+}
+
+async function cargarCampanias() {
+  return listaCatalogo("/catalogos/campanias");
+}
+
+async function cargarUnidades() {
+  const lista = await listaCatalogo("/catalogos/unidades");
+  if (lista.length) return lista;
+  if (state.me?.unidad_organizacional_id) {
+    return [{ unidad_organizacional_id: state.me.unidad_organizacional_id, nombre: "Su equipo" }];
+  }
+  return [];
+}
+
+async function cargarInstrumentos() {
+  return listaCatalogo("/catalogos/instrumentos");
+}
+
+async function cargarK() {
+  const full = await apiOpcional("/agregados/parametros");
+  const n = Number(full?.k);
+  if (Number.isFinite(n) && n > 0) return n;
+  const only = await apiOpcional("/agregados/parametros/k");
+  const k = Number(only?.k);
+  return Number.isFinite(k) && k > 0 ? k : 5;
+}
+
+async function cargarConsentimientoPropio() {
+  const a = await apiOpcional("/encuestas/consentimiento");
+  if (a && typeof a.participando === "boolean") return a;
+  const b = await apiOpcional("/portal/consentimiento");
+  if (b && typeof b.participando === "boolean") return b;
+  return { participando: true, historial: [], version_vigente: null };
+}
+
+async function guardarConsentimientoPropio(aceptar) {
+  const opts = { method: "POST", body: JSON.stringify({ aceptar }) };
+  try {
+    return await api("/encuestas/consentimiento", opts);
+  } catch {
+    return api("/portal/consentimiento", opts);
+  }
+}
+
+async function cargarMisEvaluaciones() {
+  const a = await apiOpcional("/encuestas/mias");
+  if (a) return asList(a);
+  const b = await apiOpcional("/portal/mis-evaluaciones");
+  return asList(b);
+}
+
+async function cargarCuentas() {
+  const a = await apiOpcional("/catalogos/cuentas");
+  if (a?.usuarios || a?.perfiles) return { usuarios: a.usuarios || [], perfiles: a.perfiles || [] };
+  const b = await apiOpcional("/portal/cuentas");
+  return { usuarios: b?.usuarios || [], perfiles: b?.perfiles || [] };
+}
+
+async function cargarConfiguracion() {
+  const parametros = (await apiOpcional("/agregados/parametros")) || {};
+  const portal = await apiOpcional("/portal/configuracion");
+  const versiones =
+    asList(portal?.versiones).length > 0
+      ? asList(portal.versiones)
+      : await listaCatalogo("/catalogos/versiones-consentimiento");
+  return {
+    k: Number(portal?.k || parametros.k || (await cargarK())),
+    version_activa_consentimiento:
+      portal?.version_activa_consentimiento || parametros.version_activa_consentimiento || null,
+    versiones,
+  };
+}
+
+async function cargarSoporte() {
+  const a = await apiOpcional("/auditoria/soporte");
+  if (a) return asList(a);
+  const b = await apiOpcional("/portal/soporte");
+  return asList(b);
+}
+
+async function enviarApoyo(mensaje) {
+  const opts = { method: "POST", body: JSON.stringify({ mensaje }) };
+  try {
+    return await api("/encuestas/soporte", opts);
+  } catch {
+    return api("/portal/soporte", opts);
+  }
+}
+
 function mostrarLogin() {
   document.body.classList.remove("is-auth");
   $("vista-login").hidden = false;
@@ -257,8 +363,7 @@ async function panelInicio(panel) {
 }
 
 async function panelEvaluacion(panel) {
-  const desk = await api("/portal/escritorio");
-  const lista = desk.campanias || [];
+  const lista = await cargarCampanias();
   if (!lista.length) {
     panel.innerHTML = `<h2>Evaluación</h2><p class="empty">Por ahora no hay evaluaciones abiertas para su equipo.</p>`;
     return;
@@ -303,7 +408,7 @@ async function panelEvaluacion(panel) {
     if (state.evalFase !== "quiz") {
       let participando = true;
       try {
-        const cons = await api("/portal/consentimiento");
+        const cons = await cargarConsentimientoPropio();
         participando = Boolean(cons.participando);
       } catch (_) {}
       if (!participando) {
@@ -405,8 +510,8 @@ async function panelEvaluacion(panel) {
 }
 
 async function panelTendencias(panel) {
-  const data = await api("/portal/mis-evaluaciones");
-  if (!data.data.length) {
+  const filas = await cargarMisEvaluaciones();
+  if (!filas.length) {
     panel.innerHTML = `<h2>Mis tendencias</h2>
       <p class="empty">Aún no ha enviado evaluaciones. Cuando participe, verá aquí su historial personal.</p>
       <div class="actions"><button type="button" class="btn btn-primary" data-go="evaluacion">Ir a la evaluación</button></div>`;
@@ -415,7 +520,7 @@ async function panelTendencias(panel) {
   }
   panel.innerHTML = `<h2>Mis tendencias</h2>
     <p class="intro">Solo usted ve este historial. No se comparte con líderes ni se cruza con su identidad laboral.</p>
-    <ul class="list-cards">${data.data
+    <ul class="list-cards">${filas
       .map(
         (x) => `<li><strong>${esc(formatFecha(x.fecha_respuesta))}</strong><br>
         <small>Promedio de su envío: ${esc(x.promedio ?? "—")}</small></li>`
@@ -425,7 +530,7 @@ async function panelTendencias(panel) {
 }
 
 async function panelPrivacidadColab(panel) {
-  const data = await api("/portal/consentimiento");
+  const data = await cargarConsentimientoPropio();
   panel.innerHTML = `<h2>Privacidad y consentimiento</h2>
     <p class="intro">Usted controla su participación. Pausar o revocar detiene nuevos envíos de evaluación.</p>
     <div class="note">${
@@ -461,14 +566,22 @@ async function panelPrivacidadColab(panel) {
   const btnA = $("aceptar");
   if (btnR) {
     btnR.onclick = async () => {
-      await api("/portal/consentimiento", { method: "POST", body: JSON.stringify({ aceptar: false }) });
-      await panelPrivacidadColab(panel);
+      try {
+        await guardarConsentimientoPropio(false);
+        await panelPrivacidadColab(panel);
+      } catch (e) {
+        aviso(e.message, true);
+      }
     };
   }
   if (btnA) {
     btnA.onclick = async () => {
-      await api("/portal/consentimiento", { method: "POST", body: JSON.stringify({ aceptar: true }) });
-      await panelPrivacidadColab(panel);
+      try {
+        await guardarConsentimientoPropio(true);
+        await panelPrivacidadColab(panel);
+      } catch (e) {
+        aviso(e.message, true);
+      }
     };
   }
 }
@@ -484,10 +597,7 @@ async function panelApoyo(panel) {
   $("f-apoyo").onsubmit = async (ev) => {
     ev.preventDefault();
     try {
-      await api("/portal/soporte", {
-        method: "POST",
-        body: JSON.stringify({ mensaje: $("mensaje").value }),
-      });
+      await enviarApoyo($("mensaje").value);
       panel.innerHTML = `<div class="phase-screen phase-ok">
         <h2>Solicitud enviada</h2>
         <p class="intro">Recibimos su mensaje. Un profesional de bienestar lo revisará sin asociarlo a su identidad laboral.</p>
@@ -536,9 +646,11 @@ async function pintarAgregado(caja, unidadId, campania, kHint) {
 }
 
 async function panelResultados(panel) {
-  const desk = await api("/portal/escritorio");
-  const unidades = desk.unidades || [];
-  const campanias = desk.campanias || [];
+  const [unidades, campanias, k] = await Promise.all([
+    cargarUnidades(),
+    cargarCampanias(),
+    cargarK(),
+  ]);
   if (!unidades.length || !campanias.length) {
     panel.innerHTML = `<h2>Resultados del equipo</h2>
       <p class="empty">No hay equipos o evaluaciones visibles para su perfil.</p>`;
@@ -565,17 +677,17 @@ async function panelResultados(panel) {
     <div id="resultado"></div>`;
   const cargar = () => {
     const campania = campanias.find((x) => x.campania_id === $("c").value) || campanias[0];
-    return pintarAgregado($("resultado"), $("u").value, campania, desk.k);
+    return pintarAgregado($("resultado"), $("u").value, campania, k);
   };
   $("ver").onclick = cargar;
   await cargar();
 }
 
 async function panelPrivacidadLider(panel) {
-  const desk = await api("/portal/escritorio");
+  const k = await cargarK();
   panel.innerHTML = `<h2>Límites de privacidad</h2>
     <p class="intro">Su acceso está limitado a métricas de grupo. El sistema oculta resultados cuando hay menos de <strong>${esc(
-      desk.k || 5
+      k
     )}</strong> respuestas en el equipo.</p>
     <ul class="checklist">
       <li>No puede ver evaluaciones individuales ni identidades.</li>
@@ -585,7 +697,7 @@ async function panelPrivacidadLider(panel) {
 }
 
 async function panelPrivacidadAuditor(panel) {
-  const cfg = await api("/portal/configuracion");
+  const cfg = await cargarConfiguracion();
   panel.innerHTML = `<h2>Verificación de privacidad</h2>
     <p class="intro">Revise que el umbral de grupo y el aviso de privacidad estén vigentes. Los cambios de umbral los hace solo el administrador y quedan en la bitácora.</p>
     <div class="metrics">
@@ -596,29 +708,32 @@ async function panelPrivacidadAuditor(panel) {
 }
 
 async function panelOrganizacion(panel) {
-  const desk = await api("/portal/escritorio");
+  const [unidades, campanias, instrumentos] = await Promise.all([
+    cargarUnidades(),
+    cargarCampanias(),
+    cargarInstrumentos(),
+  ]);
   const tipo = (t) =>
     t === "NOM035" ? "Factores de riesgo psicosocial" : t === "CLIMA" ? "Clima laboral" : t || "Instrumento";
   panel.innerHTML = `<h2>Instrumentos y equipos</h2>
     <p class="intro">Catálogos para configurar evaluaciones y analizar departamentos. Los instrumentos definen el cuestionario; las campañas lo aplican a un equipo.</p>
     <h3>Equipos</h3>
-    <ul class="list-cards">${(desk.unidades || []).map((x) => `<li>${esc(x.nombre)}</li>`).join("") || "<li>No hay equipos</li>"}</ul>
+    <ul class="list-cards">${unidades.map((x) => `<li>${esc(x.nombre)}</li>`).join("") || "<li>No hay equipos</li>"}</ul>
     <h3>Evaluaciones</h3>
     <ul class="list-cards">${
-      (desk.campanias || [])
+      campanias
         .map((x) => `<li>${esc(x.nombre)}<br><small>${esc(formatDia(x.fecha_inicio))} — ${esc(formatDia(x.fecha_fin))}</small></li>`)
         .join("") || "<li>No hay evaluaciones</li>"
     }</ul>
     <h3>Instrumentos</h3>
     <ul class="list-cards">${
-      (desk.instrumentos || [])
-        .map((x) => `<li>${esc(x.nombre)}<br><small>${esc(tipo(x.tipo))}</small></li>`)
-        .join("") || "<li>No hay instrumentos</li>"
+      instrumentos.map((x) => `<li>${esc(x.nombre)}<br><small>${esc(tipo(x.tipo))}</small></li>`).join("") ||
+      "<li>No hay instrumentos</li>"
     }</ul>`;
 }
 
 async function panelCuentas(panel) {
-  const data = await api("/portal/cuentas");
+  const data = await cargarCuentas();
   panel.innerHTML = `<h2>Cuentas y perfiles</h2>
     <p class="intro">Administración de acceso. Esta lista no se cruza con respuestas de encuesta.</p>
     <h3>Perfiles</h3>
@@ -708,8 +823,7 @@ async function panelConsentimiento(panel) {
 }
 
 async function panelSoporte(panel) {
-  const data = await api("/portal/soporte");
-  const filas = data.data || [];
+  const filas = await cargarSoporte();
   panel.innerHTML = `<h2>Solicitudes de apoyo</h2>
     <p class="intro">Mensajes de colaboradores sin nombre, correo ni identificador laboral.</p>
     ${
@@ -722,7 +836,7 @@ async function panelSoporte(panel) {
 }
 
 async function panelPrivacidad(panel) {
-  const cfg = await api("/portal/configuracion");
+  const cfg = await cargarConfiguracion();
   panel.innerHTML = `<h2>Parámetros globales</h2>
     <p class="intro">Defina el umbral mínimo de grupo (k) y la versión activa del aviso de privacidad. Cada cambio queda en la bitácora.</p>
     <form id="fk">
@@ -742,13 +856,15 @@ async function panelPrivacidad(panel) {
   $("fk").onsubmit = async (ev) => {
     ev.preventDefault();
     try {
-      await api("/portal/configuracion", {
-        method: "PATCH",
-        body: JSON.stringify({
-          k: Number($("k").value),
-          version_activa_consentimiento: $("ver").value,
-        }),
-      });
+      const body = {
+        k: Number($("k").value),
+        version_activa_consentimiento: $("ver").value,
+      };
+      try {
+        await api("/agregados/parametros", { method: "PATCH", body: JSON.stringify(body) });
+      } catch {
+        await api("/portal/configuracion", { method: "PATCH", body: JSON.stringify(body) });
+      }
       panel.innerHTML = `<div class="phase-screen phase-ok"><h2>Parámetros actualizados</h2>
         <p class="intro">El umbral de grupo y el aviso activo quedaron guardados.</p>
         <div class="actions"><button type="button" class="btn btn-primary" id="volver">Seguir editando</button></div></div>`;

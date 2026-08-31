@@ -11,6 +11,25 @@ encuestaRouter.get(
   autorizar(PERFILES.COLAB),
   Encuesta.estado
 );
+encuestaRouter.get(
+  "/consentimiento",
+  autenticar,
+  autorizar(PERFILES.COLAB),
+  Encuesta.miConsentimiento
+);
+encuestaRouter.post(
+  "/consentimiento",
+  autenticar,
+  autorizar(PERFILES.COLAB),
+  Encuesta.cambiarConsentimiento
+);
+encuestaRouter.get("/mias", autenticar, autorizar(PERFILES.COLAB), Encuesta.mias);
+encuestaRouter.post(
+  "/soporte",
+  autenticar,
+  autorizar(PERFILES.COLAB),
+  Encuesta.crearSoporte
+);
 encuestaRouter.post(
   "/respuestas",
   autenticar,

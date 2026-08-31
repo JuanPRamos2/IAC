@@ -1,4 +1,6 @@
 import * as Encuesta from "../servicios/encuesta.servicio.js";
+import * as Consentimiento from "../servicios/consentimiento.servicio.js";
+import * as Portal from "../servicios/portal.servicio.js";
 import { asyncHandler } from "../utilidades/errores.js";
 
 export const crear = asyncHandler(async (req, res) => {
@@ -15,6 +17,34 @@ export const estado = asyncHandler(async (req, res) => {
     await Encuesta.estadoRespuesta({
       actor: req.actor,
       campaniaId: req.query.campania_id,
+    })
+  );
+});
+
+export const miConsentimiento = asyncHandler(async (req, res) => {
+  res.json(await Consentimiento.mio(req.actor));
+});
+
+export const cambiarConsentimiento = asyncHandler(async (req, res) => {
+  res.json(
+    await Consentimiento.cambiarMio({
+      actor: req.actor,
+      aceptar: Boolean(req.body?.aceptar),
+      correlacionId: req.correlacionId,
+    })
+  );
+});
+
+export const mias = asyncHandler(async (req, res) => {
+  res.json(await Encuesta.mias(req.actor));
+});
+
+export const crearSoporte = asyncHandler(async (req, res) => {
+  res.status(201).json(
+    await Portal.solicitarApoyo({
+      actor: req.actor,
+      mensaje: req.body?.mensaje,
+      correlacionId: req.correlacionId,
     })
   );
 });

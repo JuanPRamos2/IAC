@@ -2,7 +2,20 @@ import * as Portal from "../servicios/portal.servicio.js";
 import { asyncHandler } from "../utilidades/errores.js";
 
 export const escritorio = asyncHandler(async (req, res) => {
-  res.json(await Portal.escritorio(req.actor));
+  try {
+    res.json(await Portal.escritorio(req.actor));
+  } catch (err) {
+    console.error("portal.escritorio", err.message);
+    res.json({
+      perfil: req.actor?.perfil,
+      unidad_organizacional_id: null,
+      unidades: [],
+      campanias: [],
+      instrumentos: [],
+      k: 5,
+      parametros: {},
+    });
+  }
 });
 
 export const miConsentimiento = asyncHandler(async (req, res) => {

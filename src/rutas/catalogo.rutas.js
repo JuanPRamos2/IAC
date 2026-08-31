@@ -27,3 +27,9 @@ catalogoRouter.get(
   autorizar(PERFILES.COLAB, PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
   Catalogo.reactivos
 );
+catalogoRouter.get(
+  "/versiones-consentimiento",
+  autorizar(PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Catalogo.versionesConsentimiento
+);
+catalogoRouter.get("/cuentas", autorizar(PERFILES.ADMIN_SISTEMA), Catalogo.cuentas);

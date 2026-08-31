@@ -28,6 +28,17 @@ export async function instrumentos() {
   return Catalogo.listarInstrumentos();
 }
 
+export async function versionesConsentimiento() {
+  return Catalogo.listarVersionesConsentimiento();
+}
+
+export async function cuentas() {
+  return {
+    usuarios: await Usuario.listarCuentas(),
+    perfiles: await Usuario.listarPerfiles(),
+  };
+}
+
 export async function reactivos(instrumentoId, version) {
   return Catalogo.reactivosDeVersion(instrumentoId, Number(version));
 }

@@ -99,6 +99,25 @@ export async function guardarAutoreporte({ actor, body, correlacionId }) {
   };
 }
 
+export async function mias(actor) {
+  const ctx = await Usuario.contextoOperativo(actor.usuario_id);
+  if (!ctx?.seudonimo_id) {
+    throw new HttpError(403, "SIN_SEUDONIMO", "El colaborador no tiene seudónimo operativo");
+  }
+  const docs = await Encuesta.respuestasDeSeudonimo(ctx.seudonimo_id);
+  return {
+    data: docs.map((d) => {
+      const valores = (d.respuestas || []).map((x) => x.valor);
+      const n = valores.length;
+      return {
+        campania_id: d.campania_id,
+        fecha_respuesta: d.fecha_respuesta,
+        promedio: n ? Number((valores.reduce((a, b) => a + b, 0) / n).toFixed(2)) : null,
+      };
+    }),
+  };
+}
+
 export async function estadoRespuesta({ actor, campaniaId }) {
   if (!campaniaId) {
     throw new HttpError(400, "PAYLOAD_INVALIDO", "campania_id es obligatorio");

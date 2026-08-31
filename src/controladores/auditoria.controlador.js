@@ -1,5 +1,6 @@
 import * as Bitacora from "../modelos/Bitacora.js";
 import * as Consentimiento from "../servicios/consentimiento.servicio.js";
+import * as Portal from "../servicios/portal.servicio.js";
 import { asyncHandler } from "../utilidades/errores.js";
 
 export const listar = asyncHandler(async (req, res) => {
@@ -25,4 +26,8 @@ export const historialConsentimiento = asyncHandler(async (req, res) => {
       correlacionId: req.correlacionId,
     })
   );
+});
+
+export const listarSoporte = asyncHandler(async (_req, res) => {
+  res.json(await Portal.listarApoyo());
 });

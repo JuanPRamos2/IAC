@@ -142,6 +142,36 @@ export async function leerK() {
   return { k };
 }
 
+export async function leerParametros() {
+  const parametros = await Catalogo.leerParametros();
+  return {
+    k: Number(parametros.k || 5),
+    version_activa_consentimiento: parametros.version_activa_consentimiento || null,
+  };
+}
+
+export async function guardarParametros({ actor, k, version_activa_consentimiento, correlacionId }) {
+  if (k !== undefined && k !== null && k !== "") {
+    await cambiarK({ actor, k, correlacionId });
+  }
+  if (version_activa_consentimiento) {
+    await Catalogo.actualizarParametro(
+      "version_activa_consentimiento",
+      version_activa_consentimiento,
+      actor.usuario_id
+    );
+    await registrarAsync({
+      actor_id: actor.usuario_id,
+      actor_perfil: actor.perfil,
+      accion: ACCIONES.CAMBIO_CONSENTIMIENTO,
+      recurso: RECURSOS.VERSION_CONSENTIMIENTO,
+      resultado: RESULTADOS.EXITO,
+      correlacion_id: correlacionId,
+    });
+  }
+  return leerParametros();
+}
+
 export async function cambiarK({ actor, k, correlacionId }) {
   const valor = Number(k);
   if (!Number.isInteger(valor) || valor < 2 || valor > 50) {
