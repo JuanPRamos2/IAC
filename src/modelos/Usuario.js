@@ -57,3 +57,25 @@ export async function contextoOperativo(usuarioId) {
   );
   return r.rows[0] || null;
 }
+
+export async function listarCuentas() {
+  const r = await pgQuery(
+    `SELECT u.usuario_id, u.correo, u.activo, u.fecha_ultimo_acceso,
+            p.codigo AS perfil, p.nombre AS perfil_nombre, p.nivel_acceso
+     FROM usuarios.usuario u
+     JOIN usuarios.usuario_perfil up
+       ON up.usuario_id = u.usuario_id AND up.perfil_principal = TRUE
+     JOIN usuarios.perfil p ON p.perfil_id = up.perfil_id
+     ORDER BY p.nivel_acceso, u.correo`
+  );
+  return r.rows;
+}
+
+export async function listarPerfiles() {
+  const r = await pgQuery(
+    `SELECT codigo, nombre, nivel_acceso, activo
+     FROM usuarios.perfil
+     ORDER BY nivel_acceso`
+  );
+  return r.rows;
+}

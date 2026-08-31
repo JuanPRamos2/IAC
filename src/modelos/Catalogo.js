@@ -150,6 +150,50 @@ export async function leerUmbralK() {
   return Number(r.rows[0]?.valor || 5);
 }
 
+export async function leerParametros() {
+  const r = await pgQuery(`SELECT clave, valor FROM agregado.parametro_global`);
+  return Object.fromEntries(r.rows.map((row) => [row.clave, row.valor]));
+}
+
+export async function actualizarParametro(clave, valor, usuarioId) {
+  await pgQuery(
+    `UPDATE agregado.parametro_global
+     SET valor = $1, fecha_actualizacion = NOW(), actualizado_por = $2
+     WHERE clave = $3`,
+    [String(valor), usuarioId, clave]
+  );
+}
+
+export async function listarVersionesConsentimiento() {
+  const r = await pgQuery(
+    `SELECT version_consentimiento_id, resumen_cambios, fecha_vigencia, activo
+     FROM consentimiento.version_consentimiento
+     ORDER BY fecha_vigencia DESC`
+  );
+  return r.rows;
+}
+
+export async function revocarConsentimientosVigentes(seudonimoId) {
+  const r = await pgQuery(
+    `UPDATE consentimiento.consentimiento
+     SET estado = 'REVOCADO', fecha_revocacion = NOW()
+     WHERE seudonimo_id = $1 AND estado = 'ACEPTADO' AND fecha_revocacion IS NULL`,
+    [seudonimoId]
+  );
+  return r.rowCount;
+}
+
+export async function aceptarConsentimiento(seudonimoId, versionId) {
+  await pgQuery(
+    `INSERT INTO consentimiento.consentimiento
+       (seudonimo_id, version_consentimiento_id, estado, fecha_aceptacion, fecha_revocacion)
+     VALUES ($1, $2, 'ACEPTADO', NOW(), NULL)
+     ON CONFLICT (seudonimo_id, version_consentimiento_id)
+     DO UPDATE SET estado = 'ACEPTADO', fecha_aceptacion = NOW(), fecha_revocacion = NULL`,
+    [seudonimoId, versionId]
+  );
+}
+
 export async function actualizarUmbralK(valor, usuarioId) {
   await pgQuery(
     `UPDATE agregado.parametro_global

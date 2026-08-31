@@ -28,3 +28,15 @@ export async function respuestasPorUnidadCampania(unidadId, campaniaId) {
     )
     .toArray();
 }
+
+export async function respuestasDeSeudonimo(seudonimoId) {
+  await conectarMongo();
+  return colRespuestas()
+    .find(
+      { seudonimo_id: seudonimoId },
+      { projection: { seudonimo_id: 0, _id: 0, unidad_organizacional_id: 0 } }
+    )
+    .sort({ fecha_respuesta: -1 })
+    .limit(12)
+    .toArray();
+}
