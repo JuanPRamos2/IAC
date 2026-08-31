@@ -8,7 +8,11 @@ export const consultar = asyncHandler(async (req, res) => {
     campaniaId: req.params.campaniaId,
     correlacionId: req.correlacionId,
   });
-  res.status(out.visible ? 200 : 200).json(out);
+  res.json(out);
+});
+
+export const leerK = asyncHandler(async (_req, res) => {
+  res.json(await Agregado.leerK());
 });
 
 export const cambiarK = asyncHandler(async (req, res) => {

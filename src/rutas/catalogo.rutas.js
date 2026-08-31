@@ -18,6 +18,11 @@ catalogoRouter.get(
   Catalogo.campanias
 );
 catalogoRouter.get(
+  "/instrumentos",
+  autorizar(PERFILES.COLAB, PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Catalogo.instrumentos
+);
+catalogoRouter.get(
   "/instrumentos/:instrumento_id/versiones/:version/reactivos",
   autorizar(PERFILES.COLAB, PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
   Catalogo.reactivos

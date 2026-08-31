@@ -47,8 +47,7 @@ export async function perfilDeUsuario(usuarioId) {
 
 export async function contextoOperativo(usuarioId) {
   const r = await pgQuery(
-    `SELECT e.empleado_id,
-            e.unidad_organizacional_id,
+    `SELECT e.unidad_organizacional_id,
             s.seudonimo_id
      FROM usuarios.empleado e
      LEFT JOIN consentimiento.seudonimo s

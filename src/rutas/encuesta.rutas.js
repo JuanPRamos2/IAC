@@ -5,6 +5,12 @@ import { autorizar } from "../middlewares/autorizacion.js";
 import { PERFILES } from "../utilidades/catalogos-auditoria.js";
 
 export const encuestaRouter = Router();
+encuestaRouter.get(
+  "/estado",
+  autenticar,
+  autorizar(PERFILES.COLAB),
+  Encuesta.estado
+);
 encuestaRouter.post(
   "/respuestas",
   autenticar,

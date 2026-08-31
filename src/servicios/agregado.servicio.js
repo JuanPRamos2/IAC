@@ -1,18 +1,14 @@
 import { redis } from "../config/redis.js";
+import { env } from "../config/env.js";
 import * as Catalogo from "../modelos/Catalogo.js";
 import * as Encuesta from "../modelos/Encuesta.js";
 import * as Usuario from "../modelos/Usuario.js";
 import { registrarAsync } from "./auditoria.servicio.js";
+import { invalidarTodosLosCachesAgregado } from "./cache-agregado.js";
 import { publicarAgregado } from "../utilidades/privacidad.js";
 import { HttpError } from "../utilidades/errores.js";
 import { ACCIONES, RESULTADOS, RECURSOS, PERFILES } from "../utilidades/catalogos-auditoria.js";
-
-function claveCache(unidad, campania) {
-  return `cache:agregado:${unidad}:${campania}`;
-}
-function claveLock(unidad) {
-  return `lock:calculo_agregado:${unidad}`;
-}
+import { claveCacheAgregado, claveLockAgregado } from "../utilidades/redis-claves.js";
 
 function promedio(docs) {
   let suma = 0;
@@ -36,6 +32,15 @@ function promedio(docs) {
   };
 }
 
+async function esperarCache(cacheKey) {
+  for (let i = 0; i < 5; i += 1) {
+    await new Promise((r) => setTimeout(r, 200));
+    const again = await redis.get(cacheKey);
+    if (again) return JSON.parse(again);
+  }
+  return null;
+}
+
 export async function consultarAgregado({ actor, unidadId, campaniaId, correlacionId }) {
   if (actor.perfil === PERFILES.COLAB) {
     throw new HttpError(403, "RBAC", "El colaborador no consulta agregados");
@@ -47,7 +52,7 @@ export async function consultarAgregado({ actor, unidadId, campaniaId, correlaci
     }
   }
 
-  const cacheKey = claveCache(unidadId, campaniaId);
+  const cacheKey = claveCacheAgregado(unidadId, campaniaId);
   const cached = await redis.get(cacheKey);
   if (cached) {
     const parsed = JSON.parse(cached);
@@ -62,11 +67,33 @@ export async function consultarAgregado({ actor, unidadId, campaniaId, correlaci
     return parsed;
   }
 
-  const lock = await redis.set(claveLock(unidadId), actor.usuario_id, "EX", 10, "NX");
+  let lock = await redis.set(
+    claveLockAgregado(unidadId),
+    actor.usuario_id,
+    "EX",
+    env.redisTtl.lockAgregadoSec,
+    "NX"
+  );
   if (!lock) {
-    await new Promise((r) => setTimeout(r, 200));
-    const again = await redis.get(cacheKey);
-    if (again) return JSON.parse(again);
+    const fromWait = await esperarCache(cacheKey);
+    if (fromWait) {
+      await registrarAsync({
+        actor_id: actor.usuario_id,
+        actor_perfil: actor.perfil,
+        accion: ACCIONES.CONSULTA_AGREGADO,
+        recurso: RECURSOS.UNIDAD_ORGANIZACIONAL,
+        resultado: fromWait.visible ? RESULTADOS.EXITO : RESULTADOS.GRUPO_INSUFICIENTE,
+        correlacion_id: correlacionId,
+      });
+      return fromWait;
+    }
+    lock = await redis.set(
+      claveLockAgregado(unidadId),
+      actor.usuario_id,
+      "EX",
+      env.redisTtl.lockAgregadoSec,
+      "NX"
+    );
   }
 
   try {
@@ -95,7 +122,7 @@ export async function consultarAgregado({ actor, unidadId, campaniaId, correlaci
       detalle_json: publico.visible ? detalle : {},
     });
 
-    await redis.set(cacheKey, JSON.stringify(publico), "EX", 300);
+    await redis.set(cacheKey, JSON.stringify(publico), "EX", env.redisTtl.cacheAgregadoSec);
     await registrarAsync({
       actor_id: actor.usuario_id,
       actor_perfil: actor.perfil,
@@ -106,8 +133,13 @@ export async function consultarAgregado({ actor, unidadId, campaniaId, correlaci
     });
     return publico;
   } finally {
-    if (lock) await redis.del(claveLock(unidadId));
+    if (lock) await redis.del(claveLockAgregado(unidadId));
   }
+}
+
+export async function leerK() {
+  const k = await Catalogo.leerUmbralK();
+  return { k };
 }
 
 export async function cambiarK({ actor, k, correlacionId }) {
@@ -116,6 +148,7 @@ export async function cambiarK({ actor, k, correlacionId }) {
     throw new HttpError(400, "K_INVALIDO", "k debe ser un entero entre 2 y 50");
   }
   await Catalogo.actualizarUmbralK(valor, actor.usuario_id);
+  await invalidarTodosLosCachesAgregado();
   await registrarAsync({
     actor_id: actor.usuario_id,
     actor_perfil: actor.perfil,

@@ -1,4 +1,5 @@
 import * as Bitacora from "../modelos/Bitacora.js";
+import * as Consentimiento from "../servicios/consentimiento.servicio.js";
 import { asyncHandler } from "../utilidades/errores.js";
 
 export const listar = asyncHandler(async (req, res) => {
@@ -14,4 +15,14 @@ export const listar = asyncHandler(async (req, res) => {
       timestamp: row.timestamp,
     })),
   });
+});
+
+export const historialConsentimiento = asyncHandler(async (req, res) => {
+  res.json(
+    await Consentimiento.historialPorSeudonimo({
+      actor: req.actor,
+      seudonimoId: req.params.seudonimoId,
+      correlacionId: req.correlacionId,
+    })
+  );
 });

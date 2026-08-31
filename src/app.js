@@ -15,8 +15,25 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export function crearApp() {
   const app = express();
   app.disable("x-powered-by");
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(cors());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'"],
+          imgSrc: ["'self'", "data:"],
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    })
+  );
+  app.use(cors({ origin: false }));
   app.use(express.json({ limit: "32kb" }));
   app.use(correlacion);
 

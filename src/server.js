@@ -1,7 +1,7 @@
 import { crearApp } from "./app.js";
 import { env } from "./config/env.js";
 import { conectarMongo, cerrarMongo } from "./config/mongo.js";
-import { conectarRedis } from "./config/redis.js";
+import { conectarRedis, redis } from "./config/redis.js";
 import { pgPool } from "./config/postgres.js";
 
 const app = crearApp();
@@ -21,6 +21,7 @@ main().catch((err) => {
 
 async function shutdown() {
   await cerrarMongo().catch(() => {});
+  await redis.quit().catch(() => {});
   await pgPool.end().catch(() => {});
   process.exit(0);
 }

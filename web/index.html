@@ -9,16 +9,17 @@
 <body>
   <header class="top">
     <strong>Bienestar Nexum</strong>
+    <span id="salud" class="salud">Comprobando servicios…</span>
     <span id="who"></span>
     <button id="btn-salir" hidden>Cerrar sesión</button>
   </header>
   <main class="wrap">
     <section id="vista-login" class="card">
       <h1>Ingreso</h1>
-      <p class="muted">PostgreSQL valida la clave con pgcrypto. La sesión vive 15 minutos en Redis.</p>
+      <p class="muted">PostgreSQL valida la clave con pgcrypto. La sesión vive 15 minutos en Redis (<code>session:{jti}</code>).</p>
       <form id="form-login">
-        <label>Correo <input name="correo" type="email" required value="ana.perez@empresa.com"></label>
-        <label>Contraseña <input name="contrasena" type="password" required value="demo123"></label>
+        <label>Correo <input name="correo" type="email" required value="ana.perez@empresa.com" autocomplete="username"></label>
+        <label>Contraseña <input name="contrasena" type="password" required value="demo123" autocomplete="current-password"></label>
         <button type="submit">Entrar</button>
       </form>
       <p class="muted">COLAB ana.perez · LIDER lucia.hernandez · AUDITOR roberto.garcia · ADMIN carlos.ramirez · clave demo123</p>

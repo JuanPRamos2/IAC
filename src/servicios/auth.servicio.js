@@ -7,16 +7,7 @@ import { registrarAsync } from "./auditoria.servicio.js";
 import { HttpError } from "../utilidades/errores.js";
 import { ACCIONES, RESULTADOS, RECURSOS } from "../utilidades/catalogos-auditoria.js";
 import { payloadPublicoUsuario } from "../utilidades/privacidad.js";
-
-function claveSesion(jti) {
-  return `session:${jti}`;
-}
-function claveRevocado(jti) {
-  return `revoked:${jti}`;
-}
-function claveFallos(usuarioId) {
-  return `contador:login_fallido:${usuarioId}`;
-}
+import { claveSesion, claveRevocado, claveLoginFallido } from "../utilidades/redis-claves.js";
 
 export async function login({ correo, contrasena, correlacionId }) {
   const usuario = await Usuario.buscarUsuarioPorCorreo(correo);
@@ -25,34 +16,42 @@ export async function login({ correo, contrasena, correlacionId }) {
       actor_id: "DESCONOCIDO",
       actor_perfil: "N/A",
       accion: ACCIONES.LOGIN_FALLIDO,
-      recurso: RECURSOS.SEUDONIMO,
+      recurso: RECURSOS.USUARIO,
       resultado: RESULTADOS.RECHAZADO,
       correlacion_id: correlacionId,
     });
     throw new HttpError(401, "CREDENCIALES_INVALIDAS", "Correo o contraseña incorrectos");
   }
 
-  const fallos = Number((await redis.get(claveFallos(usuario.usuario_id))) || 0);
+  const fallos = Number((await redis.get(claveLoginFallido(usuario.usuario_id))) || 0);
   if (fallos >= env.loginMaxIntentos) {
+    await registrarAsync({
+      actor_id: usuario.usuario_id,
+      actor_perfil: usuario.perfil,
+      accion: ACCIONES.LOGIN_FALLIDO,
+      recurso: RECURSOS.USUARIO,
+      resultado: RESULTADOS.RECHAZADO,
+      correlacion_id: correlacionId,
+    });
     throw new HttpError(423, "CUENTA_BLOQUEADA", "Demasiados intentos fallidos. Espera 15 minutos.");
   }
 
   const ok = await Usuario.verificarContrasena(usuario.usuario_id, contrasena);
   if (!ok) {
-    const n = await redis.incr(claveFallos(usuario.usuario_id));
-    if (n === 1) await redis.expire(claveFallos(usuario.usuario_id), env.jwtExpiresSec);
+    const n = await redis.incr(claveLoginFallido(usuario.usuario_id));
+    if (n === 1) await redis.expire(claveLoginFallido(usuario.usuario_id), env.jwtExpiresSec);
     await registrarAsync({
       actor_id: usuario.usuario_id,
       actor_perfil: usuario.perfil,
       accion: ACCIONES.LOGIN_FALLIDO,
-      recurso: RECURSOS.SEUDONIMO,
+      recurso: RECURSOS.USUARIO,
       resultado: RESULTADOS.RECHAZADO,
       correlacion_id: correlacionId,
     });
     throw new HttpError(401, "CREDENCIALES_INVALIDAS", "Correo o contraseña incorrectos");
   }
 
-  await redis.del(claveFallos(usuario.usuario_id));
+  await redis.del(claveLoginFallido(usuario.usuario_id));
   const jti = uuid();
   const token = jwt.sign(
     { sub: usuario.usuario_id, perfil: usuario.perfil, jti },
@@ -69,7 +68,7 @@ export async function login({ correo, contrasena, correlacionId }) {
     actor_id: usuario.usuario_id,
     actor_perfil: usuario.perfil,
     accion: ACCIONES.LOGIN_EXITOSO,
-    recurso: RECURSOS.SEUDONIMO,
+    recurso: RECURSOS.USUARIO,
     resultado: RESULTADOS.EXITO,
     correlacion_id: correlacionId,
   });
@@ -95,7 +94,7 @@ export async function logout({ jti, exp, actor, correlacionId }) {
     actor_id: actor.usuario_id,
     actor_perfil: actor.perfil,
     accion: ACCIONES.LOGOUT,
-    recurso: RECURSOS.SEUDONIMO,
+    recurso: RECURSOS.USUARIO,
     resultado: RESULTADOS.EXITO,
     correlacion_id: correlacionId,
   });
@@ -108,9 +107,12 @@ export async function sesionValida(jti) {
 
 export async function sesionActual(usuario) {
   const contexto = await Usuario.contextoOperativo(usuario.usuario_id);
-  return payloadPublicoUsuario({
-    usuario_id: usuario.usuario_id,
-    perfil: usuario.perfil,
-    seudonimo_id: contexto?.seudonimo_id,
-  });
+  return {
+    ...payloadPublicoUsuario({
+      usuario_id: usuario.usuario_id,
+      perfil: usuario.perfil,
+      seudonimo_id: contexto?.seudonimo_id,
+    }),
+    unidad_organizacional_id: contexto?.unidad_organizacional_id || null,
+  };
 }

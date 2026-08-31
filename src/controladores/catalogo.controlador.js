@@ -15,3 +15,7 @@ export const reactivos = asyncHandler(async (req, res) => {
     data: await Catalogos.reactivos(instrumento_id, Number(version)),
   });
 });
+
+export const instrumentos = asyncHandler(async (req, res) => {
+  res.json({ data: await Catalogos.instrumentos() });
+});

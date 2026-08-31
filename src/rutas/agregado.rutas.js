@@ -6,14 +6,20 @@ import { PERFILES } from "../utilidades/catalogos-auditoria.js";
 
 export const agregadoRouter = Router();
 agregadoRouter.get(
-  "/:unidadId/:campaniaId",
+  "/parametros/k",
   autenticar,
   autorizar(PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
-  Agregado.consultar
+  Agregado.leerK
 );
 agregadoRouter.patch(
   "/parametros/k",
   autenticar,
   autorizar(PERFILES.ADMIN_SISTEMA),
   Agregado.cambiarK
+);
+agregadoRouter.get(
+  "/:unidadId/:campaniaId",
+  autenticar,
+  autorizar(PERFILES.LIDER_TURNO, PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Agregado.consultar
 );

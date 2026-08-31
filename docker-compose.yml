@@ -1,14 +1,17 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15-bookworm
+    restart: unless-stopped
     environment:
       POSTGRES_DB: bienestar_nexum
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      # 5433 en el host evita choque con PostgreSQL local en 5432
+      - "5433:5432"
     volumes:
-      - ./db/postgres:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+      - ./db/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bienestar_nexum"]
       interval: 5s
@@ -17,21 +20,26 @@ services:
 
   mongo:
     image: mongo:7
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
+      - mongodata:/data/db
       - ./db/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-bookworm
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
+    volumes:
+      - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -40,11 +48,17 @@ services:
 
   api:
     build: .
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       PORT: 3000
+      NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:-cambia-esta-clave-en-produccion}
+      JWT_EXPIRES_SEC: "900"
+      LOGIN_MAX_INTENTOS: "5"
+      REDIS_TTL_CACHE_AGREGADO_SEC: "300"
+      REDIS_TTL_LOCK_AGREGADO_SEC: "10"
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: bienestar_nexum
@@ -60,3 +74,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/salud').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+volumes:
+  pgdata:
+  mongodata:
+  redisdata:

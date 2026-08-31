@@ -9,5 +9,7 @@ Thumbs.db
 .vscode/
 *.swp
 
-# Local data (containers)
+# Local data (containers / Redis dump)
 data/
+dump.rdb
+*.rdb

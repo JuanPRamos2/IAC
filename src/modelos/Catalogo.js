@@ -9,6 +9,27 @@ export async function listarUnidades() {
   return r.rows;
 }
 
+export async function listarCampanias() {
+  const r = await pgQuery(
+    `SELECT campania_id, nombre, fecha_inicio, fecha_fin,
+            instrumento_id, version_instrumento, activa
+     FROM catalogo.campania
+     WHERE activa = TRUE
+     ORDER BY fecha_inicio DESC`
+  );
+  return r.rows;
+}
+
+export async function listarInstrumentos() {
+  const r = await pgQuery(
+    `SELECT instrumento_id, nombre, tipo, activo
+     FROM catalogo.instrumento
+     WHERE activo = TRUE
+     ORDER BY nombre`
+  );
+  return r.rows;
+}
+
 export async function listarCampaniasDeUnidad(unidadId) {
   const r = await pgQuery(
     `SELECT c.campania_id, c.nombre, c.fecha_inicio, c.fecha_fin,
@@ -57,7 +78,7 @@ export async function reactivosDeVersion(instrumentoId, version) {
 
 export async function obtenerSeudonimo(seudonimoId) {
   const r = await pgQuery(
-    `SELECT s.seudonimo_id, s.empleado_id, s.activo,
+    `SELECT s.seudonimo_id, s.activo,
             e.unidad_organizacional_id, e.usuario_id
      FROM consentimiento.seudonimo s
      JOIN usuarios.empleado e ON e.empleado_id = s.empleado_id
@@ -75,6 +96,51 @@ export async function consentimientoVigente(seudonimoId) {
     [seudonimoId]
   );
   return r.rows[0] || null;
+}
+
+export async function historialConsentimiento(seudonimoId) {
+  const r = await pgQuery(
+    `SELECT c.seudonimo_id,
+            c.version_consentimiento_id,
+            c.fecha_aceptacion,
+            c.fecha_revocacion,
+            c.estado
+     FROM consentimiento.consentimiento c
+     WHERE c.seudonimo_id = $1
+     ORDER BY c.fecha_aceptacion DESC`,
+    [seudonimoId]
+  );
+  return r.rows;
+}
+
+export async function existeSeudonimo(seudonimoId) {
+  const r = await pgQuery(
+    `SELECT 1 FROM consentimiento.seudonimo WHERE seudonimo_id = $1`,
+    [seudonimoId]
+  );
+  return r.rowCount === 1;
+}
+
+let cacheCodigosAuditoria = null;
+
+export async function validarCodigosAuditoria({ accion, recurso, resultado }) {
+  if (!cacheCodigosAuditoria) {
+    const [acciones, recursos, resultados] = await Promise.all([
+      pgQuery("SELECT codigo FROM auditoria.tipo_accion"),
+      pgQuery("SELECT codigo FROM auditoria.tipo_recurso"),
+      pgQuery("SELECT codigo FROM auditoria.resultado_auditoria"),
+    ]);
+    cacheCodigosAuditoria = {
+      accion: new Set(acciones.rows.map((r) => r.codigo)),
+      recurso: new Set(recursos.rows.map((r) => r.codigo)),
+      resultado: new Set(resultados.rows.map((r) => r.codigo)),
+    };
+  }
+  return {
+    accion_ok: cacheCodigosAuditoria.accion.has(accion),
+    recurso_ok: cacheCodigosAuditoria.recurso.has(recurso),
+    resultado_ok: cacheCodigosAuditoria.resultado.has(resultado),
+  };
 }
 
 export async function leerUmbralK() {

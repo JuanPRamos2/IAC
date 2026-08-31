@@ -24,6 +24,10 @@ export async function campanias(actor) {
   return Catalogo.listarCampaniasDeUnidad(ctx.unidad_organizacional_id);
 }
 
+export async function instrumentos() {
+  return Catalogo.listarInstrumentos();
+}
+
 export async function reactivos(instrumentoId, version) {
-  return Catalogo.reactivosDeVersion(instrumentoId, version);
+  return Catalogo.reactivosDeVersion(instrumentoId, Number(version));
 }

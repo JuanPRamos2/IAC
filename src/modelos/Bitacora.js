@@ -1,10 +1,22 @@
 import { mongoDb } from "../config/mongo.js";
+import { validarCodigosAuditoria } from "./Catalogo.js";
 
 export function colBitacora() {
   return mongoDb().collection("bitacora_auditoria");
 }
 
 export async function registrarBitacora(doc) {
+  const chequeo = await validarCodigosAuditoria({
+    accion: doc.accion,
+    recurso: doc.recurso,
+    resultado: doc.resultado,
+  });
+  if (!chequeo.accion_ok || !chequeo.recurso_ok || !chequeo.resultado_ok) {
+    throw new Error(
+      `Código de auditoría fuera de catálogo PostgreSQL: accion=${doc.accion} recurso=${doc.recurso} resultado=${doc.resultado}`
+    );
+  }
+
   await colBitacora().insertOne({
     actor_id: doc.actor_id,
     actor_perfil: doc.actor_perfil,

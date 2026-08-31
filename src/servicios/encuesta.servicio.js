@@ -1,8 +1,11 @@
 import * as Catalogo from "../modelos/Catalogo.js";
 import * as Encuesta from "../modelos/Encuesta.js";
+import * as Usuario from "../modelos/Usuario.js";
 import { registrarAsync } from "./auditoria.servicio.js";
+import { invalidarCacheAgregado } from "./cache-agregado.js";
 import { HttpError } from "../utilidades/errores.js";
 import { ACCIONES, RESULTADOS, RECURSOS, PERFILES } from "../utilidades/catalogos-auditoria.js";
+import { documentoRespuestaMongo } from "../utilidades/encuesta-documento.js";
 
 export async function guardarAutoreporte({ actor, body, correlacionId }) {
   const { seudonimo_id, campania_id, respuestas } = body || {};
@@ -64,17 +67,18 @@ export async function guardarAutoreporte({ actor, body, correlacionId }) {
     }
   }
 
-  const doc = {
+  const doc = documentoRespuestaMongo({
     seudonimo_id,
     instrumento_id: campania.instrumento_id,
-    version: campania.version_instrumento,
+    version_instrumento: campania.version_instrumento,
     campania_id,
     unidad_organizacional_id: seudonimo.unidad_organizacional_id,
-    fecha_respuesta: new Date(),
+    version_consentimiento: consentimiento.version_consentimiento_id,
     respuestas: arreglo,
-  };
+  });
 
   const guardado = await Encuesta.insertarRespuesta(doc);
+  await invalidarCacheAgregado(seudonimo.unidad_organizacional_id, campania_id);
 
   registrarAsync({
     actor_id: actor.usuario_id,
@@ -89,7 +93,20 @@ export async function guardarAutoreporte({ actor, body, correlacionId }) {
     id: String(guardado._id),
     campania_id,
     instrumento_id: doc.instrumento_id,
-    version: doc.version,
+    version_instrumento: doc.version_instrumento,
+    version_consentimiento: doc.version_consentimiento,
     fecha_respuesta: doc.fecha_respuesta,
   };
+}
+
+export async function estadoRespuesta({ actor, campaniaId }) {
+  if (!campaniaId) {
+    throw new HttpError(400, "PAYLOAD_INVALIDO", "campania_id es obligatorio");
+  }
+  const ctx = await Usuario.contextoOperativo(actor.usuario_id);
+  if (!ctx?.seudonimo_id) {
+    throw new HttpError(403, "SIN_SEUDONIMO", "El colaborador no tiene seudónimo operativo");
+  }
+  const ya = await Encuesta.existeRespuesta(ctx.seudonimo_id, campaniaId);
+  return { campania_id: campaniaId, ya_respondio: ya };
 }

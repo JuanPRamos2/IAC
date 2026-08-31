@@ -1,19 +1,38 @@
 # Bienestar Nexum
 
-Monolito web del primer parcial: bienestar laboral y prevención de burnout.
-`cloud_models_classifier` queda como el sitio genérico en `web/` más el backend en `src/`.
+Monolito web del primer parcial: bienestar laboral y prevención de burnout
+(EQUIPO 03). PostgreSQL + MongoDB + Redis. El único pivote entre identidad real
+y operativa es `consentimiento.seudonimo`. No hay JOIN entre MongoDB y PostgreSQL.
 
-No hay JOIN entre MongoDB y PostgreSQL. Mongo solo guarda identificadores.
-El único pivote identidad real ↔ operativa es `consentimiento.seudonimo`.
+Informe de auditoría: [docs/AUDITORIA.md](docs/AUDITORIA.md).
 
-## Arranque con contenedores
+## Arranque con contenedores (Debian)
+
+En Arch o Debian, Docker Compose v2 necesita el plugin Buildx:
+
+```bash
+# Arch
+sudo pacman -S docker-buildx
+
+# Debian / Ubuntu
+sudo apt install docker-buildx-plugin
+```
+
+PostgreSQL del host suele ocupar el puerto 5432. Compose publica el contenedor
+en **5433**. La app se sirve en **3000**.
 
 ```bash
 cp .env.example .env
-docker compose up --build
+sudo docker compose down -v    # -v solo si quieres recrear la base desde los SQL
+sudo docker compose up --build
 ```
 
-Abre [http://127.0.0.1:3000](http://127.0.0.1:3000).
+Abre [http://127.0.0.1:3000](http://127.0.0.1:3000). El encabezado debe mostrar
+`PostgreSQL · MongoDB · Redis conectados`.
+
+Si el volumen de Postgres ya existía **antes** de añadir
+`db/postgres/03_recurso_usuario.sql`, recréalo con `down -v` o el recurso
+`USUARIO` no estará en el catálogo de auditoría.
 
 | Correo | Perfil | Clave |
 | --- | --- | --- |
@@ -28,23 +47,30 @@ Las contraseñas se verifican en PostgreSQL con `pgcrypto` (`crypt` + Blowfish).
 
 | Método | Ruta | Quién |
 | --- | --- | --- |
+| GET | `/api/salud` | público |
 | POST | `/api/auth/login` | público |
 | POST | `/api/auth/logout` | sesión |
 | GET | `/api/auth/me` | sesión |
 | GET | `/api/catalogos/unidades` | autenticado |
 | GET | `/api/catalogos/campanias` | autenticado |
+| GET | `/api/catalogos/instrumentos` | autenticado |
+| GET | `/api/encuestas/estado` | COLAB |
 | POST | `/api/encuestas/respuestas` | COLAB |
+| GET | `/api/agregados/parametros/k` | LIDER / AUDITOR / ADMIN |
 | GET | `/api/agregados/:unidad/:campania` | LIDER / AUDITOR / ADMIN |
 | PATCH | `/api/agregados/parametros/k` | ADMIN |
 | GET | `/api/auditoria` | AUDITOR / ADMIN |
+| GET | `/api/auditoria/consentimientos/:seudonimoId` | AUDITOR / ADMIN |
 
 POST encuesta:
 
-1. Valida `seudonimo_id` y `campania_id` en PostgreSQL.
-2. Inserta en MongoDB `respuestas_encuesta` (sin `empleado_id`).
-3. Escribe en segundo plano `CREACION_RESPUESTA` en `bitacora_auditoria`.
+1. Valida `seudonimo_id`, campaña, consentimiento y reactivos en PostgreSQL.
+2. Inserta en MongoDB `respuestas_encuesta` (sin `empleado_id`, con `version_consentimiento`).
+3. Invalida `cache:agregado:{unidad}:{campania}`.
+4. Escribe `CREACION_RESPUESTA` en `bitacora_auditoria`.
 
-Si hay menos de **k** respuestas (k=5), el agregado responde `GRUPO_INSUFICIENTE` sin totales ni promedios.
+Si hay menos de **k** respuestas (k=5), el agregado responde `GRUPO_INSUFICIENTE`
+sin totales ni promedios.
 
 ## Redis
 
@@ -61,8 +87,9 @@ Si hay menos de **k** respuestas (k=5), el agregado responde `GRUPO_INSUFICIENTE
 ```
 src/controladores  src/servicios  src/modelos  src/middlewares  src/rutas  src/config
 web/               interfaz del monolito
-db/postgres        esquema oficial + enlaces demo
+db/postgres        esquema oficial + enlaces demo + recurso USUARIO
 db/mongo           índices
+docs/AUDITORIA.md  checklist del parcial
 ```
 
 ## Pruebas
