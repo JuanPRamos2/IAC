@@ -69,3 +69,8 @@ export async function cambiarMio({ actor, aceptar, correlacionId }) {
   });
   return mio(actor);
 }
+
+export async function listarEvidencia() {
+  const filas = await Catalogo.listarConsentimientos();
+  return { data: historialConsentimientoPublico(filas) };
+}

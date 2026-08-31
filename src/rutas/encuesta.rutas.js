@@ -24,6 +24,7 @@ encuestaRouter.post(
   Encuesta.cambiarConsentimiento
 );
 encuestaRouter.get("/mias", autenticar, autorizar(PERFILES.COLAB), Encuesta.mias);
+encuestaRouter.get("/mis-accesos", autenticar, autorizar(PERFILES.COLAB), Encuesta.misAccesos);
 encuestaRouter.post(
   "/soporte",
   autenticar,

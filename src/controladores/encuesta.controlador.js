@@ -39,6 +39,10 @@ export const mias = asyncHandler(async (req, res) => {
   res.json(await Encuesta.mias(req.actor));
 });
 
+export const misAccesos = asyncHandler(async (req, res) => {
+  res.json(await Encuesta.misAccesos(req.actor));
+});
+
 export const crearSoporte = asyncHandler(async (req, res) => {
   res.status(201).json(
     await Portal.solicitarApoyo({

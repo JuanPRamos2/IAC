@@ -37,3 +37,12 @@ export async function listarBitacora({ limite = 50 } = {}) {
     .limit(Math.min(Number(limite) || 50, 200))
     .toArray();
 }
+
+export async function listarBitacoraDeActor(actorId, { limite = 50 } = {}) {
+  await conectarMongo();
+  return colBitacora()
+    .find({ actor_id: actorId })
+    .sort({ timestamp: -1 })
+    .limit(Math.min(Number(limite) || 50, 200))
+    .toArray();
+}

@@ -6,6 +6,12 @@ import { PERFILES } from "../utilidades/catalogos-auditoria.js";
 
 export const auditoriaRouter = Router();
 auditoriaRouter.get(
+  "/consentimientos",
+  autenticar,
+  autorizar(PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),
+  Auditoria.listarEvidenciaConsentimiento
+);
+auditoriaRouter.get(
   "/consentimientos/:seudonimoId",
   autenticar,
   autorizar(PERFILES.AUDITOR, PERFILES.ADMIN_SISTEMA),

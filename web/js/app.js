@@ -1,21 +1,22 @@
 const TOKEN_KEY = "nexum_token";
-const state = { token: sessionStorage.getItem(TOKEN_KEY), me: null, seccion: null, evalFase: "intro" };
+const NOTIF_KEY = "nexum_notif_leidas";
+const state = { token: sessionStorage.getItem(TOKEN_KEY), me: null, seccion: "inicio" };
 
 const MENSAJES = {
-  CREDENCIALES_INVALIDAS: "Usuario o contraseña incorrectos.",
+  CREDENCIALES_INVALIDAS: "Contraseña incorrecta. Usa demo123.",
   CUENTA_BLOQUEADA: "La cuenta está temporalmente bloqueada. Intente de nuevo más tarde.",
   SIN_TOKEN: "Su sesión ha caducado. Inicie sesión nuevamente.",
   TOKEN_INVALIDO: "Su sesión ha caducado. Inicie sesión nuevamente.",
   TOKEN_REVOCADO: "La sesión se cerró. Inicie sesión nuevamente.",
-  YA_RESPONDIO: "Ya envió esta evaluación. Solo se permite una respuesta por periodo.",
-  SIN_CONSENTIMIENTO: "No es posible continuar hasta aceptar el aviso de privacidad vigente.",
+  YA_RESPONDIO: "Ya respondiste esta campaña. Solo se permite una respuesta por periodo.",
+  SIN_CONSENTIMIENTO: "Necesitas consentimiento vigente para responder.",
   RBAC: "No tiene permiso para consultar esta sección.",
   CAMPANIA_INVALIDA: "La evaluación no está disponible en este momento.",
   CAMPANIA_NO_ASIGNADA: "Esta evaluación no corresponde a su equipo.",
   SEUDONIMO_INVALIDO: "No se encontró el participante indicado.",
   SEUDONIMO_AJENO: "No puede responder en nombre de otra persona.",
   PAYLOAD_INVALIDO: "Revise los datos e intente de nuevo.",
-  K_INVALIDO: "Indique un número entre 2 y 50.",
+  K_INVALIDO: "El umbral debe ser un entero entre 2 y 50.",
   SIN_UNIDAD: "Su cuenta no tiene un equipo asignado.",
   SIN_SEUDONIMO: "Su cuenta no está habilitada para esta evaluación.",
   VALOR_FUERA_DE_ESCALA: "Alguna respuesta quedó fuera del rango permitido.",
@@ -27,65 +28,55 @@ const MENSAJES = {
 
 const PERFIL_ETIQUETA = {
   COLAB: "Colaborador",
-  LIDER_TURNO: "Líder de turno",
-  AUDITOR: "Auditor de cumplimiento",
-  ADMIN_SISTEMA: "Administrador",
+  LIDER_TURNO: "Líder de Turno",
+  AUDITOR: "Auditor de Cumplimiento",
+  ADMIN_SISTEMA: "Administrador del Sistema",
 };
 
-const NAV = {
+const MENU = {
   COLAB: [
     { id: "inicio", label: "Inicio" },
-    { id: "evaluacion", label: "Evaluación" },
-    { id: "tendencias", label: "Mis tendencias" },
-    { id: "privacidad-colab", label: "Privacidad" },
-    { id: "apoyo", label: "Solicitar apoyo" },
+    { id: "consentimiento", label: "Mi consentimiento" },
+    { id: "encuesta", label: "Responder encuesta" },
+    { id: "misAccesos", label: "Quién vio mis datos" },
+    { id: "notificaciones", label: "Notificaciones" },
   ],
   LIDER_TURNO: [
-    { id: "resultados", label: "Resultados del equipo" },
-    { id: "privacidad-lider", label: "Límites de privacidad" },
+    { id: "inicio", label: "Inicio" },
+    { id: "agregados", label: "Resultados por unidad" },
+    { id: "reportes", label: "Reportes" },
+    { id: "notificaciones", label: "Notificaciones" },
   ],
   AUDITOR: [
-    { id: "resultados", label: "Métricas agregadas" },
-    { id: "privacidad-auditor", label: "Cumplimiento" },
-    { id: "actividad", label: "Bitácora" },
-    { id: "consentimiento", label: "Consentimientos" },
-    { id: "soporte", label: "Solicitudes de apoyo" },
+    { id: "inicio", label: "Inicio" },
+    { id: "bitacora", label: "Bitácora de auditoría" },
+    { id: "consentimientos", label: "Evidencia de consentimiento" },
+    { id: "reportes", label: "Reportes" },
+    { id: "notificaciones", label: "Notificaciones" },
   ],
   ADMIN_SISTEMA: [
-    { id: "organizacion", label: "Instrumentos y equipos" },
-    { id: "cuentas", label: "Cuentas y perfiles" },
-    { id: "privacidad", label: "Parámetros globales" },
-    { id: "resultados", label: "Métricas agregadas" },
-    { id: "actividad", label: "Bitácora" },
+    { id: "inicio", label: "Inicio" },
+    { id: "usuarios", label: "Usuarios y perfiles" },
+    { id: "unidades", label: "Unidades organizacionales" },
+    { id: "instrumentos", label: "Instrumentos" },
+    { id: "parametros", label: "Parámetros del sistema" },
+    { id: "bitacora", label: "Bitácora de auditoría" },
+    { id: "notificaciones", label: "Notificaciones" },
   ],
 };
 
 const ACCION_ETIQUETA = {
-  LOGIN_EXITOSO: "Inicio de sesión",
-  LOGIN_FALLIDO: "Acceso rechazado",
-  LOGOUT: "Cierre de sesión",
-  CREACION_RESPUESTA: "Envío de evaluación",
-  CONSULTA_AGREGADO: "Consulta de resultados",
-  CONSULTA_HISTORIAL_CONSENTIMIENTO: "Consulta de consentimiento",
-  CAMBIO_UMBRAL_K: "Ajuste de umbral de privacidad",
-  CAMBIO_CONSENTIMIENTO: "Cambio de consentimiento",
+  LOGIN_EXITOSO: "LOGIN_EXITOSO",
+  LOGIN_FALLIDO: "LOGIN_FALLIDO",
+  LOGOUT: "LOGOUT",
+  CREACION_RESPUESTA: "CREACION_RESPUESTA",
+  CONSULTA_AGREGADO: "CONSULTA_AGREGADO",
+  CONSULTA_HISTORIAL_CONSENTIMIENTO: "CONSULTA_HISTORIAL_CONSENTIMIENTO",
+  CAMBIO_UMBRAL_K: "CAMBIO_UMBRAL_K",
+  CAMBIO_CONSENTIMIENTO: "CAMBIO_CONSENTIMIENTO",
 };
 
-const RECURSO_ETIQUETA = {
-  USUARIO: "Cuenta",
-  SEUDONIMO: "Participante",
-  UNIDAD_ORGANIZACIONAL: "Equipo",
-  PARAMETRO_GLOBAL: "Configuración",
-  VERSION_CONSENTIMIENTO: "Aviso de privacidad",
-  RESPUESTA_ENCUESTA: "Evaluación",
-};
-
-const RESULTADO_ETIQUETA = {
-  EXITO: "Completado",
-  RECHAZADO: "No autorizado",
-  GRUPO_INSUFICIENTE: "Confidencialidad",
-  ERROR_TECNICO: "No disponible",
-};
+const ESCALA = ["Nunca", "Casi nunca", "A veces", "Casi siempre", "Siempre"];
 
 const $ = (id) => document.getElementById(id);
 
@@ -102,30 +93,39 @@ function mensajeAmigable(data) {
   return "No fue posible completar la operación. Intente de nuevo.";
 }
 
-function aviso(texto, esError = false) {
-  const el = $("msg");
-  if (!el) return;
-  el.hidden = !texto;
-  el.textContent = texto || "";
-  el.className = "toast" + (esError ? " error" : "");
+function toast(texto) {
+  const t = $("toast");
+  if (!t) return;
+  t.textContent = texto || "";
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
 function errorLogin(texto) {
   const el = $("login-error");
+  if (!el) return;
   el.hidden = !texto;
   el.textContent = texto || "";
 }
 
 function formatFecha(iso) {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+  if (Number.isNaN(d.getTime())) return String(iso || "—");
+  return d.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" });
 }
 
 function formatDia(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return String(iso || "—");
   return d.toLocaleDateString("es-MX", { dateStyle: "medium" });
+}
+
+function primerNombre(me) {
+  if (me?.nombre) return String(me.nombre).split(" ")[0];
+  const correo = String(me?.correo || $("correo")?.value || "");
+  const parte = correo.split("@")[0] || "usuario";
+  return parte.split(".")[0].replace(/^./, (c) => c.toUpperCase());
 }
 
 async function api(path, opts = {}) {
@@ -142,7 +142,8 @@ async function api(path, opts = {}) {
   if (res.status === 401 && path !== "/auth/login") {
     state.token = null;
     sessionStorage.removeItem(TOKEN_KEY);
-    mostrarLogin();
+    irPublico();
+    irLogin();
     throw new Error(MENSAJES.TOKEN_INVALIDO);
   }
   if (!res.ok) throw new Error(mensajeAmigable(data));
@@ -175,7 +176,7 @@ async function cargarUnidades() {
   const lista = await listaCatalogo("/catalogos/unidades");
   if (lista.length) return lista;
   if (state.me?.unidad_organizacional_id) {
-    return [{ unidad_organizacional_id: state.me.unidad_organizacional_id, nombre: "Su equipo" }];
+    return [{ unidad_organizacional_id: state.me.unidad_organizacional_id, nombre: "Su unidad" }];
   }
   return [];
 }
@@ -210,18 +211,10 @@ async function guardarConsentimientoPropio(aceptar) {
   }
 }
 
-async function cargarMisEvaluaciones() {
-  const a = await apiOpcional("/encuestas/mias");
-  if (a) return asList(a);
-  const b = await apiOpcional("/portal/mis-evaluaciones");
-  return asList(b);
-}
-
 async function cargarCuentas() {
   const a = await apiOpcional("/catalogos/cuentas");
   if (a?.usuarios || a?.perfiles) return { usuarios: a.usuarios || [], perfiles: a.perfiles || [] };
-  const b = await apiOpcional("/portal/cuentas");
-  return { usuarios: b?.usuarios || [], perfiles: b?.perfiles || [] };
+  return { usuarios: [], perfiles: [] };
 }
 
 async function cargarConfiguracion() {
@@ -239,610 +232,625 @@ async function cargarConfiguracion() {
   };
 }
 
-async function cargarSoporte() {
-  const a = await apiOpcional("/auditoria/soporte");
-  if (a) return asList(a);
-  const b = await apiOpcional("/portal/soporte");
-  return asList(b);
+async function cargarBitacora() {
+  return asList(await apiOpcional("/auditoria"));
 }
 
-async function enviarApoyo(mensaje) {
-  const opts = { method: "POST", body: JSON.stringify({ mensaje }) };
-  try {
-    return await api("/encuestas/soporte", opts);
-  } catch {
-    return api("/portal/soporte", opts);
-  }
+function irPublico() {
+  $("publico").classList.add("on");
+  $("login").classList.remove("on");
+  $("app").classList.remove("on");
+  window.scrollTo(0, 0);
 }
 
-function mostrarLogin() {
-  document.body.classList.remove("is-auth");
-  $("vista-login").hidden = false;
-  $("vista-app").hidden = true;
-  $("btn-salir").hidden = true;
-  $("who").hidden = true;
-  $("who").innerHTML = "";
-  aviso("");
+function irLogin() {
+  $("publico").classList.remove("on");
+  $("login").classList.add("on");
+  $("app").classList.remove("on");
+  $("loginBox").hidden = false;
+  $("recuperar").hidden = true;
+  errorLogin("");
+  window.scrollTo(0, 0);
 }
 
-function opciones(lista, valueKey, labelKey) {
-  return (lista || []).map((x) => `<option value="${esc(x[valueKey])}">${esc(x[labelKey])}</option>`).join("");
+function mostrarApp() {
+  $("publico").classList.remove("on");
+  $("login").classList.remove("on");
+  $("app").classList.add("on");
 }
 
-async function entrar(me) {
-  state.me = me;
-  state.evalFase = "intro";
-  document.body.classList.add("is-auth");
-  $("vista-login").hidden = true;
-  $("vista-app").hidden = false;
-  $("btn-salir").hidden = false;
-  $("who").hidden = false;
-  $("who").innerHTML = `<strong>${esc(PERFIL_ETIQUETA[me.perfil] || "Usuario")}</strong><span>Sesión activa</span>`;
-  const tabs = $("tabs");
-  tabs.innerHTML = "";
-  const items = NAV[me.perfil] || [];
-  for (const item of items) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = item.label;
-    b.dataset.id = item.id;
-    b.onclick = () => renderPanel(item.id);
-    tabs.appendChild(b);
-  }
-  renderPanel(items[0]?.id);
+function head(titulo, sub) {
+  return `<div class="page-head"><h1>${titulo}</h1><p>${sub}</p></div>`;
 }
 
-function marcarNav(id) {
-  state.seccion = id;
-  for (const b of $("tabs").querySelectorAll("button")) {
-    if (b.dataset.id === id) b.setAttribute("aria-current", "page");
-    else b.removeAttribute("aria-current");
-  }
-}
-
-async function renderPanel(id) {
-  marcarNav(id);
-  const panel = $("panel");
-  aviso("");
-  panel.innerHTML = `<p class="empty">Cargando…</p>`;
-  try {
-    const vistas = {
-      inicio: panelInicio,
-      evaluacion: panelEvaluacion,
-      tendencias: panelTendencias,
-      "privacidad-colab": panelPrivacidadColab,
-      apoyo: panelApoyo,
-      resultados: panelResultados,
-      "privacidad-lider": panelPrivacidadLider,
-      "privacidad-auditor": panelPrivacidadAuditor,
-      organizacion: panelOrganizacion,
-      cuentas: panelCuentas,
-      actividad: panelActividad,
-      consentimiento: panelConsentimiento,
-      soporte: panelSoporte,
-      privacidad: panelPrivacidad,
-    };
-    const fn = vistas[id];
-    if (fn) await fn(panel);
-  } catch (e) {
-    panel.innerHTML = `<h2>No se pudo abrir esta sección</h2>
-      <p class="intro">${esc(e.message)}</p>
-      <div class="actions"><button type="button" class="btn btn-primary" id="reintentar">Reintentar</button></div>`;
-    $("reintentar").onclick = () => renderPanel(id);
-  }
-}
-
-function cards(items) {
-  return `<div class="cards-grid">${items
+function tarjetasMetricas(arr) {
+  return `<div class="grid2" style="margin-bottom:18px">${arr
     .map(
-      (x) => `<button type="button" class="nav-card" data-go="${esc(x.id)}">
-        <strong>${esc(x.title)}</strong>
-        <span>${esc(x.text)}</span>
-      </button>`
+      ([v, l]) =>
+        `<div class="card metric" style="margin:0"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`
     )
     .join("")}</div>`;
 }
 
-function bindCards(panel) {
-  panel.querySelectorAll("[data-go]").forEach((b) => {
-    b.onclick = () => renderPanel(b.dataset.go);
+function tagEstado(estado) {
+  const ok = estado === "ACEPTADO" || estado === "EXITO" || estado === "Activa" || estado === "Activo";
+  const warn = estado === "GRUPO_INSUFICIENTE" || estado === "Pendiente";
+  const cls = ok ? "tag-ok" : warn ? "tag-warn" : "tag-off";
+  return `<span class="tag ${cls}">${esc(estado)}</span>`;
+}
+
+function riesgoDe(promedio) {
+  const n = Number(promedio);
+  if (!Number.isFinite(n)) return { texto: "—", cls: "" };
+  if (n < 2.5) return { texto: "ALTO", cls: "amber" };
+  if (n < 3.5) return { texto: "MEDIO", cls: "amber" };
+  return { texto: "BAJO", cls: "teal" };
+}
+
+function notifLeidas() {
+  try {
+    return JSON.parse(sessionStorage.getItem(NOTIF_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function guardarNotifLeidas(mapa) {
+  sessionStorage.setItem(NOTIF_KEY, JSON.stringify(mapa));
+}
+
+function claveNotif(item) {
+  return `${state.me?.usuario_id || "x"}:${item.t}`;
+}
+
+function noLeidas(lista) {
+  const leidas = notifLeidas();
+  return lista.filter((n) => !leidas[claveNotif(n)]).length;
+}
+
+async function notificacionesPerfil() {
+  const p = state.me.perfil;
+  const campanias = await cargarCampanias();
+  const k = await cargarK();
+  const camp = campanias[0];
+  if (p === "COLAB") {
+    const cons = await cargarConsentimientoPropio();
+    return [
+      camp
+        ? {
+            t: "Nueva campaña disponible",
+            m: `${camp.nombre} ya está abierta. Cierra el ${formatDia(camp.fecha_fin)}.`,
+            f: "Campaña vigente",
+          }
+        : null,
+      {
+        t: cons.participando ? "Tu consentimiento sigue vigente" : "Tu consentimiento está revocado",
+        m: cons.participando
+          ? "No necesitas hacer nada. Puedes revisarlo cuando quieras."
+          : "Sin consentimiento vigente no se muestran encuestas.",
+        f: cons.version_vigente || "Aviso de privacidad",
+      },
+    ].filter(Boolean);
+  }
+  if (p === "LIDER_TURNO") {
+    return [
+      {
+        t: "Umbral de grupo",
+        m: `Los resultados de tu unidad solo se muestran con al menos ${k} respuestas.`,
+        f: `k = ${k}`,
+      },
+      {
+        t: "Consulta agregada",
+        m: "Usa Resultados por unidad para ver promedios. Los grupos pequeños se suprimen.",
+        f: "Regla de privacidad",
+      },
+    ];
+  }
+  if (p === "AUDITOR") {
+    return [
+      {
+        t: "Consulta suprimida",
+        m: "Las consultas con menos de k respuestas se registran como GRUPO_INSUFICIENTE.",
+        f: "Bitácora",
+      },
+    ];
+  }
+  return [
+    {
+      t: "Parámetros del sistema",
+      m: `El umbral k vigente es ${k}. Cada cambio queda en la bitácora.`,
+      f: "Administración",
+    },
+  ];
+}
+
+function pintarNav() {
+  const n = $("nav");
+  n.innerHTML = "";
+  const items = MENU[state.me.perfil] || [];
+  for (const item of items) {
+    const b = document.createElement("button");
+    b.type = "button";
+    if (item.id === "notificaciones") {
+      b.innerHTML = "Notificaciones";
+      notificacionesPerfil().then((lista) => {
+        const nl = noLeidas(lista);
+        if (nl) {
+          b.innerHTML = `Notificaciones <span style="background:var(--amber);color:#fff;font-size:10px;font-weight:600;padding:1px 7px;border-radius:9px;margin-left:4px">${nl}</span>`;
+        }
+      });
+    } else {
+      b.textContent = item.label;
+    }
+    if (item.id === state.seccion) b.className = "sel";
+    b.onclick = () => {
+      state.seccion = item.id;
+      pintarNav();
+      render();
+    };
+    n.appendChild(b);
+  }
+}
+
+async function entrar(me) {
+  state.me = me;
+  state.seccion = "inicio";
+  mostrarApp();
+  $("uName").textContent = me.nombre ? `${me.nombre}` : primerNombre(me);
+  $("uRole").textContent = PERFIL_ETIQUETA[me.perfil] || me.perfil;
+  pintarNav();
+  await render();
+}
+
+function dibujarColumnas(id, categorias, valores) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof Highcharts !== "undefined") {
+    Highcharts.chart(id, {
+      credits: { enabled: false },
+      title: { text: null },
+      chart: { type: "column", height: 300, style: { fontFamily: "Inter,sans-serif" }, backgroundColor: "transparent" },
+      xAxis: { categories: categorias, lineColor: "#DCE1E8" },
+      yAxis: { min: 0, max: 5, title: { text: "Promedio (1–5)" }, gridLineColor: "#EDEFF3" },
+      legend: { enabled: false },
+      series: [{ name: "Promedio", data: valores, color: "#1F3864", borderRadius: 3 }],
+    });
+    return;
+  }
+  el.innerHTML = categorias
+    .map((c, i) => {
+      const v = Number(valores[i] || 0);
+      const ancho = Math.max(0, Math.min(100, (v / 5) * 100));
+      return `<div class="bar-row"><div class="lab"><span>${esc(c)}</span><span class="n">${esc(v)}</span></div><div class="bar"><i style="width:${ancho}%"></i></div></div>`;
+    })
+    .join("");
+}
+
+async function consultarAgregado(unidadId, campaniaId) {
+  return apiOpcional(`/agregados/${encodeURIComponent(unidadId)}/${encodeURIComponent(campaniaId)}`);
+}
+
+async function nombresReactivos(campania) {
+  if (!campania?.instrumento_id) return {};
+  const r = await apiOpcional(
+    `/catalogos/instrumentos/${encodeURIComponent(campania.instrumento_id)}/versiones/${Number(campania.version_instrumento)}/reactivos`
+  );
+  return Object.fromEntries((r?.data || []).map((x) => [x.reactivo_id, { texto: x.texto, dim: x.dimension }]));
+}
+
+function cardAgregado(unidad, campania, data, nombres, k) {
+  if (!data?.visible) {
+    return `<div class="card"><h2>${esc(unidad.nombre)}</h2>
+      <p class="card-sub">${esc(campania.nombre)}</p>
+      <div class="suppressed"><div class="big">Resultado suprimido</div>
+      <div class="small">Este grupo no alcanza el umbral mínimo de ${esc(data?.k || k)} respuestas.
+      Mostrar el promedio permitiría deducir respuestas individuales.</div></div>
+      <p class="note">La consulta quedó registrada en la bitácora con resultado <span class="mono">GRUPO_INSUFICIENTE</span>.</p></div>`;
+  }
+  const detalle = Object.entries(data.detalle || {});
+  const chartId = `gdim-${unidad.unidad_organizacional_id}-${campania.campania_id}`.replace(/[^a-zA-Z0-9_-]/g, "");
+  const cats = detalle.map(([id]) => nombres[id]?.dim || nombres[id]?.texto || id);
+  const vals = detalle.map(([, v]) => Number(v));
+  const riesgo = riesgoDe(data.promedio_global);
+  setTimeout(() => dibujarColumnas(chartId, cats, vals), 30);
+  return `<div class="card"><h2>${esc(unidad.nombre)}</h2>
+    <p class="card-sub">${esc(campania.nombre)} · ${esc(data.total_respuestas)} respuestas</p>
+    <div class="grid2" style="margin-bottom:20px">
+      <div class="metric" style="padding:0"><div class="v">${esc(data.promedio_global)}</div><div class="l">Promedio general (escala 1–5)</div></div>
+      <div class="metric" style="padding:0"><div class="v ${riesgo.cls}">${riesgo.texto}</div><div class="l">Nivel de riesgo del grupo</div></div>
+    </div>
+    <div id="${chartId}" class="chart"></div>
+    <p class="note">Promedios de ${esc(data.total_respuestas)} personas. El sistema no expone respuestas individuales ni la lista de participantes.</p></div>`;
+}
+
+function tablaBitacora(rows) {
+  if (!rows.length) {
+    return `<div class="suppressed"><div class="big">Sin registros</div>
+      <div class="small">Todavía no hay eventos que mostrar en este periodo.</div></div>`;
+  }
+  const puedeSeud = ["AUDITOR", "ADMIN_SISTEMA", "COLAB"].includes(state.me.perfil);
+  return `<table><thead><tr><th>Fecha</th><th>Actor</th><th>Perfil</th><th>Acción</th><th>Recurso</th><th>Resultado</th></tr></thead><tbody>
+  ${rows
+    .map((b) => {
+      let rec = b.recurso || "—";
+      if (/^SEUD-/.test(rec) && !puedeSeud) rec = "Seudónimo protegido";
+      return `<tr><td class="mono">${esc(formatFecha(b.timestamp))}</td>
+        <td class="mono">${esc(b.actor_id === "DESCONOCIDO" ? "No identificado" : b.actor_id)}</td>
+        <td>${esc(PERFIL_ETIQUETA[b.actor_perfil] || b.actor_perfil || "—")}</td>
+        <td class="mono">${esc(ACCION_ETIQUETA[b.accion] || b.accion)}</td>
+        <td class="mono">${esc(rec)}</td>
+        <td>${tagEstado(b.resultado)}</td></tr>`;
+    })
+    .join("")}
+  </tbody></table>`;
+}
+
+async function render() {
+  const view = $("view");
+  view.innerHTML = `<p class="note">Cargando…</p>`;
+  try {
+    const fn = V[state.seccion];
+    view.innerHTML = fn ? await fn() : head("Sección", "No disponible.");
+    bindView();
+  } catch (e) {
+    view.innerHTML = head("No se pudo abrir esta sección", esc(e.message)) +
+      `<p><button class="btn" type="button" id="reintentar">Reintentar</button></p>`;
+    $("reintentar").onclick = () => render();
+  }
+}
+
+function bindView() {
+  $("view").querySelectorAll("[data-go]").forEach((b) => {
+    b.onclick = () => {
+      state.seccion = b.dataset.go;
+      pintarNav();
+      render();
+    };
   });
 }
 
-async function panelInicio(panel) {
-  panel.innerHTML = `<h2>Bienvenido</h2>
-    <p class="intro">Este espacio es confidencial. Sus respuestas no se muestran a su líder de forma individual.</p>
-    ${cards([
-      { id: "evaluacion", title: "Completar evaluación", text: "Autoreporte de carga de trabajo y clima laboral." },
-      { id: "privacidad-colab", title: "Consentimiento y privacidad", text: "Aceptar, pausar o revocar su participación." },
-      { id: "tendencias", title: "Mis tendencias", text: "Consulte el historial de las evaluaciones que usted envió." },
-      { id: "apoyo", title: "Solicitar apoyo", text: "Pida orientación de bienestar sin exponer su identidad laboral." },
-    ])}
-    <div class="note">La vinculación de wearables y las recomendaciones automáticas avanzadas se habilitan en una fase posterior. En este producto mínimo puede evaluar, gestionar su consentimiento y pedir apoyo.</div>`;
-  bindCards(panel);
-}
+const V = {};
 
-async function panelEvaluacion(panel) {
-  const lista = await cargarCampanias();
-  if (!lista.length) {
-    panel.innerHTML = `<h2>Evaluación</h2><p class="empty">Por ahora no hay evaluaciones abiertas para su equipo.</p>`;
-    return;
-  }
-
-  const pintarFase = async () => {
-    const campania = lista[0];
-    let ya = false;
-    try {
-      const est = await api(`/encuestas/estado?campania_id=${encodeURIComponent(campania.campania_id)}`);
-      ya = Boolean(est.ya_respondio);
-    } catch (_) {}
-
-    if (state.evalFase === "exito") {
-      panel.innerHTML = `<div class="phase-screen phase-ok">
-        <p class="eyebrow">Listo</p>
-        <h2>Gracias por completar su evaluación</h2>
-        <p class="intro">Sus respuestas se guardaron de forma anónima. Nadie de su equipo verá un resultado individual. Cuando haya suficientes participaciones, su líder solo verá promedios del grupo.</p>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" data-go="tendencias">Ver mis tendencias</button>
-          <button type="button" class="btn btn-secondary" data-go="inicio">Volver al inicio</button>
-        </div>
-      </div>`;
-      bindCards(panel);
-      return;
-    }
-
-    if (ya) {
-      panel.innerHTML = `<div class="phase-screen">
-        <p class="eyebrow">Participación</p>
-        <h2>Esta evaluación ya fue enviada</h2>
-        <p class="intro">Registramos su autoreporte de <strong>${esc(campania.nombre)}</strong>. Solo se permite una respuesta por periodo, para proteger la consistencia y su confidencialidad.</p>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" data-go="tendencias">Ver mis tendencias</button>
-          <button type="button" class="btn btn-secondary" data-go="inicio">Volver al inicio</button>
-        </div>
-      </div>`;
-      bindCards(panel);
-      return;
-    }
-
-    if (state.evalFase !== "quiz") {
-      let participando = true;
-      try {
-        const cons = await cargarConsentimientoPropio();
-        participando = Boolean(cons.participando);
-      } catch (_) {}
-      if (!participando) {
-        panel.innerHTML = `<div class="phase-screen">
-          <h2>Necesitamos su consentimiento</h2>
-          <p class="intro">Para enviar una evaluación debe aceptar el aviso de privacidad vigente.</p>
-          <div class="actions">
-            <button type="button" class="btn btn-primary" data-go="privacidad-colab">Ir a privacidad</button>
-          </div>
-        </div>`;
-        bindCards(panel);
-        return;
-      }
-      panel.innerHTML = `<div class="phase-screen">
-        <p class="eyebrow">${esc(campania.nombre)}</p>
-        <h2>Antes de comenzar</h2>
-        <p class="intro">Esta evaluación busca entender la carga de trabajo y el clima de su equipo. Responda con sinceridad.</p>
-        <ul class="checklist">
-          <li>Sus respuestas son confidenciales y se procesan de forma anónima.</li>
-          <li>Su líder no puede ver su cuestionario individual.</li>
-          <li>Los resultados del equipo solo se publican si hay suficientes participaciones.</li>
-          <li>Puede pausar su consentimiento en Privacidad cuando lo necesite.</li>
-        </ul>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" id="comenzar">Comenzar evaluación</button>
-        </div>
-      </div>`;
-      $("comenzar").onclick = () => {
-        state.evalFase = "quiz";
-        pintarFase();
-      };
-      return;
-    }
-
-    panel.innerHTML = `<h2>${esc(campania.nombre)}</h2>
-      <p class="intro">Por favor, responda con sinceridad. Sus respuestas son estrictamente confidenciales y se procesan de forma anónima para proteger su identidad.</p>
-      <form id="f-enc">
-        <div id="reactivos"></div>
-        <div class="actions">
-          <button class="btn btn-primary" type="submit" id="btn-enviar">Enviar evaluación</button>
-        </div>
-      </form>`;
-    try {
-      const r = await api(
-        `/catalogos/instrumentos/${encodeURIComponent(campania.instrumento_id)}/versiones/${Number(campania.version_instrumento)}/reactivos`
-      );
-      const preguntas = Array.isArray(r.data) ? r.data : [];
-      $("reactivos").innerHTML = preguntas
-        .map(
-          (item) => `<div class="reactivo">
-            <p>${esc(item.orden)}. ${esc(item.texto)}</p>
-            <div class="escala">
-              <small>En desacuerdo</small>
-              <input type="range" min="${item.escala_min}" max="${item.escala_max}" value="3" data-id="${esc(item.reactivo_id)}" aria-label="Valoración">
-              <small>De acuerdo</small>
-            </div>
-            <p class="escala-valor">Su valoración: <strong>3</strong> de ${esc(item.escala_max)}</p>
-          </div>`
-        )
-        .join("");
-      panel.querySelectorAll("input[type=range]").forEach((input) => {
-        const etiqueta = input.closest(".reactivo").querySelector(".escala-valor strong");
-        input.addEventListener("input", () => {
-          etiqueta.textContent = input.value;
-        });
-      });
-    } catch (e) {
-      $("reactivos").innerHTML = `<p class="intro">${esc(e.message)}</p>`;
-    }
-    $("f-enc").onsubmit = async (ev) => {
-      ev.preventDefault();
-      try {
-        const respuestas = [...panel.querySelectorAll("input[data-id]")].map((i) => ({
-          reactivo_id: i.dataset.id,
-          valor: Number(i.value),
-        }));
-        await api("/encuestas/respuestas", {
-          method: "POST",
-          body: JSON.stringify({
-            seudonimo_id: state.me.seudonimo_id,
-            campania_id: campania.campania_id,
-            respuestas,
-          }),
-        });
-        state.evalFase = "exito";
-        await pintarFase();
-      } catch (e) {
-        if (e.message === MENSAJES.YA_RESPONDIO) {
-          state.evalFase = "intro";
-          await pintarFase();
-          return;
-        }
-        aviso(e.message, true);
-      }
-    };
-  };
-
-  await pintarFase();
-}
-
-async function panelTendencias(panel) {
-  const filas = await cargarMisEvaluaciones();
-  if (!filas.length) {
-    panel.innerHTML = `<h2>Mis tendencias</h2>
-      <p class="empty">Aún no ha enviado evaluaciones. Cuando participe, verá aquí su historial personal.</p>
-      <div class="actions"><button type="button" class="btn btn-primary" data-go="evaluacion">Ir a la evaluación</button></div>`;
-    bindCards(panel);
-    return;
-  }
-  panel.innerHTML = `<h2>Mis tendencias</h2>
-    <p class="intro">Solo usted ve este historial. No se comparte con líderes ni se cruza con su identidad laboral.</p>
-    <ul class="list-cards">${filas
-      .map(
-        (x) => `<li><strong>${esc(formatFecha(x.fecha_respuesta))}</strong><br>
-        <small>Promedio de su envío: ${esc(x.promedio ?? "—")}</small></li>`
-      )
-      .join("")}</ul>
-    <div class="note">Las recomendaciones personalizadas automáticas se incorporarán cuando el programa de intervenciones esté activo. Si necesita ayuda ahora, use Solicitar apoyo.</div>`;
-}
-
-async function panelPrivacidadColab(panel) {
-  const data = await cargarConsentimientoPropio();
-  panel.innerHTML = `<h2>Privacidad y consentimiento</h2>
-    <p class="intro">Usted controla su participación. Pausar o revocar detiene nuevos envíos de evaluación.</p>
-    <div class="note">${
-      data.participando
-        ? `Participación activa. Aviso vigente: ${esc(data.version_vigente)}.`
-        : "Su participación está pausada o no hay consentimiento vigente."
-    }</div>
-    <h3>Quién puede ver información</h3>
-    <ul class="checklist">
-      <li>Su líder solo ve promedios del equipo, nunca su cuestionario.</li>
-      <li>Esos promedios se ocultan si hay pocas respuestas (umbral de grupo).</li>
-      <li>El auditor revisa accesos y consentimientos, no sus respuestas individuales.</li>
-    </ul>
-    <div class="actions">
-      ${
-        data.participando
-          ? `<button type="button" class="btn btn-secondary" id="revocar">Pausar participación</button>`
-          : `<button type="button" class="btn btn-primary" id="aceptar">Aceptar aviso y participar</button>`
-      }
-    </div>
-    <h3>Historial</h3>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Aviso</th><th>Aceptado</th><th>Estado</th></tr></thead>
-      <tbody>${(data.historial || [])
-        .map(
-          (f) => `<tr><td>${esc(f.version_consentimiento_id)}</td>
-          <td>${esc(formatFecha(f.fecha_aceptacion))}</td>
-          <td>${esc(f.estado === "ACEPTADO" ? "Activo" : "Revocado")}</td></tr>`
-        )
-        .join("")}</tbody>
-    </table></div>`;
-  const btnR = $("revocar");
-  const btnA = $("aceptar");
-  if (btnR) {
-    btnR.onclick = async () => {
-      try {
-        await guardarConsentimientoPropio(false);
-        await panelPrivacidadColab(panel);
-      } catch (e) {
-        aviso(e.message, true);
-      }
-    };
-  }
-  if (btnA) {
-    btnA.onclick = async () => {
-      try {
-        await guardarConsentimientoPropio(true);
-        await panelPrivacidadColab(panel);
-      } catch (e) {
-        aviso(e.message, true);
-      }
-    };
-  }
-}
-
-async function panelApoyo(panel) {
-  panel.innerHTML = `<h2>Solicitar apoyo</h2>
-    <p class="intro">El mensaje se registra sin su nombre ni correo. Un especialista de bienestar podrá atenderlo de forma confidencial.</p>
-    <form id="f-apoyo">
-      <label for="mensaje">¿En qué podemos apoyar?</label>
-      <textarea id="mensaje" name="mensaje" rows="5" required minlength="8" placeholder="Describa la situación con el detalle que le resulte cómodo."></textarea>
-      <div class="actions"><button class="btn btn-primary" type="submit">Enviar solicitud</button></div>
-    </form>`;
-  $("f-apoyo").onsubmit = async (ev) => {
-    ev.preventDefault();
-    try {
-      await enviarApoyo($("mensaje").value);
-      panel.innerHTML = `<div class="phase-screen phase-ok">
-        <h2>Solicitud enviada</h2>
-        <p class="intro">Recibimos su mensaje. Un profesional de bienestar lo revisará sin asociarlo a su identidad laboral.</p>
-        <div class="actions"><button type="button" class="btn btn-primary" data-go="inicio">Volver al inicio</button></div>
-      </div>`;
-      bindCards(panel);
-    } catch (e) {
-      aviso(e.message, true);
-    }
-  };
-}
-
-async function pintarAgregado(caja, unidadId, campania, kHint) {
-  caja.innerHTML = `<p class="empty">Consultando resultados del grupo…</p>`;
-  try {
-    const data = await api(`/agregados/${encodeURIComponent(unidadId)}/${encodeURIComponent(campania.campania_id)}`);
-    let nombres = {};
-    try {
-      const reactivos = await api(
-        `/catalogos/instrumentos/${encodeURIComponent(campania.instrumento_id)}/versiones/${Number(campania.version_instrumento)}/reactivos`
-      );
-      nombres = Object.fromEntries((reactivos.data || []).map((r) => [r.reactivo_id, r.texto]));
-    } catch (_) {}
-    if (!data.visible) {
-      caja.innerHTML = `<div class="aviso">Aún no hay suficientes respuestas para mostrar resultados de este equipo (mínimo ${esc(
-        data.k || kHint || 5
-      )} participaciones). Esta regla evita que alguien pueda ser identificado.</div>`;
-      return;
-    }
-    const detalle = Object.entries(data.detalle || {});
-    caja.innerHTML = `<div class="metrics">
-        <div class="metric"><span>Participación del grupo</span><strong>${esc(data.total_respuestas)}</strong></div>
-        <div class="metric"><span>Promedio general</span><strong>${esc(data.promedio_global)}</strong></div>
-        <div class="metric"><span>Umbral de privacidad</span><strong>${esc(data.k)}</strong></div>
-      </div>
-      ${detalle
-        .map(([id, valor]) => {
-          const ancho = Math.max(0, Math.min(100, (Number(valor) / 5) * 100));
-          return `<div class="bar-row"><p>${esc(nombres[id] || "Indicador")} · ${esc(valor)}</p>
-            <div class="bar" aria-hidden="true"><i style="width:${ancho}%"></i></div></div>`;
-        })
-        .join("")}`;
-  } catch (e) {
-    caja.innerHTML = `<div class="aviso">${esc(e.message)}</div>`;
-  }
-}
-
-async function panelResultados(panel) {
-  const [unidades, campanias, k] = await Promise.all([
-    cargarUnidades(),
-    cargarCampanias(),
-    cargarK(),
-  ]);
-  if (!unidades.length || !campanias.length) {
-    panel.innerHTML = `<h2>Resultados del equipo</h2>
-      <p class="empty">No hay equipos o evaluaciones visibles para su perfil.</p>`;
-    return;
-  }
-  const lider = state.me.perfil === "LIDER_TURNO";
-  panel.innerHTML = `<h2>${lider ? "Resultados de su equipo" : "Métricas agregadas"}</h2>
-    <p class="intro">${
-      lider
-        ? "Solo ve promedios de su equipo. Si el grupo es pequeño, no se muestra ninguna cifra."
-        : "Consulte promedios por equipo y evaluación. Nunca se muestran respuestas individuales."
-    }</p>
-    <div class="filters">
-      <div>
-        <label for="u">Equipo</label>
-        <select id="u">${opciones(unidades, "unidad_organizacional_id", "nombre")}</select>
-      </div>
-      <div>
-        <label for="c">Evaluación</label>
-        <select id="c">${opciones(campanias, "campania_id", "nombre")}</select>
-      </div>
-      <button type="button" class="btn btn-primary" id="ver">Actualizar</button>
-    </div>
-    <div id="resultado"></div>`;
-  const cargar = () => {
-    const campania = campanias.find((x) => x.campania_id === $("c").value) || campanias[0];
-    return pintarAgregado($("resultado"), $("u").value, campania, k);
-  };
-  $("ver").onclick = cargar;
-  await cargar();
-}
-
-async function panelPrivacidadLider(panel) {
+V.inicio = async () => {
+  const p = state.me.perfil;
   const k = await cargarK();
-  panel.innerHTML = `<h2>Límites de privacidad</h2>
-    <p class="intro">Su acceso está limitado a métricas de grupo. El sistema oculta resultados cuando hay menos de <strong>${esc(
-      k
-    )}</strong> respuestas en el equipo.</p>
-    <ul class="checklist">
-      <li>No puede ver evaluaciones individuales ni identidades.</li>
-      <li>Use los agregados solo para detectar carga de trabajo del turno.</li>
-      <li>Si el aviso de confidencialidad aparece, no hay excepción: hay que esperar más participaciones.</li>
-    </ul>`;
-}
-
-async function panelPrivacidadAuditor(panel) {
-  const cfg = await cargarConfiguracion();
-  panel.innerHTML = `<h2>Verificación de privacidad</h2>
-    <p class="intro">Revise que el umbral de grupo y el aviso de privacidad estén vigentes. Los cambios de umbral los hace solo el administrador y quedan en la bitácora.</p>
-    <div class="metrics">
-      <div class="metric"><span>Umbral k</span><strong>${esc(cfg.k)}</strong></div>
-      <div class="metric"><span>Aviso activo</span><strong>${esc(cfg.version_activa_consentimiento || "—")}</strong></div>
-    </div>
-    <p class="intro">Para auditar consultas de agregados, consentimientos y cambios de k, use la bitácora.</p>`;
-}
-
-async function panelOrganizacion(panel) {
-  const [unidades, campanias, instrumentos] = await Promise.all([
-    cargarUnidades(),
-    cargarCampanias(),
-    cargarInstrumentos(),
-  ]);
-  const tipo = (t) =>
-    t === "NOM035" ? "Factores de riesgo psicosocial" : t === "CLIMA" ? "Clima laboral" : t || "Instrumento";
-  panel.innerHTML = `<h2>Instrumentos y equipos</h2>
-    <p class="intro">Catálogos para configurar evaluaciones y analizar departamentos. Los instrumentos definen el cuestionario; las campañas lo aplican a un equipo.</p>
-    <h3>Equipos</h3>
-    <ul class="list-cards">${unidades.map((x) => `<li>${esc(x.nombre)}</li>`).join("") || "<li>No hay equipos</li>"}</ul>
-    <h3>Evaluaciones</h3>
-    <ul class="list-cards">${
-      campanias
-        .map((x) => `<li>${esc(x.nombre)}<br><small>${esc(formatDia(x.fecha_inicio))} — ${esc(formatDia(x.fecha_fin))}</small></li>`)
-        .join("") || "<li>No hay evaluaciones</li>"
-    }</ul>
-    <h3>Instrumentos</h3>
-    <ul class="list-cards">${
-      instrumentos.map((x) => `<li>${esc(x.nombre)}<br><small>${esc(tipo(x.tipo))}</small></li>`).join("") ||
-      "<li>No hay instrumentos</li>"
-    }</ul>`;
-}
-
-async function panelCuentas(panel) {
-  const data = await cargarCuentas();
-  panel.innerHTML = `<h2>Cuentas y perfiles</h2>
-    <p class="intro">Administración de acceso. Esta lista no se cruza con respuestas de encuesta.</p>
-    <h3>Perfiles</h3>
-    <ul class="list-cards">${(data.perfiles || [])
-      .map((p) => `<li><strong>${esc(p.nombre)}</strong><br><small>Nivel de acceso ${esc(p.nivel_acceso)}</small></li>`)
-      .join("")}</ul>
-    <h3>Cuentas</h3>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Correo</th><th>Perfil</th><th>Nivel</th><th>Estado</th><th>Último acceso</th></tr></thead>
-      <tbody>${(data.usuarios || [])
-        .map(
-          (u) => `<tr>
-            <td>${esc(u.correo)}</td>
-            <td>${esc(u.perfil_nombre)}</td>
-            <td>${esc(u.nivel_acceso)}</td>
-            <td>${u.activo ? "Activa" : "Inactiva"}</td>
-            <td>${esc(u.fecha_ultimo_acceso ? formatFecha(u.fecha_ultimo_acceso) : "—")}</td>
-          </tr>`
-        )
-        .join("")}</tbody>
-    </table></div>
-    <div class="note">El alta de nuevas cuentas en este producto mínimo se realiza con el esquema institucional. Aquí se consultan perfiles y accesos vigentes.</div>`;
-}
-
-async function panelActividad(panel) {
-  const data = await api("/auditoria");
-  const filas = Array.isArray(data.data) ? data.data : [];
-  panel.innerHTML = `<h2>Bitácora de auditoría</h2>
-    <p class="intro">Acciones críticas: inicios de sesión, envíos, consultas de agregados, historial de consentimiento y cambios del umbral de privacidad.</p>
-    ${
-      filas.length
-        ? `<div class="table-wrap"><table>
-      <thead><tr><th>Actividad</th><th>Ámbito</th><th>Cuenta</th><th>Perfil</th><th>Resultado</th><th>Fecha</th></tr></thead>
-      <tbody>${filas
-        .map(
-          (r) => `<tr>
-            <td>${esc(ACCION_ETIQUETA[r.accion] || "Actividad")}</td>
-            <td>${esc(RECURSO_ETIQUETA[r.recurso] || "—")}</td>
-            <td>${esc(r.actor_id === "DESCONOCIDO" ? "No identificado" : r.actor_id)}</td>
-            <td>${esc(PERFIL_ETIQUETA[r.actor_perfil] || r.actor_perfil || "—")}</td>
-            <td>${esc(RESULTADO_ETIQUETA[r.resultado] || r.resultado)}</td>
-            <td>${esc(formatFecha(r.timestamp))}</td>
-          </tr>`
-        )
-        .join("")}</tbody>
-    </table></div>`
-        : `<p class="empty">Todavía no hay actividad registrada.</p>`
-    }`;
-}
-
-async function panelConsentimiento(panel) {
-  panel.innerHTML = `<h2>Historial de consentimientos</h2>
-    <p class="intro">Audite aceptaciones y revocaciones por código de participante, sin identidad laboral.</p>
-    <form id="f-cons">
-      <label for="codigo">Código de participante</label>
-      <input id="codigo" name="codigo" required placeholder="Ingrese el código asignado" autocomplete="off">
-      <div class="actions"><button class="btn btn-primary" type="submit">Consultar</button></div>
-    </form>
-    <div id="out-cons"></div>`;
-  $("f-cons").onsubmit = async (ev) => {
-    ev.preventDefault();
-    const caja = $("out-cons");
-    caja.innerHTML = `<p class="empty">Consultando…</p>`;
-    try {
-      const id = new FormData(ev.target).get("codigo").trim();
-      const data = await api(`/auditoria/consentimientos/${encodeURIComponent(id)}`);
-      if (!data.data.length) {
-        caja.innerHTML = `<p class="empty">No hay registros para este código.</p>`;
-        return;
-      }
-      caja.innerHTML = `<div class="table-wrap"><table>
-        <thead><tr><th>Versión del aviso</th><th>Aceptado</th><th>Revocado</th><th>Estado</th></tr></thead>
-        <tbody>${data.data
-          .map(
-            (f) => `<tr>
-              <td>${esc(f.version_consentimiento_id)}</td>
-              <td>${esc(formatFecha(f.fecha_aceptacion))}</td>
-              <td>${esc(f.fecha_revocacion ? formatFecha(f.fecha_revocacion) : "Vigente")}</td>
-              <td>${esc(f.estado === "ACEPTADO" ? "Aceptado" : f.estado)}</td>
-            </tr>`
-          )
-          .join("")}</tbody></table></div>`;
-    } catch (e) {
-      caja.innerHTML = `<p class="intro">${esc(e.message)}</p>`;
+  if (p === "COLAB") {
+    const [cons, campanias] = await Promise.all([cargarConsentimientoPropio(), cargarCampanias()]);
+    const camp = campanias[0];
+    let ya = false;
+    if (camp) {
+      const est = await apiOpcional(`/encuestas/estado?campania_id=${encodeURIComponent(camp.campania_id)}`);
+      ya = Boolean(est?.ya_respondio);
     }
-  };
-}
+    const seud = cons.participando ? state.me.seudonimo_id || "—" : "—";
+    return (
+      head(`Hola, ${esc(primerNombre(state.me))}`, "Tu participación es voluntaria y puedes retirarla cuando quieras.") +
+      `<div class="privacy"><div class="h">Tus respuestas están seudonimizadas</div>
+        <div class="b">Se guardan bajo el identificador <span class="mono">${esc(seud)}</span>, separado de tu expediente.
+        Tu líder de turno solo ve promedios de al menos ${esc(k)} personas.</div></div>
+      <div class="grid2">
+        <div class="card"><h2>Consentimiento</h2><p class="card-sub">Versión ${esc(cons.version_vigente || cons.version_activa || "—")}</p>
+          ${tagEstado(cons.participando ? "ACEPTADO" : "REVOCADO")}
+          <p class="note">${cons.participando ? "Vigente. Puedes responder las encuestas de la campaña." : "Sin consentimiento vigente no se muestran encuestas."}</p>
+          <p style="margin-top:14px"><button class="btn btn-ghost btn-sm" data-go="consentimiento">Ver o cambiar</button></p></div>
+        <div class="card"><h2>${esc(camp?.nombre || "Encuesta")}</h2>
+          <p class="card-sub">${esc(camp ? `${formatDia(camp.fecha_inicio)} — ${formatDia(camp.fecha_fin)}` : "Sin campaña abierta")}</p>
+          ${
+            !camp
+              ? `<span class="tag tag-off">No disponible</span>`
+              : ya
+                ? `<span class="tag tag-ok">Enviada</span><p class="note">Gracias por participar. Solo puedes responder una vez por campaña.</p>`
+                : `<span class="tag tag-warn">Pendiente</span><p class="note">Toma unos 4 minutos.</p>
+                   <p style="margin-top:14px"><button class="btn btn-teal btn-sm" data-go="encuesta">Responder ahora</button></p>`
+          }
+        </div>
+      </div>`
+    );
+  }
+  if (p === "LIDER_TURNO") {
+    const [unidades, campanias] = await Promise.all([cargarUnidades(), cargarCampanias()]);
+    const htmlCards = await Promise.all(
+      unidades.map(async (u) => {
+        const camp = campanias[0];
+        if (!camp) return "";
+        const data = await consultarAgregado(u.unidad_organizacional_id, camp.campania_id);
+        const nombres = await nombresReactivos(camp);
+        return cardAgregado(u, camp, data, nombres, k);
+      })
+    );
+    return (
+      head("Panel de turno", "Resultados agregados de las unidades a tu cargo.") +
+      `<div class="privacy"><div class="h">Solo ves promedios de grupo</div>
+        <div class="b">No tienes acceso a respuestas individuales ni a la lista de quién participó. Los grupos con menos de ${esc(k)} respuestas se suprimen.</div></div>
+      ${tarjetasMetricas([
+        [String(unidades.length || 0), "Unidad a tu cargo"],
+        [String(k), "Umbral k vigente"],
+        ["0", "Respuestas individuales visibles"],
+      ])}
+      ${htmlCards.join("") || `<div class="card"><p class="note">No hay unidades o campañas visibles.</p></div>`}`
+    );
+  }
+  if (p === "AUDITOR") {
+    const bit = await cargarBitacora();
+    const insuf = bit.filter((x) => x.resultado === "GRUPO_INSUFICIENTE").length;
+    return (
+      head("Panel de auditoría", "Trazabilidad de accesos y evidencia de consentimiento.") +
+      `<div class="privacy"><div class="h">Acceso a metadatos, no a respuestas</div>
+        <div class="b">Puedes verificar quién consultó qué y cuándo, y la evidencia de consentimiento. El contenido de las encuestas no es accesible desde ningún perfil de auditoría.</div></div>
+      ${tarjetasMetricas([
+        [String(bit.length), "Eventos registrados"],
+        [String(insuf), "Consulta suprimida"],
+        [String(k), "Umbral k"],
+      ])}
+      <div class="card"><h2>Eventos recientes</h2><p class="card-sub">Bitácora de auditoría</p>${tablaBitacora(bit)}</div>`
+    );
+  }
+  const cuentas = await cargarCuentas();
+  const bit = await cargarBitacora();
+  return (
+    head("Administración", "Usuarios, catálogos y parámetros del sistema.") +
+    tarjetasMetricas([
+      [String(cuentas.usuarios.length || 0), "Usuarios activos"],
+      [String(cuentas.perfiles.length || 0), "Perfiles"],
+      [String(k), "Umbral k vigente"],
+    ]) +
+    `<div class="card"><h2>Actividad reciente</h2><p class="card-sub">Últimos eventos registrados</p>${tablaBitacora(bit.slice(0, 5))}</div>`
+  );
+};
 
-async function panelSoporte(panel) {
-  const filas = await cargarSoporte();
-  panel.innerHTML = `<h2>Solicitudes de apoyo</h2>
-    <p class="intro">Mensajes de colaboradores sin nombre, correo ni identificador laboral.</p>
-    ${
-      filas.length
-        ? `<ul class="list-cards">${filas
-            .map((s) => `<li><strong>${esc(formatFecha(s.fecha))}</strong><br>${esc(s.mensaje)}</li>`)
-            .join("")}</ul>`
-        : `<p class="empty">No hay solicitudes por ahora.</p>`
-    }`;
-}
+V.consentimiento = async () => {
+  const c = await cargarConsentimientoPropio();
+  const act = Boolean(c.participando);
+  return (
+    head("Mi consentimiento", "Decides tú, y puedes cambiarlo cuando quieras sin dar explicaciones.") +
+    `<div class="card">
+      <h2>Estado actual</h2><p class="card-sub">Versión ${esc(c.version_vigente || c.version_activa || "—")}</p>
+      ${tagEstado(act ? "ACEPTADO" : "REVOCADO")}
+      <p class="note">${
+        act
+          ? "Mientras esté vigente puedes responder las encuestas de la campaña."
+          : "Sin consentimiento vigente no se te mostrarán encuestas. Tus respuestas anteriores no se borran, pero no se recolectan nuevas."
+      }</p>
+      <p style="margin-top:18px">
+        ${
+          act
+            ? `<button class="btn btn-ghost" type="button" id="btn-revocar">Revocar consentimiento</button>`
+            : `<button class="btn btn-teal" type="button" id="btn-aceptar">Otorgar consentimiento</button>`
+        }
+      </p>
+    </div>
+    <div class="card"><h2>Historial</h2><p class="card-sub">Revocar no borra los registros anteriores</p>
+    <table><thead><tr><th>Versión</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>
+    ${(c.historial || [])
+      .map(
+        (h) =>
+          `<tr><td class="mono">${esc(h.version_consentimiento_id)}</td><td class="mono">${esc(formatFecha(h.fecha_aceptacion))}</td><td>${tagEstado(h.estado)}</td></tr>`
+      )
+      .join("") || `<tr><td colspan="3">Sin historial.</td></tr>`}
+    </tbody></table></div>`
+  );
+};
 
-async function panelPrivacidad(panel) {
+V.encuesta = async () => {
+  const [cons, campanias] = await Promise.all([cargarConsentimientoPropio(), cargarCampanias()]);
+  if (!cons.participando) {
+    return (
+      head("Responder encuesta", "") +
+      `<div class="privacy blocked"><div class="h">Necesitas consentimiento vigente</div>
+      <div class="b">La encuesta no se muestra porque tu consentimiento está revocado. Puedes otorgarlo de nuevo cuando quieras.</div></div>
+      <button class="btn" data-go="consentimiento">Ir a mi consentimiento</button>`
+    );
+  }
+  const campania = campanias[0];
+  if (!campania) {
+    return head("Responder encuesta", "Por ahora no hay evaluaciones abiertas para su equipo.") +
+      `<div class="suppressed"><div class="big">Sin campaña activa</div><div class="small">Cuando haya una evaluación abierta, aparecerá aquí.</div></div>`;
+  }
+  const est = await apiOpcional(`/encuestas/estado?campania_id=${encodeURIComponent(campania.campania_id)}`);
+  if (est?.ya_respondio) {
+    return (
+      head("Responder encuesta", "") +
+      `<div class="privacy"><div class="h">Ya respondiste esta campaña</div>
+      <div class="b">Cada persona responde una sola vez por campaña. Tus respuestas se guardaron bajo tu seudónimo.</div></div>`
+    );
+  }
+  const r = await api(
+    `/catalogos/instrumentos/${encodeURIComponent(campania.instrumento_id)}/versiones/${Number(campania.version_instrumento)}/reactivos`
+  );
+  const preguntas = asList(r);
+  return (
+    head(esc(campania.nombre), "Responde con honestidad. Nadie puede vincular estas respuestas contigo.") +
+    `<div class="privacy"><div class="h">Se guardará como ${esc(state.me.seudonimo_id || "seudónimo")}</div>
+      <div class="b">Tu nombre y tu número de empleado no se envían junto con las respuestas.</div></div>
+    <div class="card"><form id="f-enc">
+    ${preguntas
+      .map(
+        (item, i) => `<div class="q"><div class="qt">${i + 1}. ${esc(item.texto)}</div>
+        <div class="qd">Dimensión: ${esc(item.dimension || "—")}</div>
+        <div class="scale">${ESCALA.map(
+          (t, j) =>
+            `<label><input type="radio" name="${esc(item.reactivo_id)}" value="${j + 1}" required><span>${t}</span></label>`
+        ).join("")}</div></div>`
+      )
+      .join("")}
+    <p style="margin-top:20px"><button class="btn btn-teal" type="submit">Enviar respuestas</button></p>
+    </form></div>`
+  );
+};
+
+V.misAccesos = async () => {
+  const data = await apiOpcional("/encuestas/mis-accesos");
+  const filas = asList(data);
+  return (
+    head("Quién vio mis datos", "Registro de cada consulta relacionada con tu información.") +
+    `<div class="privacy"><div class="h">Transparencia verificable</div>
+     <div class="b">Esta lista no es una promesa del aviso de privacidad: es la bitácora real del sistema.</div></div>
+    <div class="card">${tablaBitacora(filas)}</div>`
+  );
+};
+
+V.agregados = async () => {
+  const [unidades, campanias, k] = await Promise.all([cargarUnidades(), cargarCampanias(), cargarK()]);
+  const html = [];
+  html.push(
+    head("Resultados por unidad", "Un resultado solo se muestra si el grupo alcanza el umbral mínimo.") +
+      `<div class="toolbar"><span class="note right" style="margin:0">Umbral vigente: k = ${esc(k)}</span></div>`
+  );
+  if (!unidades.length || !campanias.length) {
+    html.push(`<div class="card"><p class="note">No hay equipos o evaluaciones visibles para su perfil.</p></div>`);
+    return html.join("");
+  }
+  for (const u of unidades) {
+    for (const c of campanias) {
+      const data = await consultarAgregado(u.unidad_organizacional_id, c.campania_id);
+      const nombres = await nombresReactivos(c);
+      html.push(cardAgregado(u, c, data, nombres, k));
+    }
+  }
+  return html.join("");
+};
+
+V.reportes = async () => {
+  const [unidades, campanias, k] = await Promise.all([cargarUnidades(), cargarCampanias(), cargarK()]);
+  const visible = [];
+  const participacion = [];
+  for (const u of unidades) {
+    const c = campanias[0];
+    if (!c) continue;
+    const data = await consultarAgregado(u.unidad_organizacional_id, c.campania_id);
+    participacion.push({ nombre: u.nombre, n: data?.visible ? data.total_respuestas : 0, visible: Boolean(data?.visible), data, campania: c, unidad: u });
+    if (data?.visible) visible.push({ unidad: u, campania: c, data });
+  }
+  setTimeout(() => {
+    const primero = visible[0];
+    if (primero) {
+      const det = Object.entries(primero.data.detalle || {});
+      dibujarColumnas(
+        "g1",
+        det.map(([id]) => id),
+        det.map(([, v]) => Number(v))
+      );
+    }
+    if (typeof Highcharts !== "undefined" && $("g2")) {
+      Highcharts.chart("g2", {
+        credits: { enabled: false },
+        title: { text: null },
+        chart: { type: "bar", height: 300, style: { fontFamily: "Inter,sans-serif" }, backgroundColor: "transparent" },
+        xAxis: { categories: participacion.map((x) => x.nombre), lineColor: "#DCE1E8" },
+        yAxis: {
+          min: 0,
+          title: { text: "Respuestas" },
+          gridLineColor: "#EDEFF3",
+          plotLines: [{ value: k, color: "#8A5A00", width: 2, dashStyle: "Dash", label: { text: "umbral k=" + k, style: { color: "#8A5A00", fontSize: "11px" } } }],
+        },
+        legend: { enabled: false },
+        series: [{ name: "Respuestas", data: participacion.map((x) => x.n), color: "#0F6B62", borderRadius: 3 }],
+      });
+    }
+  }, 40);
+  return (
+    head("Reportes", "Visualización de resultados agregados. Solo se grafican grupos que superan el umbral.") +
+    `<div class="grid2">
+      <div class="card"><h2>Bienestar por dimensión</h2><p class="card-sub">Escala 1–5 · grupos que superan k</p><div id="g1" class="chart"></div></div>
+      <div class="card"><h2>Participación por unidad</h2><p class="card-sub">Respuestas recibidas vs. umbral k=${esc(k)}</p><div id="g2" class="chart"></div></div>
+    </div>
+    <p class="note">Las gráficas se generan con Highcharts. Las unidades que no alcanzan el umbral mínimo no exponen promedios.</p>`
+  );
+};
+
+V.instrumentos = async () => {
+  const instrumentos = await cargarInstrumentos();
+  const campanias = await cargarCampanias();
+  let reactivosHtml = "";
+  const nom035 = campanias.find((c) => c.instrumento_id) || campanias[0];
+  if (nom035) {
+    const r = await apiOpcional(
+      `/catalogos/instrumentos/${encodeURIComponent(nom035.instrumento_id)}/versiones/${Number(nom035.version_instrumento)}/reactivos`
+    );
+    const preguntas = asList(r);
+    reactivosHtml = `<div class="card"><h2>Reactivos de ${esc(nom035.nombre)}</h2>
+      <p class="card-sub">Versión ${esc(nom035.version_instrumento)}</p>
+      <table><thead><tr><th>Clave</th><th>Texto</th><th>Dimensión</th></tr></thead><tbody>
+      ${preguntas.map((x) => `<tr><td class="mono">${esc(x.reactivo_id)}</td><td>${esc(x.texto)}</td><td>${esc(x.dimension || "—")}</td></tr>`).join("")}
+      </tbody></table></div>`;
+  }
+  return (
+    head("Instrumentos", "Cuestionarios disponibles y sus versiones.") +
+    `<div class="card"><table><thead><tr><th>Clave</th><th>Nombre</th><th>Tipo</th><th>Estado</th></tr></thead><tbody>
+    ${instrumentos
+      .map(
+        (i) =>
+          `<tr><td class="mono">${esc(i.instrumento_id)}</td><td>${esc(i.nombre)}</td><td>${esc(i.tipo)}</td>
+           <td>${tagEstado(i.activo === false ? "Inactivo" : "Activo")}</td></tr>`
+      )
+      .join("")}
+    </tbody></table></div>${reactivosHtml}`
+  );
+};
+
+V.unidades = async () => {
+  const [unidades, campanias] = await Promise.all([cargarUnidades(), cargarCampanias()]);
+  return (
+    head("Unidades organizacionales", "Áreas y turnos. El tamaño del grupo alimenta la verificación del umbral.") +
+    `<div class="card"><table><thead><tr><th>Clave</th><th>Nombre</th><th>Nivel</th></tr></thead><tbody>
+    ${unidades
+      .map(
+        (u) =>
+          `<tr><td class="mono">${esc(u.unidad_organizacional_id)}</td><td>${esc(u.nombre)}</td>
+           <td class="mono">${esc(u.nivel_jerarquico ?? "—")}</td></tr>`
+      )
+      .join("")}
+    </tbody></table>
+    <p class="note">Una unidad con colaboradores activos no puede eliminarse, solo inactivarse.</p></div>
+    <div class="card"><h2>Campañas</h2><p class="card-sub">Aplicaciones de un instrumento a una o varias unidades.</p>
+    <table><thead><tr><th>Clave</th><th>Nombre</th><th>Periodo</th></tr></thead><tbody>
+    ${campanias
+      .map(
+        (c) =>
+          `<tr><td class="mono">${esc(c.campania_id)}</td><td>${esc(c.nombre)}</td>
+           <td class="mono">${esc(formatDia(c.fecha_inicio))} → ${esc(formatDia(c.fecha_fin))}</td></tr>`
+      )
+      .join("")}
+    </tbody></table></div>`
+  );
+};
+
+V.usuarios = async () => {
+  const data = await cargarCuentas();
+  return (
+    head("Usuarios y perfiles", "Un usuario tiene un perfil principal que define su menú y sus permisos.") +
+    `<div class="card"><h2>Perfiles</h2><p class="card-sub">Nivel de acceso institucional</p>
+    <table><thead><tr><th>Perfil</th><th>Nivel</th></tr></thead><tbody>
+    ${(data.perfiles || []).map((p) => `<tr><td>${esc(p.nombre)}</td><td class="mono">${esc(p.nivel_acceso)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="card"><h2>Cuentas</h2>
+    <table><thead><tr><th>Clave</th><th>Correo</th><th>Perfil</th><th>Estado</th></tr></thead><tbody>
+    ${(data.usuarios || [])
+      .map(
+        (u) =>
+          `<tr><td class="mono">${esc(u.usuario_id)}</td><td class="mono">${esc(u.correo)}</td>
+           <td>${esc(u.perfil_nombre || PERFIL_ETIQUETA[u.perfil] || u.perfil)}</td>
+           <td>${tagEstado(u.activo ? "Activo" : "Inactivo")}</td></tr>`
+      )
+      .join("")}
+    </tbody></table><p class="note">Cada cambio de perfil se registra en la bitácora de auditoría.</p></div>`
+  );
+};
+
+V.parametros = async () => {
   const cfg = await cargarConfiguracion();
-  panel.innerHTML = `<h2>Parámetros globales</h2>
-    <p class="intro">Defina el umbral mínimo de grupo (k) y la versión activa del aviso de privacidad. Cada cambio queda en la bitácora.</p>
-    <form id="fk">
-      <label for="k">Umbral de privacidad (respuestas mínimas del equipo)</label>
-      <input id="k" name="k" type="number" min="2" max="50" value="${esc(cfg.k)}" required>
-      <label for="ver">Versión activa del aviso</label>
+  return (
+    head("Parámetros del sistema", "Configuración que afecta a toda la plataforma.") +
+    `<div class="privacy"><div class="h">El umbral k protege a los grupos pequeños</div>
+     <div class="b">Ningún resultado agregado se muestra si el grupo tiene menos de k respuestas. Bajarlo aumenta el riesgo de reidentificación.</div></div>
+    <div class="card"><h2>Umbral mínimo de grupo</h2><p class="card-sub">Clave <span class="mono">k</span> en parametro_global</p>
+    <form id="fk" class="toolbar">
+      <input id="kIn" name="k" type="number" min="2" max="50" value="${esc(cfg.k)}" style="width:110px">
+      <button class="btn btn-sm" type="submit">Guardar cambio</button>
+    </form>
+    <p class="note">Valor actual: ${esc(cfg.k)}. Al guardar se registra un evento <span class="mono">CAMBIO_UMBRAL_K</span> en la bitácora.</p></div>
+    <div class="card"><h2>Versión activa del consentimiento</h2><p class="card-sub">Documento que firman los colaboradores</p>
+    <form id="fver">
       <select id="ver" name="version">${(cfg.versiones || [])
         .map(
           (v) =>
@@ -851,36 +859,243 @@ async function panelPrivacidad(panel) {
             }>${esc(v.version_consentimiento_id)}</option>`
         )
         .join("")}</select>
-      <div class="actions"><button class="btn btn-primary" type="submit">Guardar</button></div>
-    </form>`;
-  $("fk").onsubmit = async (ev) => {
+      <p style="margin-top:14px"><button class="btn btn-sm" type="submit">Guardar aviso activo</button></p>
+    </form>
+    <p class="mono" style="margin-top:12px">${esc(cfg.version_activa_consentimiento || "—")}</p></div>`
+  );
+};
+
+V.bitacora = async () => {
+  const filas = await cargarBitacora();
+  const acciones = [...new Set(filas.map((b) => b.accion).filter(Boolean))];
+  return (
+    head("Bitácora de auditoría", "Cada acceso a información personal o agregada queda registrado.") +
+    `<div class="toolbar">
+      <select id="fAcc"><option value="">Todas las acciones</option>
+        ${acciones.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("")}</select>
+    </div><div class="card" id="tbl-bit">${tablaBitacora(filas)}</div>`
+  );
+};
+
+V.consentimientos = async () => {
+  const lista = asList(await apiOpcional("/auditoria/consentimientos"));
+  return (
+    head("Evidencia de consentimiento", "Quién consintió, cuándo y bajo qué versión del aviso.") +
+    `<div class="privacy"><div class="h">Solo metadatos</div>
+     <div class="b">Se muestra la evidencia del otorgamiento, nunca el contenido de las respuestas asociadas al seudónimo.</div></div>
+    <div class="card">
+      <form id="f-cons" class="toolbar">
+        <input id="codigo" name="codigo" placeholder="Consultar un seudónimo" autocomplete="off">
+        <button class="btn btn-sm" type="submit">Consultar</button>
+      </form>
+      <div id="out-cons">
+        <table><thead><tr><th>Seudónimo</th><th>Versión</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>
+        ${
+          lista.length
+            ? lista
+                .map(
+                  (r) =>
+                    `<tr><td class="mono">${esc(r.seudonimo_id)}</td><td class="mono">${esc(r.version_consentimiento_id)}</td>
+                     <td class="mono">${esc(formatFecha(r.fecha_aceptacion))}</td><td>${tagEstado(r.estado)}</td></tr>`
+                )
+                .join("")
+            : `<tr><td colspan="4">No hay registros para mostrar.</td></tr>`
+        }
+        </tbody></table>
+        <p class="note">El registro revocado se conserva: revocar no elimina la evidencia histórica.</p>
+      </div>
+    </div>`
+  );
+};
+
+V.notificaciones = async () => {
+  const list = await notificacionesPerfil();
+  const leidas = notifLeidas();
+  const n = noLeidas(list);
+  return (
+    head("Notificaciones", "Avisos del sistema relacionados con tu perfil.") +
+    `<div class="toolbar"><span class="note" style="margin:0">${n} sin leer</span>
+     ${n ? `<button class="btn btn-ghost btn-sm right" type="button" id="btn-leidas">Marcar todas como leídas</button>` : ""}</div>
+    <div class="card">${
+      list.length
+        ? list
+            .map((item) => {
+              const read = Boolean(leidas[claveNotif(item)]);
+              return `<div class="notif ${read ? "read" : ""}"><div class="dot"></div>
+                <div class="body"><div class="t">${esc(item.t)}</div><div class="m">${esc(item.m)}</div><div class="f">${esc(item.f)}</div></div></div>`;
+            })
+            .join("")
+        : `<div class="suppressed"><div class="big">Sin notificaciones</div><div class="small">Cuando haya algo que avisarte, aparecerá aquí.</div></div>`
+    }</div>`
+  );
+};
+
+$("view").addEventListener("submit", async (ev) => {
+  if (ev.target.id === "f-enc") {
     ev.preventDefault();
     try {
-      const body = {
-        k: Number($("k").value),
-        version_activa_consentimiento: $("ver").value,
-      };
+      const campanias = await cargarCampanias();
+      const campania = campanias[0];
+      const respuestas = [...ev.target.querySelectorAll("input[type=radio]:checked")].map((i) => ({
+        reactivo_id: i.name,
+        valor: Number(i.value),
+      }));
+      await api("/encuestas/respuestas", {
+        method: "POST",
+        body: JSON.stringify({
+          seudonimo_id: state.me.seudonimo_id,
+          campania_id: campania.campania_id,
+          respuestas,
+        }),
+      });
+      toast("Respuestas enviadas");
+      state.seccion = "inicio";
+      pintarNav();
+      await render();
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  if (ev.target.id === "fk") {
+    ev.preventDefault();
+    try {
+      const body = { k: Number($("kIn").value) };
+      try {
+        await api("/agregados/parametros", { method: "PATCH", body: JSON.stringify(body) });
+      } catch {
+        await api("/agregados/parametros/k", { method: "PATCH", body: JSON.stringify(body) });
+      }
+      toast("Umbral actualizado a k = " + body.k);
+      await render();
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  if (ev.target.id === "fver") {
+    ev.preventDefault();
+    try {
+      const body = { version_activa_consentimiento: $("ver").value };
       try {
         await api("/agregados/parametros", { method: "PATCH", body: JSON.stringify(body) });
       } catch {
         await api("/portal/configuracion", { method: "PATCH", body: JSON.stringify(body) });
       }
-      panel.innerHTML = `<div class="phase-screen phase-ok"><h2>Parámetros actualizados</h2>
-        <p class="intro">El umbral de grupo y el aviso activo quedaron guardados.</p>
-        <div class="actions"><button type="button" class="btn btn-primary" id="volver">Seguir editando</button></div></div>`;
-      $("volver").onclick = () => panelPrivacidad(panel);
+      toast("Aviso activo actualizado");
+      await render();
     } catch (e) {
-      aviso(e.message, true);
+      toast(e.message);
     }
+  }
+  if (ev.target.id === "f-cons") {
+    ev.preventDefault();
+    const caja = $("out-cons");
+    const id = String(new FormData(ev.target).get("codigo") || "").trim();
+    if (!id) return;
+    caja.innerHTML = `<p class="note">Consultando…</p>`;
+    try {
+      const data = await api(`/auditoria/consentimientos/${encodeURIComponent(id)}`);
+      const filas = asList(data);
+      if (!filas.length) {
+        caja.innerHTML = `<div class="suppressed"><div class="big">Sin registros</div><div class="small">No hay evidencia para este seudónimo.</div></div>`;
+        return;
+      }
+      caja.innerHTML = `<table><thead><tr><th>Seudónimo</th><th>Versión</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>
+        ${filas
+          .map(
+            (f) =>
+              `<tr><td class="mono">${esc(f.seudonimo_id || id)}</td><td class="mono">${esc(f.version_consentimiento_id)}</td>
+               <td class="mono">${esc(formatFecha(f.fecha_aceptacion))}</td><td>${tagEstado(f.estado)}</td></tr>`
+          )
+          .join("")}</tbody></table>`;
+    } catch (e) {
+      caja.innerHTML = `<p class="note">${esc(e.message)}</p>`;
+    }
+  }
+});
+
+$("view").addEventListener("click", async (ev) => {
+  const t = ev.target;
+  if (!(t instanceof HTMLElement)) return;
+  if (t.id === "btn-revocar") {
+    if (!confirm("¿Revocar tu consentimiento? Dejarás de recibir encuestas. Tus respuestas anteriores no se eliminan.")) return;
+    try {
+      await guardarConsentimientoPropio(false);
+      toast("Consentimiento revocado");
+      await render();
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  if (t.id === "btn-aceptar") {
+    try {
+      await guardarConsentimientoPropio(true);
+      toast("Consentimiento otorgado");
+      await render();
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+  if (t.id === "btn-leidas") {
+    const list = await notificacionesPerfil();
+    const mapa = notifLeidas();
+    list.forEach((n) => {
+      mapa[claveNotif(n)] = true;
+    });
+    guardarNotifLeidas(mapa);
+    toast("Notificaciones marcadas como leídas");
+    pintarNav();
+    await render();
+  }
+});
+
+$("view").addEventListener("change", (ev) => {
+  if (ev.target.id === "fAcc") {
+    const acc = ev.target.value;
+    cargarBitacora().then((filas) => {
+      const rows = acc ? filas.filter((b) => b.accion === acc) : filas;
+      $("tbl-bit").innerHTML = tablaBitacora(rows);
+    });
+  }
+});
+
+function wirePublico() {
+  document.querySelectorAll('a[href="#login"]').forEach((a) => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      irLogin();
+    });
+  });
+  $("link-publico").onclick = (e) => {
+    e.preventDefault();
+    irPublico();
+  };
+  $("link-recuperar").onclick = (e) => {
+    e.preventDefault();
+    $("loginBox").hidden = true;
+    $("recuperar").hidden = false;
+  };
+  $("link-volver-login").onclick = (e) => {
+    e.preventDefault();
+    $("loginBox").hidden = false;
+    $("recuperar").hidden = true;
+  };
+  $("btn-recuperar").onclick = () => {
+    const m = $("rmail").value.trim();
+    if (!m || !m.includes("@")) {
+      toast("Escribe un correo válido");
+      return;
+    }
+    $("loginBox").hidden = false;
+    $("recuperar").hidden = true;
+    toast("Si el correo existe, enviamos un enlace de recuperación");
   };
 }
 
 $("form-login").onsubmit = async (ev) => {
   ev.preventDefault();
   errorLogin("");
-  const fd = new FormData(ev.target);
-  const correo = String(fd.get("correo") || "").trim();
-  const contrasena = String(fd.get("contrasena") || "");
+  const correo = String($("correo").value || "").trim();
+  const contrasena = String($("contrasena").value || "");
   if (!correo || !contrasena) {
     errorLogin("Ingrese su correo y contraseña.");
     return;
@@ -892,6 +1107,7 @@ $("form-login").onsubmit = async (ev) => {
     });
     state.token = out.token;
     sessionStorage.setItem(TOKEN_KEY, out.token);
+    out.correo = correo;
     await entrar(out);
   } catch (e) {
     errorLogin(e.message);
@@ -899,15 +1115,20 @@ $("form-login").onsubmit = async (ev) => {
 };
 
 $("btn-salir").onclick = async () => {
+  if (!confirm("¿Cerrar tu sesión?")) return;
   try {
     await api("/auth/logout", { method: "POST" });
   } catch (_) {}
   state.token = null;
+  state.me = null;
   sessionStorage.removeItem(TOKEN_KEY);
-  $("form-login").reset();
-  errorLogin("");
-  mostrarLogin();
+  irPublico();
+  toast("Sesión cerrada");
 };
+
+wirePublico();
+
+if (location.hash === "#login" && !state.token) irLogin();
 
 if (state.token) {
   api("/auth/me")
@@ -915,6 +1136,6 @@ if (state.token) {
     .catch(() => {
       state.token = null;
       sessionStorage.removeItem(TOKEN_KEY);
-      mostrarLogin();
+      irPublico();
     });
 }

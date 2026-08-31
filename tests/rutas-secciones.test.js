@@ -36,11 +36,13 @@ test("las rutas que abre cada perfil existen fuera de /portal", () => {
     "GET /encuestas/consentimiento",
     "POST /encuestas/consentimiento",
     "GET /encuestas/mias",
+    "GET /encuestas/mis-accesos",
     "POST /encuestas/soporte",
     "GET /agregados/parametros/k",
     "GET /agregados/parametros",
     "PATCH /agregados/parametros",
     "GET /auditoria/soporte",
+    "GET /auditoria/consentimientos",
     "GET /portal/escritorio",
   ]) {
     assert.equal(rutas.includes(esperada), true, `falta ${esperada} en ${rutas.join(" | ")}`);

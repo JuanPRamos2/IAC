@@ -1,6 +1,7 @@
 import * as Catalogo from "../modelos/Catalogo.js";
 import * as Encuesta from "../modelos/Encuesta.js";
 import * as Usuario from "../modelos/Usuario.js";
+import * as Bitacora from "../modelos/Bitacora.js";
 import { registrarAsync } from "./auditoria.servicio.js";
 import { invalidarCacheAgregado } from "./cache-agregado.js";
 import { HttpError } from "../utilidades/errores.js";
@@ -115,6 +116,21 @@ export async function mias(actor) {
         promedio: n ? Number((valores.reduce((a, b) => a + b, 0) / n).toFixed(2)) : null,
       };
     }),
+  };
+}
+
+export async function misAccesos(actor) {
+  const rows = await Bitacora.listarBitacoraDeActor(actor.usuario_id);
+  return {
+    data: rows.map((row) => ({
+      actor_id: row.actor_id,
+      actor_perfil: row.actor_perfil,
+      accion: row.accion,
+      recurso: row.recurso,
+      resultado: row.resultado,
+      correlacion_id: row.correlacion_id,
+      timestamp: row.timestamp,
+    })),
   };
 }
 

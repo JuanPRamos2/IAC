@@ -31,3 +31,7 @@ export const historialConsentimiento = asyncHandler(async (req, res) => {
 export const listarSoporte = asyncHandler(async (_req, res) => {
   res.json(await Portal.listarApoyo());
 });
+
+export const listarEvidenciaConsentimiento = asyncHandler(async (_req, res) => {
+  res.json(await Consentimiento.listarEvidencia());
+});

@@ -173,6 +173,16 @@ export async function listarVersionesConsentimiento() {
   return r.rows;
 }
 
+export async function listarConsentimientos() {
+  const r = await pgQuery(
+    `SELECT seudonimo_id, version_consentimiento_id, fecha_aceptacion, fecha_revocacion, estado
+     FROM consentimiento.consentimiento
+     ORDER BY fecha_aceptacion DESC
+     LIMIT 100`
+  );
+  return r.rows;
+}
+
 export async function revocarConsentimientosVigentes(seudonimoId) {
   const r = await pgQuery(
     `UPDATE consentimiento.consentimiento

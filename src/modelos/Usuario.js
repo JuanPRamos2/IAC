@@ -2,7 +2,7 @@ import { pgQuery } from "../config/postgres.js";
 
 export async function buscarUsuarioPorCorreo(correo) {
   const r = await pgQuery(
-    `SELECT u.usuario_id, u.activo, u.correo, p.codigo AS perfil
+    `SELECT u.usuario_id, u.activo, u.correo, u.nombre, u.apellido_paterno, p.codigo AS perfil
      FROM usuarios.usuario u
      JOIN usuarios.usuario_perfil up
        ON up.usuario_id = u.usuario_id AND up.perfil_principal = TRUE
@@ -34,7 +34,7 @@ export async function marcarUltimoAcceso(usuarioId) {
 
 export async function perfilDeUsuario(usuarioId) {
   const r = await pgQuery(
-    `SELECT u.usuario_id, p.codigo AS perfil
+    `SELECT u.usuario_id, u.nombre, u.apellido_paterno, p.codigo AS perfil
      FROM usuarios.usuario u
      JOIN usuarios.usuario_perfil up
        ON up.usuario_id = u.usuario_id AND up.perfil_principal = TRUE

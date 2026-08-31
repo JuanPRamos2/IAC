@@ -82,6 +82,7 @@ export async function login({ correo, contrasena, correlacionId }) {
       perfil: usuario.perfil,
       seudonimo_id: contexto?.seudonimo_id,
     }),
+    nombre: usuario.nombre || null,
     unidad_organizacional_id: contexto?.unidad_organizacional_id || null,
   };
 }
@@ -106,6 +107,7 @@ export async function sesionValida(jti) {
 }
 
 export async function sesionActual(usuario) {
+  const perfil = await Usuario.perfilDeUsuario(usuario.usuario_id);
   const contexto = await Usuario.contextoOperativo(usuario.usuario_id);
   return {
     ...payloadPublicoUsuario({
@@ -113,6 +115,7 @@ export async function sesionActual(usuario) {
       perfil: usuario.perfil,
       seudonimo_id: contexto?.seudonimo_id,
     }),
+    nombre: perfil?.nombre || null,
     unidad_organizacional_id: contexto?.unidad_organizacional_id || null,
   };
 }
