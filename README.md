@@ -30,6 +30,20 @@ sudo docker compose up --build
 Abre [http://127.0.0.1:3000](http://127.0.0.1:3000). El encabezado debe mostrar
 `PostgreSQL · MongoDB · Redis conectados`.
 
+### Puerto ya en uso (`address already in use`)
+
+`systemctl stop postgresql` solo libera **5432**. Si el error menciona `0.0.0.0:3000`, hay otro proceso (Node, otro Compose, o un `iac-api` viejo).
+
+```bash
+cd /home/bold/Documents/IAC
+sudo ss -tlnp | grep -E ':3000|:5432|:5433|:27017|:6379'
+sudo docker compose down
+sudo fuser -k 3000/tcp || true
+sudo docker compose up --build
+```
+
+Si 3000 sigue ocupado, en `.env` pon `API_HOST_PORT=3001` y abre http://127.0.0.1:3001. Lo mismo existe para `MONGO_HOST_PORT` y `REDIS_HOST_PORT`.
+
 Si el volumen de Postgres ya existía **antes** de añadir
 `db/postgres/03_recurso_usuario.sql`, recréalo con `down -v` o el recurso
 `USUARIO` no estará en el catálogo de auditoría.
