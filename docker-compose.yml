@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:15-bookworm
     restart: unless-stopped
+    attach: false
     environment:
       POSTGRES_DB: bienestar_nexum
       POSTGRES_USER: postgres
@@ -21,6 +22,7 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
+    attach: false
     ports:
       - "${MONGO_HOST_PORT:-27017}:27017"
     volumes:
@@ -35,6 +37,7 @@ services:
   redis:
     image: redis:7-bookworm
     restart: unless-stopped
+    attach: false
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "${REDIS_HOST_PORT:-6379}:6379"

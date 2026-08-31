@@ -22,13 +22,22 @@ PostgreSQL del host suele ocupar el puerto 5432. Compose publica el contenedor
 en **5433**. La app se sirve en **3000**.
 
 ```bash
-cp .env.example .env
-sudo docker compose down -v    # -v solo si quieres recrear la base desde los SQL
-sudo docker compose up --build
+cp -n .env.example .env
+sudo docker compose down
+sudo docker compose up --build -d
+sudo docker compose ps
 ```
+
+`-d` corre en segundo plano. No te quedes viendo logs JSON de Mongo: eso no es la app.
 
 Abre [http://127.0.0.1:3000](http://127.0.0.1:3000). El encabezado debe mostrar
 `PostgreSQL · MongoDB · Redis conectados`.
+
+Para ver solo la API:
+
+```bash
+sudo docker compose logs -f api
+```
 
 ### Puerto ya en uso (`address already in use`)
 
