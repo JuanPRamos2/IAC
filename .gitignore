@@ -7,9 +7,21 @@ coverage/
 Thumbs.db
 .idea/
 .vscode/
+.cursor/
 *.swp
 
 # Local data (containers / Redis dump)
 data/
 dump.rdb
 *.rdb
+
+# Archivos locales que no forman parte de Nexum
+cloud_models_classifier/
+/css/
+/js/
+/vendor/
+/sql/
+evidencias/
+img/
+descargas/
+/index.html
