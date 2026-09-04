@@ -21,7 +21,7 @@ export async function conectarMongo() {
   db = client.db(env.mongoDb);
   await db.collection("respuestas_encuesta").createIndex(
     { seudonimo_id: 1, campania_id: 1 },
-    { unique: true }
+    { unique: true, name: "ux_seudonimo_campania" }
   );
   await db.collection("bitacora_auditoria").createIndex({ timestamp: -1 });
   return db;
