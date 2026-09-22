@@ -5,6 +5,8 @@ echo "Cargando esquema y semilla de la librería..."
 for f in \
   01_schema.sql \
   02_seed_30_per_table.sql \
+  08_normalize_users.sql \
+  09_email_verified.sql \
   04_stored_procedures.sql \
   05_triggers.sql \
   06_views.sql

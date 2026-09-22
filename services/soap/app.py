@@ -48,7 +48,7 @@ def _probar_html():
 def _service_descriptor():
     return {
         "service": "LibraryClassifier",
-        "ports": [5000, 5001],
+        "ports": [5001],
         "wsdl": "/soap?wsdl",
         "endpoint": "/soap",
         "demo": settings.SOAP_DEMO,
@@ -101,7 +101,7 @@ def wsdl():
                 "format": "json",
                 "wsdl": "/soap?wsdl",
                 "location": request.url_root.rstrip("/") + "/soap",
-                "ports": [5000, 5001],
+                "ports": [5001],
                 "operations": [
                     "ObtenerConceptosPendientes",
                     "RegistrarClasificacion",
