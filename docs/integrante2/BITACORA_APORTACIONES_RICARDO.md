@@ -107,15 +107,33 @@ Estamos construyendo e independizando los componentes de negocio y persistencia 
 | [`docs/integrante2/postgresql.md`](postgresql.md) | Markdown / Doc Técnica | Especificación de diseño de base de datos relacional y guía para el CRUD. |
 | [`docs/integrante2/mongodb.md`](mongodb.md) | Markdown / Doc Técnica | Especificación de esquemas documentales, índices y justificación de colecciones. |
 | [`docs/integrante2/BITACORA_APORTACIONES_RICARDO.md`](BITACORA_APORTACIONES_RICARDO.md) | Markdown / Evidencia | Bitácora integral que responde qué, por qué y cómo se construyó la solución. |
+| [`services/catalog-service/`](../../services/catalog-service/) | Microservicio | Microservicio independiente de catálogos con PostgreSQL, Dockerfile, Swagger y tests. |
+| [`services/catalog-service/openapi.yaml`](../../services/catalog-service/openapi.yaml) | OpenAPI 3.0 | Contrato de API de catálogos con ejemplos en JSON y XML. |
+| [`services/catalog-service/Dockerfile`](../../services/catalog-service/Dockerfile) | Dockerfile | Imagen de contenedor Node 20-alpine con healthcheck para catalog-service. |
+| [`services/catalog-service/tests/catalog-service.test.js`](../../services/catalog-service/tests/catalog-service.test.js) | JS / Test Unitario | Suite de tests para serialización dual JSON/XML y mapeo de errores SQL. |
+| [`services/main-process-service/`](../../services/main-process-service/) | Microservicio | Microservicio independiente del proceso principal con MongoDB, Dockerfile, Swagger y tests. |
+| [`services/main-process-service/openapi.yaml`](../../services/main-process-service/openapi.yaml) | OpenAPI 3.0 | Contrato de API del proceso principal y soporte con ejemplos JSON y XML. |
+| [`services/main-process-service/Dockerfile`](../../services/main-process-service/Dockerfile) | Dockerfile | Imagen de contenedor Node 20-alpine con healthcheck para main-process-service. |
+| [`services/main-process-service/tests/main-process-service.test.js`](../../services/main-process-service/tests/main-process-service.test.js) | JS / Test Unitario | Suite de tests para serialización XML, regla D-01 y transiciones de estado. |
 
 ---
 
-## 6. Próximos Pasos (Fase 2)
+## 6. Estado de Avance: Fase 2 Culminada con Éxito
 
-1. **Diseño de Endpoints REST Versionados (`/api/v1/`):**
-   - Implementar el CRUD completo en `catalog-service` consumiendo las nuevas capacidades de PostgreSQL.
-   - Implementar el flujo operativo en `main-process-service` integrando la inserción de respuestas y eventos en Mongo.
-2. **Formato Dual (JSON / XML):**
-   - Asegurar soporte de negociación de contenido (`Accept: application/xml` o `?format=xml`) para coordinar con el Integrante 3 (Contratos y Swagger).
-3. **Endpoint `/health` y Dockerfiles:**
-   - Proveer Dockerfile individual para cada microservicio y sondas de salud independientes.
+1. **Microservicio `catalog-service` Completado:**
+   - Endpoints REST versionados `/api/v1/catalogos/...` implementando CRUD completo de unidades, instrumentos, reactivos y campañas.
+   - Soporte dual JSON y XML (`Accept: application/xml` o `?format=xml`).
+   - Baja lógica implementada (`activa=false` / `activo=false`) con triggers y fechas de actualización automáticas.
+   - Caché Redis con invalidación en operaciones de escritura.
+   - Endpoint `/health`, `Dockerfile` propio y especificación `openapi.yaml`.
+
+2. **Microservicio `main-process-service` Completado:**
+   - Endpoints REST versionados `/api/v1/encuestas/respuestas` y `/api/v1/solicitudes-apoyo`.
+   - Estricto cumplimiento de regla D-01: validación en Postgres e inserción de respuestas y eventos en MongoDB sin persistir jamás `empleado_id`.
+   - Transiciones de estado de solicitudes (`ABIERTA` -> `EN_PROCESO` -> `CERRADA`) con historial `$push`.
+   - Endpoint `/health`, `Dockerfile` propio y especificación `openapi.yaml`.
+
+3. **Pruebas y Verificación:**
+   - 29 pruebas unitarias pasando al 100% (`npm test`).
+   - Montaje retrocompatible en el monolito (`/api/v1/...`) para no romper vistas existentes.
+

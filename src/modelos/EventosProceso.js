@@ -40,3 +40,15 @@ export async function eventosDeSeudonimo(seudonimoId, { limite = 50 } = {}, col)
     .limit(Math.min(Number(limite) || 50, 200))
     .toArray();
 }
+
+export async function listarEventosProceso({ limite = 50, pagina = 1 } = {}, col) {
+  const c = await resolverCol(col);
+  const limitNum = Math.min(Math.max(Number(limite) || 50, 1), 200);
+  const skipNum = Math.max((Number(pagina) || 1) - 1, 0) * limitNum;
+  return c
+    .find({}, { projection: { empleado_id: 0 } })
+    .sort({ timestamp: -1 })
+    .skip(skipNum)
+    .limit(limitNum)
+    .toArray();
+}
