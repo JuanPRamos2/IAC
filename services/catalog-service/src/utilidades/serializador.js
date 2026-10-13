@@ -72,7 +72,7 @@ export function generarXml(datos, rootTag = "catalogo") {
   } else {
     cuerpo = escaparXml(datos);
   }
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<${tagRaiz}>${cuerpo}</${tagRaiz}>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<${tagRaiz} xmlns="http://nexum.com.mx/bienestar/v1">${cuerpo}</${tagRaiz}>`;
 }
 
 export function solicitaXml(req) {

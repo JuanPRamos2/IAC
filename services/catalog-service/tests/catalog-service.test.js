@@ -11,7 +11,8 @@ test("catalog-service: serialización XML con caracteres escapados", () => {
   };
   const xml = generarXml(data, "unidad");
   assert.match(xml, /<\?xml version="1.0" encoding="UTF-8"\?>/);
-  assert.match(xml, /<unidad>/);
+  assert.match(xml, /<unidad[\s>]/);
+  assert.match(xml, /xmlns="http:\/\/nexum\.com\.mx\/bienestar\/v1"/);
   assert.match(xml, /<nombre>Unidad &amp; Calidad &lt;Especial&gt;<\/nombre>/);
   assert.match(xml, /<activa>true<\/activa>/);
   assert.match(xml, /<total>10<\/total>/);

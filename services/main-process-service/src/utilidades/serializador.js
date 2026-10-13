@@ -72,7 +72,7 @@ export function generarXml(datos, rootTag = "respuesta") {
   } else {
     cuerpo = escaparXml(datos);
   }
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<${tagRaiz}>${cuerpo}</${tagRaiz}>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<${tagRaiz} xmlns="http://nexum.com.mx/bienestar/v1">${cuerpo}</${tagRaiz}>`;
 }
 
 export function solicitaXml(req) {
@@ -95,9 +95,11 @@ export function responderProceso(req, res, datos, { rootTag = "respuesta", statu
 export function manejadorErroresProceso(err, req, res, _next) {
   const status = err.status || 500;
   const payload = {
-    error: err.code || "ERROR_TECNICO",
-    mensaje: err.message || "Error interno del servidor",
-    ...(err.extra ? err.extra : {}),
+    error: {
+      codigo: err.code || err.codigo || (status === 500 ? "ERROR_INTERNO" : "ERROR"),
+      mensaje: err.message || "Error interno del servidor",
+      correlacion_id: req.correlacionId || undefined,
+    },
   };
-  return responderProceso(req, res, payload, { rootTag: "respuesta", status });
+  return responderProceso(req, res, payload, { rootTag: "error_respuesta", status });
 }

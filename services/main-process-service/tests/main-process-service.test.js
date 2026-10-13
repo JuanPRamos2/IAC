@@ -12,7 +12,8 @@ test("main-process-service: serialización XML con caracteres escapados", () => 
   };
   const xml = generarXml(data, "solicitud_apoyo");
   assert.match(xml, /<\?xml version="1.0" encoding="UTF-8"\?>/);
-  assert.match(xml, /<solicitud_apoyo>/);
+  assert.match(xml, /<solicitud_apoyo[\s>]/);
+  assert.match(xml, /xmlns="http:\/\/nexum\.com\.mx\/bienestar\/v1"/);
   assert.match(xml, /<mensaje>Orientación de salud &amp; bienestar<\/mensaje>/);
   assert.match(xml, /<estado>EN_PROCESO<\/estado>/);
 });

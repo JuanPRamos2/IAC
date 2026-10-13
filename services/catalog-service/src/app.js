@@ -42,16 +42,16 @@ export function crearAppCatalogService() {
   // Rutas versionadas del microservicio
   app.use("/api/v1/catalogos", catalogoV1Router);
 
-  // Manejo de errores estandarizado
+  // Manejo de errores estandarizado (alineado con contratos/xml/comun.xsd y Error.schema.json)
   app.use((err, req, res, _next) => {
     const statusCode = err.status || err.statusCode || 500;
     const errorBody = {
-      ok: false,
-      codigo: err.codigo || (statusCode === 500 ? "ERROR_INTERNO" : "ERROR"),
-      mensaje: err.message || "Error interno del servidor",
-      timestamp: new Date().toISOString(),
+      error: {
+        codigo: err.code || err.codigo || (statusCode === 500 ? "ERROR_INTERNO" : "ERROR"),
+        mensaje: err.message || "Error interno del servidor",
+      },
     };
-    responderCatalogo(req, res, errorBody, { rootTag: "error", status: statusCode });
+    responderCatalogo(req, res, errorBody, { rootTag: "error_respuesta", status: statusCode });
   });
 
   return app;

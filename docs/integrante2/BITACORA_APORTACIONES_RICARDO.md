@@ -137,3 +137,18 @@ Estamos construyendo e independizando los componentes de negocio y persistencia 
    - 29 pruebas unitarias pasando al 100% (`npm test`).
    - Montaje retrocompatible en el monolito (`/api/v1/...`) para no romper vistas existentes.
 
+---
+
+## 7. Homogeneización con Avances del Equipo (Google Drive - Parcial 2)
+
+Tras la revisión de la carpeta compartida de Google Drive (`Nuevo/Parcial 2/`), se identificaron los avances de los Integrantes 1 y 3 (`Contratos_JSON_XML_y_Swagger_Equipo03.docx` y `segundo_parcial_microservicios.zip`). Para asegurar máxima interoperabilidad y uniformidad:
+
+1. **Adopción del Namespace Común:**
+   - Se configuró el namespace canónico `xmlns="http://nexum.com.mx/bienestar/v1"` en las respuestas XML generadas por `catalog-service` y `main-process-service`.
+2. **Estructura Estándar de Errores y Paginación:**
+   - Los manejadores de error fueron alineados con [`contratos/xml/comun.xsd`](../../contratos/xml/comun.xsd) y [`contratos/json/Error.schema.json`](../../contratos/json/Error.schema.json), envolviendo errores bajo `error_respuesta` en XML y `{ error: { codigo, mensaje } }` en JSON.
+3. **Esquemas XSD para el Integrante 2:**
+   - Se crearon los esquemas formales [`contratos/xml/catalogos.xsd`](../../contratos/xml/catalogos.xsd) y [`contratos/xml/proceso.xsd`](../../contratos/xml/proceso.xsd) importando `comun.xsd`.
+4. **Orquestación en Contenedores:**
+   - Se creó [`docker-compose.microservicios.yml`](../../docker-compose.microservicios.yml) para que el Integrante 4 pueda levantar los microservicios del Integrante 2 (`catalog-service` en 3002 y `main-process-service` en 3003) sin conflictos de red ni puertos.
+
