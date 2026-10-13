@@ -35,4 +35,4 @@ activo en instrumento/reactivo/tipo_accion, (instrumento_id, activo) en version_
 - Aplicar: `psql -f db/postgres/04_catalogos_crud.sql` (re-ejecutable). Si el volumen ya existe, el init de docker no la corre sola.
 
 ## Validación
-Docker daemon no disponible y sin psql local: sintaxis **no ejecutada**. Pendiente probar contra Postgres real.
+Validado exitosamente contra contenedor `iac-postgres-1` (PostgreSQL 15-bookworm) con `04_catalogos_crud.sql` ejecutado sin errores (COMMIT). Todos los triggers, constraints e índices quedaron aplicados y son idempotentes.
