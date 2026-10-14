@@ -5,8 +5,8 @@
 services:
   catalog-service:
     build:
-      context: .
-      dockerfile: services/catalog-service/Dockerfile
+      context: ./services/catalog-service
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${CATALOG_HOST_PORT:-3002}:3002"
@@ -29,8 +29,8 @@ services:
 
   main-process-service:
     build:
-      context: .
-      dockerfile: services/main-process-service/Dockerfile
+      context: ./services/main-process-service
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${MAIN_PROCESS_HOST_PORT:-3003}:3003"

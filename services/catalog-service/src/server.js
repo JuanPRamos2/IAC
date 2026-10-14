@@ -1,7 +1,7 @@
 import { crearAppCatalogService } from "./app.js";
-import { env } from "./config/env.js";
+import { config } from "./config/env.js";
 
-const puerto = Number(process.env.CATALOG_SERVICE_PORT || process.env.PORT || 3002);
+const puerto = Number(config.port || 3002);
 const app = crearAppCatalogService();
 
 app.listen(puerto, () => {
