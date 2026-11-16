@@ -61,4 +61,33 @@
     </xs:complexType>
   </xs:element>
 
+  <!--
+    Permisos vigentes del perfil que trae la sesion.
+
+    Existe como raiz propia porque los permisos NO viajan dentro del token
+    ni dentro de <sesion>: se consultan contra usuarios.perfil_permiso en
+    cada peticion. Si viajaran en el token, quitarle un permiso a un perfil
+    no tendria efecto hasta que el token expirara, y un token de quince
+    minutos significa quince minutos de permiso ya revocado.
+
+    La envoltura plural <permisos> con hijos <permiso> sigue la convencion
+    de todo el contrato: una lista vacia es un elemento <permisos/> sin
+    hijos, que es distinto de que el elemento no venga.
+  -->
+  <xs:element name="permisos_respuesta">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="perfil" type="xs:string"/>
+        <xs:element name="permisos">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="permiso" type="xs:string"
+                          minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
 </xs:schema>
