@@ -1,4 +1,5 @@
 import { mongoDb, conectarMongo } from "../config/mongo.js";
+import { pipelineRespuestasPorUnidadCampania } from "./pipelinesMongo.js";
 
 export function colRespuestas() {
   return mongoDb().collection("respuestas_encuesta");
@@ -39,4 +40,9 @@ export async function respuestasDeSeudonimo(seudonimoId) {
     .sort({ fecha_respuesta: -1 })
     .limit(12)
     .toArray();
+}
+
+export async function agregarRespuestasPorUnidadCampania(filtros = {}, col) {
+  const c = col || (await conectarMongo(), colRespuestas());
+  return c.aggregate(pipelineRespuestasPorUnidadCampania(filtros)).toArray();
 }
