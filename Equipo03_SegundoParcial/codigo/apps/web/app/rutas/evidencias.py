@@ -118,17 +118,22 @@ def _llamar_documentos(ruta, metodo="GET", json_cuerpo=None, tiempo=None):
                   "BITACORA_CONSULTAR")
 def listar():
     intervencion = request.args.get("intervencion_id") or ""
-    consulta = "?tipo=REPORTE_ORGANIZACIONAL&tamano=50"
+    consulta = "?tipo=EVIDENCIA_ARCHIVO&tamano=50"
     datos, problema = _llamar_documentos(f"/api/v1/documentos{consulta}")
 
     evidencias = []
-    for d in (datos or {}).get("elementos", []):
+    filas = (datos or {}).get("documentos") or (datos or {}).get("elementos") or []
+    for d in filas:
         contenido = d.get("contenido") or {}
-        if contenido.get("clase") != "EVIDENCIA_ARCHIVO":
+        if contenido.get("clase") not in (None, "EVIDENCIA_ARCHIVO"):
             continue
         if intervencion and contenido.get("intervencion_id") != intervencion:
             continue
-        evidencias.append({**d, **contenido})
+        fila = {**d, **contenido}
+        fila.setdefault("nombre_original", contenido.get("nombre_archivo") or d.get("identificador") or "")
+        fila.setdefault("formato", contenido.get("extension") or "")
+        fila.setdefault("sha256", contenido.get("sha256") or d.get("hash") or "")
+        evidencias.append(fila)
 
     planes = consultar(
         "SELECT p.intervencion_id, p.tipo_intervencion, p.estado, "

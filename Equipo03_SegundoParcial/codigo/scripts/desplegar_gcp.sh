@@ -15,6 +15,9 @@ if [[ ! -f /opt/nexum/signer.json ]]; then
   echo "Falta /opt/nexum/signer.json. No está en Git y este guion no lo crea."
   exit 1
 fi
+# documents-service corre como el usuario servicio. Una llave en modo 600
+# solo la lee quien la creó, y la carga de evidencias responde 500.
+sudo chmod 644 /opt/nexum/signer.json
 
 if ! mountpoint -q /mnt/evidencias; then
   sudo mkdir -p /mnt/evidencias
