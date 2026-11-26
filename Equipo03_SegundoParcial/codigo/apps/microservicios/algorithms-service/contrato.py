@@ -157,6 +157,134 @@ ESQUEMAS = {
                                "cuentan aparte."},
             "nota": {"type": "string"},
             "epsilon_consumido": {"type": "number", "format": "double"}}},
+
+    # ------------------------------------------------- análisis complejo
+    "Tendencia": {
+        "type": "object",
+        "properties": {
+            "direccion": {"type": "string",
+                          "enum": ["MEJORA", "DETERIORO", "ESTABLE",
+                                   "INDETERMINADA"]},
+            "pendiente_por_campania": {
+                "type": "number", "format": "double", "nullable": True,
+                "description": "Pendiente de Theil-Sen: la mediana de las "
+                               "pendientes entre todos los pares de puntos. Se "
+                               "usa en lugar de mínimos cuadrados porque el "
+                               "ruido de privacidad es de Laplace, de colas "
+                               "pesadas, y un solo valor extremo arrastra una "
+                               "recta de mínimos cuadrados. Theil-Sen aguanta "
+                               "que hasta un 29% de los puntos sean atípicos."},
+            "p_valor": {"type": "number", "format": "double", "nullable": True,
+                        "description": "Prueba de Mann-Kendall, no paramétrica: "
+                                       "no supone que los datos sean normales, "
+                                       "y aquí no lo son."},
+            "puntos_publicados": {"type": "integer"},
+            "puntos_suprimidos": {
+                "type": "integer",
+                "description": "Campañas en que la unidad no publicó por el "
+                               "umbral k. Se descartan del cálculo y se "
+                               "cuentan: tratarlas como serie continua haría "
+                               "que dos campañas no consecutivas se leyeran "
+                               "como un solo paso."},
+            "supera_el_ruido": {
+                "type": "boolean",
+                "description": "Si el cambio acumulado es mayor que el ruido "
+                               "aplicado. Una tendencia estadísticamente real "
+                               "pero más pequeña que el ruido no sostiene una "
+                               "decisión."},
+            "lectura": {"type": "string",
+                        "description": "La conclusión en palabras."}}},
+    "UnidadPriorizada": {
+        "type": "object",
+        "properties": {
+            "unidad_organizacional_id": {"type": "string"},
+            "puntaje": {"type": "number", "format": "double"},
+            "nivel": {"type": "string",
+                      "enum": ["INFORMATIVO", "ATENCION", "PRIORITARIO"]},
+            "grupo": {"type": "integer",
+                      "description": "El grupo de pares al que quedó asignada."},
+            "comparada_contra": {
+                "type": "string",
+                "description": "El centroide contra el que se midió. Una unidad "
+                               "que queda sola o en pareja se compara con el "
+                               "centroide del grupo MÁS CERCANO y no con el "
+                               "suyo: contra su propio centroide la desviación "
+                               "sería cero por construcción, y la anomalía se "
+                               "esconderia a si misma."},
+            "dimensiones_anomalas": {"type": "array", "items": {
+                "type": "object",
+                "properties": {
+                    "dimension_id": {"type": "string"},
+                    "valor": {"type": "number", "format": "double"},
+                    "centro_del_grupo": {"type": "number", "format": "double"},
+                    "desviacion": {"type": "number", "format": "double"},
+                    "umbral_por_ruido": {
+                        "type": "number", "format": "double",
+                        "description": "El umbral NO es una constante: sale de "
+                                       "la escala de Laplace que el sistema "
+                                       "aplicó a esos valores. Con pocos "
+                                       "encuestados el ruido es grande y hace "
+                                       "falta más desviación para afirmar algo."},
+                    "p_valor": {"type": "number", "format": "double"},
+                    "direccion": {"type": "string"}}}},
+            "desglose": {
+                "type": "object",
+                "description": "De dónde salió el puntaje, renglón por renglón: "
+                               "anomalía 0.40, tendencia 0.35, persistencia "
+                               "0.15, confianza 0.10. Un ranking sin desglose "
+                               "no se puede discutir, y este se discute en un "
+                               "comité que puede —y debe— no estar de acuerdo.",
+                "additionalProperties": {"type": "number", "format": "double"}}}},
+    "Analisis": {
+        "type": "object",
+        "properties": {
+            "campania_id": {"type": "string"},
+            "unidades_analizadas": {"type": "integer"},
+            "unidades_sin_perfil_completo": {
+                "type": "array", "items": {"type": "object"},
+                "description": "Unidades a las que les suprimieron al menos una "
+                               "dimensión. Quedan FUERA del agrupamiento y se "
+                               "listan aparte: rellenar sus huecos con la media "
+                               "del grupo las describiría con números que nadie "
+                               "midió."},
+            "dimensiones": {"type": "array", "items": {"type": "string"}},
+            "agrupamiento": {
+                "type": "object",
+                "description": "k-medias con siembra k-means++ y k elegido por "
+                               "silueta. La silueta mide si los grupos de verdad "
+                               "están separados; sin ella, k-medias devuelve "
+                               "grupos siempre, incluso cuando no hay ninguno.",
+                "properties": {
+                    "grupos": {"type": "integer"},
+                    "silueta": {"type": "number", "format": "double",
+                                "nullable": True},
+                    "centroides": {"type": "array",
+                                   "items": {"type": "object"}},
+                    "nota": {"type": "string"}}},
+            "priorizadas": {"type": "array", "items": {
+                "$ref": "#/components/schemas/UnidadPriorizada"}},
+            "tendencias": {"type": "object",
+                           "additionalProperties": {"type": "object"}},
+            "epsilon_consumido": {
+                "type": "number", "format": "double",
+                "description": "Siempre 0.0. Lee resultados ya publicados, que "
+                               "descontaron su épsilon al calcularse."},
+            "tiempo_ms": {"type": "number", "format": "double"},
+            "origen": {"type": "string", "enum": ["calculado", "cache"]},
+            "cache_ttl_segundos": {"type": "integer"},
+            "alcance_aplicado": {
+                "type": "object", "nullable": True,
+                "description": "Presente solo cuando el informe se recortó al "
+                               "alcance del solicitante. Un informe recortado "
+                               "que no lo declarara se leería como completo.",
+                "properties": {
+                    "unidades_visibles": {"type": "integer"},
+                    "unidades_analizadas_en_total": {"type": "integer"}}},
+            "nota_epsilon": {"type": "string"},
+            "nota_causa": {
+                "type": "string",
+                "description": "El motor detecta que una unidad está lejos de "
+                               "sus pares o que viene cayendo. NO dice por qué."}}},
 }
 
 RUTAS = {

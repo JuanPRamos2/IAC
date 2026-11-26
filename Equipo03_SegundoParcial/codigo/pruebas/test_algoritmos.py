@@ -179,19 +179,47 @@ def test_la_simulacion_reacciona_al_umbral_y_no_escribe(algoritmos, token_admin)
 
     antes = detecciones_de("RG-02")
 
-    # DIM-RECUP en la campania de demostracion va de 3.45 a 4.00, asi que un
-    # umbral de 3.0 no detecta nada y uno de 4.0 detecta todo. Si el
-    # comparador estuviera invertido, los dos darian lo mismo.
+    # Los dos umbrales se DERIVAN de los datos y no se escriben a mano.
+    #
+    # La primera version fijaba 3.0 y 4.0 con el comentario de que la
+    # dimension iba de 3.45 a 4.00. Dejo de ser cierto al integrar el
+    # trabajo de los cuatro: ahora va de 2.37 a 4.56, porque UO-CC-TURNO-B
+    # —la unidad chica del caso de demostracion— cayo a 2.37. El umbral
+    # "bajo" de 3.0 paso a detectar una unidad y la prueba fallo sin que
+    # nada del servicio estuviera roto.
+    #
+    # Lo que la prueba quiere comprobar no son esos numeros: es que mover
+    # el umbral cambie el resultado y que simular no escriba. Derivar los
+    # umbrales del minimo y del maximo reales comprueba lo mismo y no se
+    # rompe la proxima vez que cambie la semilla. Los valores ademas
+    # llevan ruido de Laplace, asi que cada arranque de la base los mueve
+    # un poco: un numero fijo aqui es una prueba intermitente esperando a
+    # fallar.
+    with cn, cn.cursor() as cur:
+        cur.execute(
+            "SELECT min(valor_protegido), max(valor_protegido) "
+            "  FROM agregado.v_tablero_unidad "
+            " WHERE campania_id = %s AND dimension = %s "
+            "   AND valor_protegido IS NOT NULL",
+            ("CAMP-2026-S1", "Recuperacion"))
+        minimo, maximo = cur.fetchone()
+    assert minimo is not None, "la campania de demostracion no tiene valores"
+    umbral_bajo = float(minimo) - 0.5      # por debajo de todas: 0 detecciones
+    umbral_alto = float(maximo) + 0.5      # por encima de todas: las detecta
+
     bajo = algoritmos.post("/api/v1/algoritmos/simular", headers=cab(token_admin),
                            json={"regla_id": "RG-02",
                                  "campania_id": "CAMP-2026-S1",
-                                 "umbral_valor": 3.0})
+                                 "umbral_valor": umbral_bajo})
     alto = algoritmos.post("/api/v1/algoritmos/simular", headers=cab(token_admin),
                            json={"regla_id": "RG-02",
                                  "campania_id": "CAMP-2026-S1",
-                                 "umbral_valor": 4.0})
+                                 "umbral_valor": umbral_alto})
     assert bajo.status_code == alto.status_code == 200
-    assert bajo.get_json()["detectadas_con_umbral_simulado"] == 0
+    assert bajo.get_json()["detectadas_con_umbral_simulado"] == 0, (
+        f"Con un umbral por debajo del minimo ({umbral_bajo:.3f}) no "
+        f"deberia detectar nada. Si el comparador estuviera invertido, "
+        f"los dos umbrales darian lo mismo.")
     assert alto.get_json()["detectadas_con_umbral_simulado"] > 0
     assert len(alto.get_json()["entrarian"]) > 0
     assert alto.get_json()["epsilon_consumido"] == 0
@@ -330,3 +358,203 @@ def test_correr_el_motor_queda_en_la_bitacora(algoritmos, token_especialista):
     cn.close()
     assert n >= 1, ("algorithms-service no pudo escribir en la bitacora: "
                     "falta aplicar la migracion 006")
+
+
+# ===================================================== análisis complejo
+#
+# El endpoint /analisis expone el paquete `analitica`, cuya matemática se
+# prueba por separado en test_analitica.py sin levantar Flask ni
+# PostgreSQL. Lo que se prueba AQUÍ es lo que solo se puede romper al
+# exponerlo por HTTP: el alcance del solicitante, el gasto de épsilon, la
+# caché, y que una campaña sin agregados publicados se distinga de una
+# campaña sin riesgo.
+
+def test_el_analisis_no_gasta_presupuesto_de_privacidad(algoritmos, consultas,
+                                                       token_especialista,
+                                                       token_admin):
+    """La misma prueba central que el motor de reglas, para el análisis.
+
+    El análisis complejo lee `agregado.resultado_protegido` donde el estado
+    es PUBLICADO: valores que ya descontaron su épsilon al calcularse. Si
+    en cambio llamara a `fn_calcular_agregado_protegido` para tener datos
+    más frescos, cada corrida gastaría presupuesto, y al agotarlo la
+    campaña se quedaría sin poder publicar nada más. Analizar el riesgo
+    costaría la capacidad de medirlo.
+    """
+    antes = consultas.get("/api/v1/consultas/presupuesto",
+                          headers=cab(token_admin))
+    assert antes.status_code == 200, antes.get_data(as_text=True)
+    gasto_antes = sum(float(e["epsilon_consumido"])
+                      for e in antes.get_json()["elementos"])
+
+    # Varias corridas, y una sin cache: una sola lectura cacheada no
+    # probaria nada, porque la cache no toca la base.
+    for sufijo in ("?sin_cache=1", "", "?sin_cache=1"):
+        r = algoritmos.get(f"/api/v1/algoritmos/analisis{sufijo}",
+                           headers=cab(token_especialista))
+        assert r.status_code == 200, r.get_data(as_text=True)
+        assert r.get_json()["epsilon_consumido"] == 0.0
+
+    # El presupuesto que sirve /consultas esta cacheado: sin invalidarlo,
+    # la segunda lectura devolveria la primera y la prueba pasaria aunque
+    # el analisis hubiera gastado epsilon.
+    consultas.post("/api/v1/consultas/cache/invalidar",
+                   headers=cab(token_admin), json={"recurso": "presupuesto"})
+    despues = consultas.get("/api/v1/consultas/presupuesto",
+                            headers=cab(token_admin))
+    gasto_despues = sum(float(e["epsilon_consumido"])
+                        for e in despues.get_json()["elementos"])
+    assert gasto_despues == gasto_antes, (
+        "El analisis movio el presupuesto de epsilon. Tiene que leer solo "
+        "resultados ya publicados.")
+
+
+def test_el_analisis_no_llama_a_la_funcion_que_gasta_epsilon():
+    """A nivel de código fuente, no solo de comportamiento.
+
+    La prueba de arriba comprueba que hoy no gasta. Esta comprueba que no
+    PUEDE gastar: la única función que descuenta épsilon es
+    `fn_calcular_agregado_protegido`, y el servicio no la menciona. Sin
+    esto, alguien «arregla» el análisis para que use datos más frescos, el
+    presupuesto se consume y la prueba de comportamiento solo falla cuando
+    ya se agotó.
+    """
+    ruta = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "apps", "microservicios", "algorithms-service", "app.py")
+    codigo = open(ruta, encoding="utf-8").read()
+    assert "fn_calcular_agregado_protegido" not in codigo, (
+        "algorithms-service menciona la funcion que descuenta epsilon. "
+        "Solo el servicio de agregados puede llamarla.")
+
+    paquete = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "apps", "microservicios", "analitica", "analitica")
+    for archivo in os.listdir(paquete):
+        if archivo.endswith(".py"):
+            texto = open(os.path.join(paquete, archivo), encoding="utf-8").read()
+            assert "fn_calcular_agregado" not in texto, archivo
+            # El paquete no debe hablar con la base en absoluto: recibe
+            # filas y devuelve un informe. Si consultara por su cuenta, no
+            # se podria probar sin PostgreSQL ni auditar que no gasta.
+            assert "psycopg2" not in texto and "SELECT" not in texto.upper(), (
+                f"{archivo} toca la base de datos. El paquete de analisis "
+                f"recibe filas y devuelve un informe: es lo que permite "
+                f"probar la matematica sin levantar nada.")
+
+
+def test_el_analisis_recorta_a_lo_que_el_lider_puede_ver(algoritmos,
+                                                         token_lider,
+                                                         token_especialista):
+    """La parte que solo se puede romper al exponerlo por HTTP.
+
+    El análisis se CALCULA sobre la organización completa —comparar cada
+    unidad con sus pares es el método— pero un líder de unidad no puede
+    recibir el ranking de áreas que no le corresponden. Y como el informe
+    global se cachea, un error al recortar serviría al líder exactamente
+    el informe del administrador.
+    """
+    global_ = algoritmos.get("/api/v1/algoritmos/analisis",
+                             headers=cab(token_especialista))
+    assert global_.status_code == 200, global_.get_data(as_text=True)
+    completo = global_.get_json()
+
+    acotado = algoritmos.get("/api/v1/algoritmos/analisis",
+                             headers=cab(token_lider))
+    assert acotado.status_code == 200, acotado.get_data(as_text=True)
+    recortado = acotado.get_json()
+
+    assert "alcance_aplicado" in recortado, (
+        "El informe del lider no declara que se recorto. Un informe "
+        "recortado que no lo dice se lee como si fuera completo.")
+    assert len(recortado["priorizadas"]) < len(completo["priorizadas"]), (
+        "El lider recibio tantas unidades priorizadas como el "
+        "especialista: el recorte por alcance no se aplico.")
+
+    visibles = {p["unidad_organizacional_id"] for p in recortado["priorizadas"]}
+    visibles |= set(recortado["tendencias"])
+    assert visibles, "El lider no vio ninguna unidad, ni la suya"
+    assert all(u.startswith("UO-CC-TURNO-B") or u == "UO-CC-TURNO-B"
+               for u in visibles), (
+        f"El lider de UO-CC-TURNO-B vio unidades fuera de su subarbol: "
+        f"{sorted(visibles)}")
+
+    # Los centroides describen a toda la organizacion: se reemplazan por
+    # una nota en lugar de entregarse.
+    assert "centroides" not in recortado["agrupamiento"]
+    assert recortado["agrupamiento"]["nota"]
+    # Pero la silueta y el numero de grupos si van: son una medida de la
+    # calidad del agrupamiento, y sin ellas el lider no puede saber si la
+    # comparacion con pares que recibio significa algo.
+    assert recortado["agrupamiento"]["silueta"] is not None
+
+
+def test_el_analisis_usa_cache_y_la_puede_saltar(algoritmos, token_especialista):
+    """La caché tiene que existir Y tiene que poderse ignorar.
+
+    Sin `sin_cache=1` no hay forma de medir cuánto cuesta de verdad el
+    algoritmo, que es justo lo que la caché esconde. Una medición de
+    rendimiento tomada contra una caché caliente no mide el algoritmo.
+    """
+    primero = algoritmos.get("/api/v1/algoritmos/analisis?sin_cache=1",
+                             headers=cab(token_especialista))
+    assert primero.status_code == 200
+    assert primero.get_json()["origen"] == "calculado"
+    assert primero.get_json()["tiempo_ms"] > 0
+
+    segundo = algoritmos.get("/api/v1/algoritmos/analisis",
+                             headers=cab(token_especialista))
+    assert segundo.status_code == 200
+    assert segundo.get_json()["origen"] == "cache", (
+        "La segunda consulta se recalculo: la cache no esta guardando nada.")
+    # El informe cacheado es el MISMO, no una version reducida.
+    assert (segundo.get_json()["priorizadas"]
+            == primero.get_json()["priorizadas"])
+
+
+def test_una_campania_sin_agregados_publicados_no_se_lee_como_sin_riesgo(
+        algoritmos, token_especialista):
+    """«No pudimos ver» y «no hay nada» son respuestas distintas.
+
+    Una campaña cuyos agregados se suprimieron todos por el umbral k no
+    tiene riesgo cero: tiene riesgo desconocido. Devolver un informe vacío
+    con 200 haría que el portal mostrara «sin hallazgos», que es
+    exactamente la conclusión equivocada.
+    """
+    r = algoritmos.get("/api/v1/algoritmos/analisis?campania_id=CAMP-2026-S5",
+                       headers=cab(token_especialista))
+    assert r.status_code in (200, 409), r.get_data(as_text=True)
+    if r.status_code == 409:
+        cuerpo = r.get_json()
+        assert cuerpo["error"]["codigo"] == "SIN_DATOS"
+        assert "no haya riesgo" in cuerpo["error"]["mensaje"], (
+            "El mensaje no advierte que la ausencia de datos no es "
+            "ausencia de riesgo.")
+
+
+def test_el_analisis_rechaza_una_campania_inexistente(algoritmos,
+                                                      token_especialista):
+    r = algoritmos.get("/api/v1/algoritmos/analisis?campania_id=CAMP-NO-EXISTE",
+                       headers=cab(token_especialista))
+    assert r.status_code == 404
+
+
+def test_el_analisis_queda_en_bitacora(algoritmos, token_especialista):
+    """La cuarta vez que este modo de falla aparece en el proyecto.
+
+    `auditoria.bitacora` tiene llave foránea contra `auditoria.tipo_accion`
+    y el INSERT va envuelto en un try para no tumbar la operación. Si
+    `ANALISIS_EJECUTADO` no está declarado —migración 018— el registro
+    falla sin que nadie se entere.
+    """
+    import psycopg2
+    algoritmos.get("/api/v1/algoritmos/analisis",
+                   headers=cab(token_especialista))
+    cn = psycopg2.connect(host=os.environ["PG_HOST"], dbname=os.environ["PG_BASE"],
+                          user=os.environ["PG_USUARIO"],
+                          password=os.environ["PG_CLAVE"])
+    with cn, cn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM auditoria.bitacora "
+                    " WHERE accion = 'ANALISIS_EJECUTADO'")
+        n = cur.fetchone()[0]
+    cn.close()
+    assert n >= 1, ("El analisis no quedo en bitacora: falta aplicar la "
+                    "migracion 018.")

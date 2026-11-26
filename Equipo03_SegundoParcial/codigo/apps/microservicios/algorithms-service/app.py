@@ -38,14 +38,15 @@ distintas sobre los mismos datos.
 """
 import datetime as dt
 import decimal
+import json
 import os
 import uuid
 
 from flask import g, request
 
-from comun import (ErrorApi, VERSION_API, crear_servicio, cuerpo_peticion, limite_consumo,
-                   obtener_redis, pagina, responder, requiere_permiso,
-                   sobre_pagina)
+from comun import (ErrorApi, VERSION_API, crear_servicio, cuerpo_peticion,
+                   exigir_tiempo, limite_consumo, obtener_redis, pagina,
+                   responder, requiere_permiso, sobre_pagina)
 from comun.datos import consultar, consultar_uno, cursor, ping as ping_pg
 from comun.mongo import (ASCENDING, DESCENDING, asegurar_indices, base,
                          ping as ping_mongo, verificar_sin_identidad)
@@ -62,6 +63,15 @@ INDICES = {
         ([("unidad_organizacional_id", ASCENDING), ("fecha", DESCENDING)],
          {"name": "ix_unidad_fecha"}),
         ([("detecciones.regla_id", ASCENDING)], {"name": "ix_regla"}),
+        # `GET /algoritmos/corridas` SIN campania_id ordena por fecha con
+        # el filtro vacio, y ningun indice empezaba por fecha: el orden se
+        # hacia en memoria. Y un sort en memoria tiene un limite de 32 MB
+        # y **falla** al pasarlo — no se degrada, deja de funcionar — asi
+        # que el historial completo se rompia justo cuando tenia historial.
+        #
+        # Es el caso por omision del endpoint: quien abre el historial sin
+        # filtrar por campania recorre todo.
+        ([("fecha", DESCENDING)], {"name": "ix_fecha"}),
     ],
 }
 
@@ -101,7 +111,7 @@ def _bitacora(accion, resultado, recurso=None):
                  accion, "DETECCION", recurso, resultado,
                  getattr(g, "correlacion_id", "")))
     except Exception:
-        app.logger.error("No se pudo escribir en la bitacora: %s", accion)
+        app.logger.exception("No se pudo escribir en la bitacora: %s", accion)
 
 
 def _normalizar(valor):
@@ -597,6 +607,263 @@ def corrida(corrida_id):
     if not doc:
         raise ErrorApi("NO_ENCONTRADO", "No existe esa corrida.", 404)
     return responder(_limpiar(doc), 200, raiz="corrida_respuesta")
+
+
+# ===================================================== análisis complejo
+#
+# El motor de reglas de más arriba evalúa UMBRALES: «si la dimensión X
+# está por debajo de Y, detecta». Es correcto y es lo que pide el
+# catálogo de reglas, pero tiene dos límites que no se arreglan ajustando
+# los umbrales:
+#
+#   - Compara cada unidad contra una constante, no contra sus pares. Los
+#     turnos nocturnos salen como anomalía todos los semestres, porque un
+#     turno nocturno tiene peor descanso que una oficina y eso no es un
+#     hallazgo.
+#   - No distingue estar mal de estar empeorando. Una unidad en 2.8 y
+#     estable ya tocó fondo; otra en 3.4 cayendo 0.2 por campaña llegará
+#     más abajo en un año. La primera dispara la regla y la segunda no,
+#     y es la segunda donde una intervención todavía sirve.
+#
+# El análisis complejo (paquete `analitica`) contesta eso: agrupa las
+# unidades por perfil con k-medias, mide la desviación de cada una contra
+# el centroide de SU grupo, decide si el ruido de privacidad puede
+# explicar esa desviación, estima la tendencia con Theil-Sen y
+# Mann-Kendall, y prioriza con un puntaje desglosado.
+#
+# Igual que el motor de reglas: lee solo lo PUBLICADO y consume cero
+# épsilon.
+from analitica import motor as motor_analitico
+
+PREFIJO_CACHE = "analisis:"
+
+# Diez minutos. El análisis depende solo de agregados PUBLICADOS, y
+# publicar es una operación deliberada que nadie hace cada minuto: un TTL
+# corto gastaría CPU recalculando lo mismo. Y no es como el presupuesto de
+# épsilon, donde un dato viejo lleva a creer que queda presupuesto cuando
+# ya se agotó; aquí un informe de hace diez minutos describe los mismos
+# datos publicados.
+TTL_ANALISIS = 600
+
+
+def _unidades_en_alcance():
+    """El conjunto de unidades que el solicitante puede ver, o None = todas.
+
+    Se resuelve UNA vez y no por unidad. `_alcance_permite` hace una
+    consulta recursiva cada vez que se le llama, y el análisis trabaja con
+    cientos de unidades: llamarla en un bucle convertía una respuesta de
+    milisegundos en cientos de consultas.
+    """
+    permisos = getattr(g, "permisos", set()) or set()
+    if "AGREGADO_GLOBAL" in permisos or "PARAMETRO_ADMIN" in permisos:
+        return None
+    fila = consultar_uno(
+        "SELECT unidad_alcance_id FROM usuarios.usuario_perfil "
+        " WHERE usuario_id = %s AND perfil_id = %s",
+        (g.actor.get("sub"), g.actor.get("perfil_id")))
+    alcance = (fila or {}).get("unidad_alcance_id")
+    if alcance is None:
+        return None
+    return {f["unidad_organizacional_id"] for f in consultar(
+        "WITH RECURSIVE arbol AS ("
+        "  SELECT unidad_organizacional_id FROM organizacion.unidad_organizacional"
+        "   WHERE unidad_organizacional_id = %s"
+        "  UNION ALL"
+        "  SELECT u.unidad_organizacional_id FROM organizacion.unidad_organizacional u"
+        "    JOIN arbol a ON u.unidad_padre_id = a.unidad_organizacional_id)"
+        " SELECT unidad_organizacional_id FROM arbol", (alcance,))}
+
+
+def _ultima_campania():
+    fila = consultar_uno(
+        "SELECT campania_id FROM catalogo.campania "
+        " WHERE campania_id IN (SELECT DISTINCT campania_id "
+        "                         FROM agregado.resultado_protegido "
+        "                        WHERE estado_publicacion = 'PUBLICADO') "
+        " ORDER BY secuencia DESC LIMIT 1")
+    return (fila or {}).get("campania_id")
+
+
+def _datos_para_analisis(campania_id):
+    """Las dos entradas del motor: la matriz de la campaña y las series.
+
+    POR QUÉ LAS SERIES SE ARMAN EN PYTHON Y NO EN SQL
+    -------------------------------------------------
+    La serie de una unidad tiene que incluir las campañas en que NO
+    publicó, con valor nulo, porque el análisis de tendencia cuenta los
+    puntos suprimidos y los reporta. Una serie que solo trae lo publicado
+    hace creer que la unidad tiene seis lecturas seguidas cuando tiene
+    seis de doce, y la pendiente sale calculada sobre campañas que no son
+    consecutivas.
+
+    Traer eso en SQL exige cruzar las unidades convocadas por las
+    dimensiones y hacer un LEFT JOIN contra los resultados: un producto
+    cartesiano de tres tablas para rellenar huecos. Armarlo aquí son dos
+    consultas con índice y un bucle.
+    """
+    secuencia = (consultar_uno(
+        "SELECT secuencia FROM catalogo.campania WHERE campania_id = %s",
+        (campania_id,)) or {}).get("secuencia")
+
+    filas_campania = _filas(
+        "SELECT unidad_organizacional_id, dimension_id, valor_protegido, "
+        "       escala_ruido, n_observaciones "
+        "  FROM agregado.resultado_protegido "
+        " WHERE campania_id = %s AND estado_publicacion = 'PUBLICADO' "
+        "   AND dimension_id IS NOT NULL", (campania_id,))
+
+    publicados = _filas(
+        "SELECT rp.unidad_organizacional_id, rp.dimension_id, c.secuencia, "
+        "       rp.valor_protegido, rp.escala_ruido "
+        "  FROM agregado.resultado_protegido rp "
+        "  JOIN catalogo.campania c USING (campania_id) "
+        " WHERE rp.estado_publicacion = 'PUBLICADO' "
+        "   AND rp.dimension_id IS NOT NULL AND c.secuencia <= %s",
+        (secuencia,))
+
+    convocadas = {}
+    for f in consultar(
+            "SELECT cu.unidad_organizacional_id, c.secuencia "
+            "  FROM catalogo.campania_unidad cu "
+            "  JOIN catalogo.campania c USING (campania_id) "
+            " WHERE c.secuencia <= %s", (secuencia,)):
+        convocadas.setdefault(f["unidad_organizacional_id"], set()).add(
+            f["secuencia"])
+
+    dimensiones = sorted({f["dimension_id"] for f in filas_campania})
+    valores = {}
+    for f in publicados:
+        valores[(f["unidad_organizacional_id"], f["dimension_id"],
+                 f["secuencia"])] = (f["valor_protegido"], f["escala_ruido"])
+
+    series = {}
+    for unidad, secuencias in convocadas.items():
+        # El plazo de la peticion se consulta aqui, entre unidades, que es
+        # donde es seguro rendirse: nada a medias y ninguna transaccion
+        # abierta. Ver `exigir_tiempo` en comun/servicio.py — este bucle es
+        # Python puro y `statement_timeout` no lo puede cancelar.
+        exigir_tiempo("las series por unidad")
+        por_dimension = {}
+        for dim in dimensiones:
+            puntos = []
+            for s in sorted(secuencias):
+                valor, escala = valores.get((unidad, dim, s), (None, None))
+                puntos.append((s, valor, escala))
+            por_dimension[dim] = puntos
+        series[unidad] = por_dimension
+    return filas_campania, series
+
+
+def _recortar_a_alcance(informe, permitidas):
+    """Deja en el informe solo lo que el solicitante puede ver.
+
+    El análisis se calcula SIEMPRE sobre la organización completa, y eso
+    no es negociable: el sentido del método es comparar cada unidad con
+    sus pares, y un líder que solo viera su subárbol compararía sus tres
+    equipos entre sí y el resultado no significaría nada.
+
+    Lo que se recorta es la SALIDA. Los centroides y la silueta describen
+    a toda la organización, así que se reemplazan por una nota: no son un
+    riesgo de privacidad —salen de valores ya publicados— pero sí son
+    información de áreas que no le corresponden.
+    """
+    if permitidas is None:
+        return informe
+    salida = dict(informe)
+    salida["priorizadas"] = [p for p in informe["priorizadas"]
+                             if p["unidad_organizacional_id"] in permitidas]
+    salida["tendencias"] = {u: t for u, t in informe["tendencias"].items()
+                            if u in permitidas}
+    salida["unidades_sin_perfil_completo"] = [
+        x for x in informe["unidades_sin_perfil_completo"]
+        if x["unidad_organizacional_id"] in permitidas]
+    salida["agrupamiento"] = {
+        "nota": "El agrupamiento se calculo sobre la organizacion completa "
+                "—es lo que hace significativa la comparacion con pares— "
+                "pero sus centroides describen areas fuera de tu alcance, "
+                "asi que no se incluyen.",
+        "grupos": informe["agrupamiento"].get("grupos"),
+        "silueta": informe["agrupamiento"].get("silueta"),
+    }
+    salida["alcance_aplicado"] = {
+        "unidades_visibles": len(permitidas),
+        "unidades_analizadas_en_total": informe["unidades_analizadas"],
+    }
+    return salida
+
+
+@app.get(f"{BASE}/analisis")
+@requiere_permiso("RECOMENDACION_CONSULTAR", "AGREGADO_UNIDAD",
+                  "AGREGADO_GLOBAL", "PARAMETRO_ADMIN")
+def analisis():
+    """Análisis complejo: agrupamiento, anomalías contra pares y tendencia.
+
+    Parámetros:
+      campania_id  — la campaña a analizar. Por omisión, la última con
+                     resultados publicados.
+      sin_cache=1  — recalcula ignorando la caché. Existe para poder medir
+                     el costo real del algoritmo, que es justo lo que la
+                     caché esconde.
+
+    La caché guarda el informe GLOBAL y el recorte por alcance se aplica
+    después de leerla. Al revés —cachear lo ya recortado— la clave tendría
+    que incluir el alcance de quien pregunta, y un fallo al construir esa
+    clave serviría a un líder el informe completo de la organización.
+    """
+    limite_consumo(maximo=30)
+    campania_id = (request.args.get("campania_id") or "").strip() or _ultima_campania()
+    if not campania_id:
+        raise ErrorApi("SIN_DATOS",
+                       "Ninguna campania tiene resultados publicados todavia: "
+                       "no hay nada que analizar.", 409)
+    if not _campania_existe(campania_id):
+        raise ErrorApi("NO_ENCONTRADO", "No existe esa campania.", 404)
+
+    sin_cache = (request.args.get("sin_cache") or "").lower() in ("1", "true", "si")
+    # La semilla va en la clave. El agrupamiento es determinista para una
+    # semilla dada, así que si alguien la cambia los informes guardados
+    # dejan de corresponder al código que los produciría hoy: con la
+    # semilla en la clave, caducan solos en lugar de servirse como si
+    # fueran del algoritmo actual.
+    clave = f"{PREFIJO_CACHE}{campania_id}:{motor_analitico.ag.SEMILLA}"
+    r, informe, desde_cache = None, None, False
+
+    try:
+        r = obtener_redis()
+        if not sin_cache:
+            crudo = r.get(clave)
+            if crudo:
+                informe = json.loads(crudo)
+                desde_cache = True
+                r.incr(f"{PREFIJO_CACHE}_metricas:aciertos")
+    except Exception as e:                               # noqa: BLE001
+        # Una caida de Redis no puede tumbar el analisis: solo lo hace
+        # mas lento. Se registra y se sigue contra PostgreSQL.
+        r = None
+        app.logger.warning("Redis no disponible para %s: %s", clave, e)
+
+    if informe is None:
+        filas_campania, series = _datos_para_analisis(campania_id)
+        if not filas_campania:
+            raise ErrorApi(
+                "SIN_DATOS",
+                "Esa campania no tiene ningun agregado publicado. No es que "
+                "no haya riesgo: es que el umbral k no permitio publicar "
+                "nada, y sobre eso el analisis no puede concluir.", 409)
+        informe = motor_analitico.analizar(filas_campania, series)
+        informe["campania_id"] = campania_id
+        if r is not None:
+            try:
+                r.set(clave, json.dumps(informe, default=str), ex=TTL_ANALISIS)
+                r.incr(f"{PREFIJO_CACHE}_metricas:fallos")
+            except Exception as e:                       # noqa: BLE001
+                app.logger.warning("No se pudo cachear %s: %s", clave, e)
+
+    informe["origen"] = "cache" if desde_cache else "calculado"
+    informe["cache_ttl_segundos"] = TTL_ANALISIS
+    _bitacora("ANALISIS_EJECUTADO", "EXITO", campania_id)
+    return responder(_recortar_a_alcance(informe, _unidades_en_alcance()),
+                     200, raiz="analisis_respuesta")
 
 
 @app.post(f"{BASE}/indices")

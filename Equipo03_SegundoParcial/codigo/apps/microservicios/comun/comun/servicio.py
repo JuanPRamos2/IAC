@@ -144,6 +144,32 @@ def limite_consumo(maximo: int = 120, ventana: int = 60):
         pass
 
 
+
+# El analisis complejo recorre series en Python. statement_timeout no
+# cancela ese bucle, asi que la peticion lleva su propio plazo.
+TIEMPO_MAXIMO_PETICION_S = float(os.environ.get("TIEMPO_MAXIMO_PETICION", "20"))
+
+
+def tiempo_restante():
+    plazo = getattr(g, "plazo", None) if g else None
+    if plazo is None:
+        return float("inf")
+    return plazo - time.perf_counter()
+
+
+def exigir_tiempo(que_falta="la operacion"):
+    """Lanza 503 si esta peticion ya gasto su plazo. Se llama en bucles largos."""
+    if tiempo_restante() > 0:
+        return
+    raise ErrorApi(
+        "TIEMPO_EXCEDIDO",
+        f"La peticion excedio el tiempo maximo de "
+        f"{TIEMPO_MAXIMO_PETICION_S:.0f} s mientras calculaba "
+        f"{que_falta}, y se detuvo. No se escribio ningun resultado parcial.",
+        503, [{"campo": "tiempo_maximo_s", "problema": f"{TIEMPO_MAXIMO_PETICION_S:.0f}"}],
+        cabeceras={"Retry-After": "10"})
+
+
 def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
     """comprobaciones: dict nombre -> función sin argumentos que lanza si falla."""
     app = Flask(nombre)
@@ -162,6 +188,7 @@ def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
         # completa en la bitacora con un solo identificador.
         g.correlacion_id = (request.headers.get("X-Correlacion-Id")
                             or uuid.uuid4().hex[:16])
+        g.plazo = g.inicio + TIEMPO_MAXIMO_PETICION_S
 
     @app.after_request
     def _despues(resp):
