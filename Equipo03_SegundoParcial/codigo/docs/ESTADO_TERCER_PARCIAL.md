@@ -66,9 +66,9 @@ El panel central es **Administración → Servicios** (`/portal/` del administra
 | Tiempo de respuesta del sondeo | Tenemos |
 | Dependencias caídas | Tenemos, en el detalle de cada fila |
 | Servicios degradados | Tenemos |
-| Última verificación | A medias. La pantalla consulta en el momento. No guarda la hora de la corrida anterior. |
-| Número de errores | Tenemos en `monitoring-service`, `GET /api/v1/monitoreo/errores`, leído de `auditoria.bitacora`. Esa cifra no está dibujada en la pantalla Servicios. |
-| Historial de disponibilidad | A medias. `monitoring-service` guarda en Redis los reinicios de la última hora y los anota en la bitácora. No hay una gráfica de disponibilidad por día. |
+| Última verificación | Tenemos. La pantalla Servicios muestra la hora del centro de México de esa apertura. |
+| Número de errores | Tenemos en la misma pantalla, leído de `auditoria.bitacora` en 24 horas, y también en `GET /api/v1/monitoreo/errores`. |
+| Historial de disponibilidad | Tenemos en código. Cada apertura guarda una muestra en `auditoria.sonda_disponibilidad` (migración 022) y la pantalla resume 24 horas. En la VM aparece después de aplicar esa migración. |
 
 Fallos que hay que poder mostrar:
 
@@ -180,7 +180,7 @@ Esos tres flujos están en la rama integrada. En la VM de hoy el análisis compl
 | 6 | Buckets | Tenemos. |
 | 7 | URLs firmadas | Código y una firma manual. Falta la firma desde el portal ya desplegado. |
 | 8 | Health checks | Tenemos. |
-| 9 | Panel de monitoreo | Tenemos estado, latencia y dependencias. Falta historial en esa pantalla. El conteo de errores está en el servicio, no en la pantalla. |
+| 9 | Panel de monitoreo | Tenemos estado, latencia, versión, errores de 24 horas e historial. El historial en la VM exige la migración 022. |
 | 10 | Algoritmo complejo | Tenemos en la rama, con documento. No está en la VM. |
 | 11 | Datos de alto volumen | Generador e informe en la rama. La base de la VM sigue con la semilla de demostración. |
 | 12 | Pruebas Locust | Escenario e informe en la rama. Falta la corrida contra la URL pública y el CSV. |
@@ -190,14 +190,28 @@ Esos tres flujos están en la rama integrada. En la VM de hoy el análisis compl
 | 16 | Documentación del tercero | Tenemos los tres markdown (algoritmo, clientes, rendimiento) más este estado. Siguen repartidos. El expediente único de 32 apartados es de la entrega final. |
 | 17 | Demostración en la nube | El portal está vivo. La demo todavía no enseña algoritmo, Locust ni una evidencia subida por la aplicación. |
 
-## 10. Qué falta y ya está en GitHub
+## 10. Qué se cerró en código en esta pasada
+
+- El panel distingue disponible, degradado, sin dependencia (503) y caído.
+- `/health/ready` incluye `version_desplegada`. En la nube el compose la fija en `tercer-parcial-gcp`.
+- `documents-service` en GCP queda en modo `gcs`: sube al bucket `nexum-610248-evidencias` y firma por 10 minutos.
+- Migración `022_historial_disponibilidad.sql`, montada como `24_mig_022.sql` en un volumen nuevo.
+- `scripts/desplegar_gcp.sh` levanta el compose de la nube y aplica 019 a 022 sobre la base que ya existe.
+- `scripts/aplicar_migraciones_en_caliente.sh` hace solo esa parte de la base.
+- `infra/gcp/nexum-bucket.service` vuelve a montar el bucket si la VM se reinicia. Hay que instalarlo una vez.
+
+La reconexión de Redis de los servicios Node ya estaba en `comun-node`. Entra cuando la VM reconstruye esas imágenes. No había que reescribirla.
+
+## 11. Qué falta y ya está en GitHub
 
 Nada de esta lista hay que volver a programarlo ni que volver a juntarlo a mano. Está en `cursor/tercer-parcial-juan-pablo-1881`.
 
 - Paquete `analitica` y el `algorithms-service` que lo expone.
 - `exigir_tiempo` en la librería común.
 - Migraciones `019_cuatro_ojos_en_la_aprobacion.sql`, `020_la_jerarquia_se_impide_romper.sql` y `021_analisis_complejo_y_rendimiento.sql`.
-- `docker-compose.gcp.yml` y `infra/caddy/Caddyfile`.
+- `docker-compose.gcp.yml`, `infra/caddy/Caddyfile` y `infra/gcp/nexum-bucket.service`.
+- Migración `022_historial_disponibilidad.sql` y el panel con historial y errores.
+- `scripts/desplegar_gcp.sh` y `scripts/aplicar_migraciones_en_caliente.sh`.
 - Locust, `datos_masivos.py`, `rendimiento.py`, `validar_algoritmo.py` y `cuentas_de_carga.sql`.
 - Contratos JSON de análisis, tendencia y unidad priorizada.
 - Pruebas de analítica, procesos integrales, sonda de salud e índices.
@@ -218,28 +232,25 @@ En la VM, el usuario `DELL` y la carpeta del código (`Equipo03_SegundoParcial/c
 git fetch origin
 git checkout cursor/tercer-parcial-juan-pablo-1881
 git pull
-sudo docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d --build
+bash scripts/desplegar_gcp.sh
 ```
 
-Hay un detalle que el `git pull` no resuelve solo. PostgreSQL en Docker ejecuta los archivos de `docker-entrypoint-initdb.d` únicamente cuando el volumen está vacío. La VM ya tiene datos, así que las migraciones 019, 020 y 021 no se aplican al volver a levantar. Después del pull hay que ejecutarlas contra la base que ya existe, en ese orden, o aceptar borrar el volumen y dejar que el arranque en limpio las corra. Borrar el volumen también borra la semilla y cualquier evidencia ya subida a Postgres. El bucket no se borra con eso.
+Ese guion reconstruye las imágenes y aplica 019, 020, 021 y 022 sobre la base que ya existe. PostgreSQL no las corre solo: `docker-entrypoint-initdb.d` únicamente actúa cuando el volumen está vacío. Borrar el volumen también borra la semilla. El bucket no se borra con eso.
 
 `signer.json` no se baja de GitHub. Ya está en la VM. No hay que subirlo.
 
-## 11. Qué no se resuelve bajando la rama
+## 12. Qué no se resuelve bajando la rama
 
 Estas piezas no están esperando en otro branch. O se ejecutan, o se demuestran, o son de la entrega final.
 
-1. Aplicar 019, 020 y 021 sobre la base que ya corre en la VM.
-2. Reconstruir las imágenes, sobre todo `algorithms-service`, para que el paquete `analitica` quede instalado.
-3. Subir una evidencia desde el portal y abrir la URL firmada que devuelve la aplicación.
-4. Cargar el volumen con `scripts/datos_masivos.py` si la demo del algoritmo debe verse con 206 mil respuestas. Con la semilla de demostración el algoritmo corre, pero el informe dice que el ruido tapa la señal.
-5. Correr Locust contra https://34.41.26.94.sslip.io y guardar el CSV.
-6. Ensayar en la VM: un microservicio detenido, Redis, MongoDB, PostgreSQL, el almacén de archivos y una petición que pasa de 20 segundos. Mostrar el panel y el log, reiniciar y comprobar que no se escribió un resultado a medias.
-7. Exportar `VERSION_DESPLIEGUE` al levantar, para que la sonda no diga `local` en la nube.
-8. Volver a montar el bucket si la VM se reinicia. gcsfuse no está en `fstab`.
-9. Historial de disponibilidad dibujado en el panel web. Hoy el historial de reinicios está en Redis y en la bitácora, no en la pantalla Servicios. Eso sería código nuevo. Para el tercer parcial se puede mostrar el endpoint de errores y la pantalla actual, y decirlo así.
-10. APK, instalador de escritorio, video, presentación, expediente único y la reflexión individual. Son de la entrega final. La reflexión la entrega cada quien. Quien no la entregue queda en cero en esa parte, aunque el repositorio esté completo.
+1. Correr `bash scripts/desplegar_gcp.sh` en la VM. Eso reconstruye las imágenes, incluida `algorithms-service`, y aplica 019, 020, 021 y 022.
+2. Subir una evidencia desde el portal y abrir la URL firmada que devuelve la aplicación.
+3. Cargar el volumen con `scripts/datos_masivos.py` si la demo del algoritmo debe verse con 206 mil respuestas. Con la semilla de demostración el algoritmo corre, pero el informe dice que el ruido tapa la señal.
+4. Correr Locust contra https://34.41.26.94.sslip.io y guardar el CSV.
+5. Ensayar en la VM: un microservicio detenido, Redis, MongoDB, PostgreSQL, el almacén de archivos y una petición que pasa de 20 segundos. Mostrar el panel y el log, reiniciar y comprobar que no se escribió un resultado a medias.
+6. Instalar una vez el servicio `infra/gcp/nexum-bucket.service` si quieres que el bucket se monte solo al reiniciar la VM. `VERSION_DESPLIEGUE` ya queda en `tercer-parcial-gcp` por el compose.
+7. APK, instalador de escritorio, video, presentación, expediente único y la reflexión individual. Son de la entrega final. La reflexión la escribes y la entregas tú. Quien no la entregue queda en cero en esa parte, aunque el repositorio esté completo.
 
-## 12. Lectura corta
+## 13. Lectura corta
 
-El tercer parcial, como código, ya está junto en una rama. La nube ya tiene el portal, el firewall, el certificado, el bucket y los 24 servicios del código anterior. Lo que sigue para que la aplicación quede una sola es bajar `cursor/tercer-parcial-juan-pablo-1881`, reconstruir con el compose de GCP y aplicar las tres migraciones nuevas a la base que ya existe. Locust contra la URL pública, la carga masiva y la pasada de fallos en vivo son ejecuciones, no commits que falten. El video y la reflexión no forman parte de ese pull.
+El tercer parcial, como código de los cuatro integrantes, ya está junto en `cursor/tercer-parcial-juan-pablo-1881`. La nube ya tiene el portal, el firewall, el certificado y el bucket, con el código anterior. Lo que sigue es bajar esa rama en la laptop y en la VM, y en la VM correr `scripts/desplegar_gcp.sh`. Locust contra la URL pública, la carga masiva y la pasada de fallos en vivo son ejecuciones. El video, la presentación y la reflexión individual no forman parte de ese pull.

@@ -63,6 +63,7 @@ services:
       - ../../db/migraciones/019_cuatro_ojos_en_la_aprobacion.sql:/docker-entrypoint-initdb.d/21_mig_019.sql:ro
       - ../../db/migraciones/020_la_jerarquia_se_impide_romper.sql:/docker-entrypoint-initdb.d/22_mig_020.sql:ro
       - ../../db/migraciones/021_analisis_complejo_y_rendimiento.sql:/docker-entrypoint-initdb.d/23_mig_021.sql:ro
+      - ../../db/migraciones/022_historial_disponibilidad.sql:/docker-entrypoint-initdb.d/24_mig_022.sql:ro
       # Los permisos van DESPUÉS de las migraciones: varias crean
       # tablas y columnas sobre las que este script otorga
       # privilegios.

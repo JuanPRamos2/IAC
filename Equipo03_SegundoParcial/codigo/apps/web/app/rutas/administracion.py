@@ -11,6 +11,7 @@ operador por cuál de las dos vías obtuvo los datos, para que durante la
 demostración se pueda apagar el microservicio y ver que el portal aguanta.
 """
 import os
+from datetime import datetime, timedelta, timezone
 
 import requests
 from flask import (Blueprint, current_app, flash, g, redirect, render_template,
@@ -263,10 +264,95 @@ def permisos():
                            permisos=permisos_lista, matriz=matriz)
 
 
+def _clasificar_sonda(respuesta):
+    """Separa proceso caído, dependencia esencial caída y degradado.
+
+    Un 503 con cuerpo es un servicio vivo que dice qué le falta. Tratarlo
+    como degradado escondía esa diferencia en el panel: el operador no
+    sabía si había que reiniciar el contenedor o revisar la base.
+    """
+    cuerpo = {}
+    try:
+        cuerpo = respuesta.json()
+    except Exception:
+        cuerpo = {}
+    bruto = (cuerpo.get("estado") or "").lower()
+    if respuesta.status_code == 200 and bruto == "degradado":
+        estado = "DEGRADADO"
+    elif respuesta.status_code == 200:
+        estado = "DISPONIBLE"
+    elif respuesta.status_code == 503 or bruto == "no_listo":
+        estado = "NO_LISTO"
+    else:
+        estado = "DEGRADADO"
+    if cuerpo.get("falta"):
+        detalle = "falta: " + ", ".join(cuerpo["falta"])
+    elif cuerpo.get("degradado_por"):
+        detalle = "degradado por: " + ", ".join(cuerpo["degradado_por"])
+    else:
+        detalle = cuerpo.get("estado") or ""
+    return estado, detalle, cuerpo.get("dependencias") or {}, cuerpo.get("version_desplegada") or ""
+
+
+def _guardar_sondas(filas):
+    """Deja el sondeo en la base. Sin la migración 022 el panel sigue igual."""
+    try:
+        with cursor(commit=True) as cur:
+            for fila in filas:
+                cur.execute(
+                    "INSERT INTO auditoria.sonda_disponibilidad "
+                    "(servicio, estado, latencia_ms, detalle) VALUES (%s,%s,%s,%s)",
+                    (fila["servicio"], fila["estado"], fila["ms"],
+                     (fila["detalle"] or "")[:200]))
+    except Exception:
+        current_app.logger.info(
+            "Historial de disponibilidad no disponible; aplica la migracion 022.")
+
+
+def _historial_24h():
+    try:
+        filas = consultar(
+            "SELECT servicio, count(*) AS muestras, "
+            "       count(*) FILTER (WHERE estado = 'DISPONIBLE') AS disponibles, "
+            "       count(*) FILTER (WHERE estado = 'DEGRADADO') AS degradados, "
+            "       count(*) FILTER (WHERE estado = 'NO_LISTO') AS sin_dependencia, "
+            "       count(*) FILTER (WHERE estado = 'CAIDO') AS caidos, "
+            "       max(momento) AS ultima "
+            "  FROM auditoria.sonda_disponibilidad "
+            " WHERE momento > now() - interval '24 hours' "
+            " GROUP BY servicio ORDER BY servicio")
+    except Exception:
+        return []
+    salida = []
+    for fila in filas:
+        muestras = fila["muestras"] or 0
+        fila = dict(fila)
+        fila["disponibilidad"] = round(100.0 * (fila["disponibles"] or 0) / muestras, 1) if muestras else 0
+        salida.append(fila)
+    return salida
+
+
+def _errores_24h():
+    try:
+        total = consultar_uno(
+            "SELECT count(*) AS n FROM auditoria.bitacora "
+            " WHERE fecha_hora > now() - interval '24 hours' "
+            "   AND resultado <> 'EXITO'")
+        por_accion = consultar(
+            "SELECT accion, resultado, count(*) AS n, max(fecha_hora) AS ultimo "
+            "  FROM auditoria.bitacora "
+            " WHERE fecha_hora > now() - interval '24 hours' "
+            "   AND resultado <> 'EXITO' "
+            " GROUP BY accion, resultado ORDER BY n DESC LIMIT 8")
+    except Exception:
+        return None, []
+    return (total or {}).get("n", 0), por_accion
+
+
 @bp.get("/servicios")
 @requiere_permiso("PARAMETRO_ADMIN", "USUARIO_ADMIN")
 def servicios():
-    """Monitoreo de los microservicios: disponible, degradado o caído.
+    """Monitoreo de los microservicios: disponible, degradado, sin dependencia o caído.
 
     Consulta el endpoint de salud de cada uno. Es lo que permite demostrar
     que el sistema web sigue operando con los microservicios apagados.
@@ -334,23 +420,21 @@ def servicios():
     filas = []
     for nombre, responsable, lenguaje, url in catalogo:
         inicio = time.perf_counter()
-        estado, detalle, dependencias = "CAIDO", "", {}
+        estado, detalle, dependencias, version = "CAIDO", "", {}, ""
         try:
             r = requests.get(f"{url}/health/ready", timeout=_tiempo_limite())
-            cuerpo = r.json()
-            dependencias = cuerpo.get("dependencias", {})
-            # 200 es listo; 503 es vivo pero con una dependencia caida, que
-            # NO es lo mismo que estar muerto: el proceso responde y puede
-            # decir que le falta. Distinguirlo es lo que permite saber si
-            # hay que reiniciar el servicio o revisar la base.
-            estado = "DISPONIBLE" if r.status_code == 200 else "DEGRADADO"
-            detalle = cuerpo.get("estado", "")
+            estado, detalle, dependencias, version = _clasificar_sonda(r)
         except Exception as e:
             detalle = str(e)[:120]
         filas.append({
             "servicio": nombre, "responsable": responsable, "lenguaje": lenguaje,
-            "url": url, "estado": estado, "detalle": detalle,
+            "url": url, "estado": estado, "detalle": detalle, "version": version,
             "ms": round((time.perf_counter() - inicio) * 1000, 1),
             "dependencias": dependencias,
         })
-    return render_template("admin/servicios.html", filas=filas)
+    _guardar_sondas(filas)
+    errores_n, errores = _errores_24h()
+    verificacion = datetime.now(timezone(timedelta(hours=-6))).strftime("%Y-%m-%d %H:%M:%S")
+    return render_template("admin/servicios.html", filas=filas,
+                           verificacion=verificacion, errores_n=errores_n,
+                           errores=errores, historial=_historial_24h())

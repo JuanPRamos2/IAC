@@ -280,7 +280,8 @@ def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
         else:
             estado, codigo = "listo", 200
 
-        cuerpo = {"servicio": nombre, "estado": estado, "dependencias": detalle}
+        cuerpo = {"servicio": nombre, "estado": estado, "dependencias": detalle,
+                  "version_desplegada": os.environ.get("VERSION_DESPLIEGUE") or "local"}
         if opcionales_mal:
             cuerpo["degradado_por"] = sorted(opcionales_mal)
         if esenciales_mal:
