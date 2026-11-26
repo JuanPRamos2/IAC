@@ -119,12 +119,14 @@
   <xs:element name="registro_respuesta">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="resultado"        type="xs:string"/>
-        <xs:element name="mensaje"          type="xs:string"/>
-        <xs:element name="campania_id"      type="xs:string"/>
-        <xs:element name="cuestionario_id"  type="xs:string"/>
-        <xs:element name="total_respuestas" type="xs:nonNegativeInteger"/>
-        <xs:element name="fecha_registro"   type="xs:dateTime"/>
+        <xs:element name="estado"              type="xs:string" minOccurs="0"/>
+        <xs:element name="resultado"           type="xs:string" minOccurs="0"/>
+        <xs:element name="mensaje"             type="xs:string"/>
+        <xs:element name="campania_id"         type="xs:string"/>
+        <xs:element name="cuestionario_id"     type="xs:string"/>
+        <xs:element name="total_respuestas"    type="xs:nonNegativeInteger"/>
+        <xs:element name="documento_pendiente" type="xs:boolean" minOccurs="0"/>
+        <xs:element name="fecha_registro"      type="xs:dateTime" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

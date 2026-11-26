@@ -17,6 +17,9 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SALIDA = os.path.join(RAIZ, "contratos", "json")
+COMUN_PY = os.path.join(RAIZ, "apps", "microservicios", "comun")
+if COMUN_PY not in sys.path:
+    sys.path.insert(0, COMUN_PY)
 
 SERVICIOS = {
     "auth-service": "svc_auth_gen",
@@ -26,16 +29,84 @@ SERVICIOS = {
     "queries-service": "svc_queries_gen",
     "reports-service": "svc_reports_gen",
     "algorithms-service": "svc_alg_gen",
+    "audit-service": "svc_audit_gen",
+    "configuration-service": "svc_config_gen",
+    "consent-service": "svc_consent_gen",
+    "data-governance-service": "svc_datagov_gen",
+    "export-service": "svc_export_gen",
+    "integration-service": "svc_integ_gen",
+    "interventions-service": "svc_interv_gen",
+    "monitoring-service": "svc_monit_gen",
+    "privacy-service": "svc_priv_gen",
+    "sync-service": "svc_sync_gen",
+    "trends-service": "svc_trends_gen",
 }
 
-# catalog-service y main-process-service son de Node: su contrato vive en un
-# openapi.yaml estatico en lugar de construirse en Python. Se leen del
-# archivo para que sus esquemas salgan en el mismo lote y con la misma
-# conversion, en vez de quedar fuera del paquete de contratos.
+# Servicios en Node: su contrato vive en openapi.yaml junto al servicio.
+# Se leen del archivo para que sus esquemas salgan en el mismo lote y con
+# la misma conversion a JSON Schema draft 2020-12.
 SERVICIOS_YAML = {
     "catalog-service": "openapi.yaml",
     "main-process-service": "openapi.yaml",
+    "survey-service": "openapi.yaml",
+    "indicators-service": "openapi.yaml",
+    "support-service": "openapi.yaml",
+    "organizational-service": "openapi.yaml",
 }
+
+
+def _crear_cliente_mongo_memoria():
+    """Shim ligero en memoria para importar servicios cuando falta mongomock/pymongo."""
+    class _ColeccionMemoria:
+        def create_index(self, *args, **kwargs):
+            return "idx_memoria"
+
+        def find(self, *args, **kwargs):
+            return []
+
+        def find_one(self, *args, **kwargs):
+            return None
+
+    class _BaseMemoria:
+        def __getitem__(self, _nombre):
+            return _ColeccionMemoria()
+
+    class _AdminMemoria:
+        def command(self, *args, **kwargs):
+            return {"ok": 1}
+
+    class _ClienteMemoria:
+        def __init__(self, *args, **kwargs):
+            self.admin = _AdminMemoria()
+
+        def __getitem__(self, _nombre):
+            return _BaseMemoria()
+
+    return _ClienteMemoria
+
+
+def _asegurar_mongo_en_memoria():
+    """Sustituye MongoDB en memoria para importar los servicios Python sin BD viva."""
+    try:
+        import pymongo  # noqa: F401
+    except ModuleNotFoundError:
+        import types
+        modulo_pymongo = types.ModuleType("pymongo")
+        modulo_pymongo.ASCENDING = 1
+        modulo_pymongo.DESCENDING = -1
+        modulo_pymongo.MongoClient = _crear_cliente_mongo_memoria()
+        sys.modules["pymongo"] = modulo_pymongo
+
+    try:
+        import mongomock
+        cliente = mongomock.MongoClient()
+    except ModuleNotFoundError:
+        cliente = _crear_cliente_mongo_memoria()()
+
+    import comun.mongo as m
+    m.obtener_cliente = lambda: cliente
+    m.base = lambda: cliente["bienestar"]
+    m.ping = lambda: None
 
 
 def cargar_contrato(servicio, alias):
@@ -53,7 +124,8 @@ def cargar_contrato(servicio, alias):
         return cliente.get("/openapi.json").get_json()
     finally:
         sys.path.remove(carpeta)
-        sys.modules.pop("contrato", None)
+        for mod_local in ("contrato", "archivos", "preferencias"):
+            sys.modules.pop(mod_local, None)
 
 
 def cargar_contrato_yaml(servicio, archivo):
@@ -112,13 +184,8 @@ reescribir_refs = convertir
 
 def main():
     os.makedirs(SALIDA, exist_ok=True)
-    # mongomock solo para poder importar los servicios que usan MongoDB.
-    import mongomock
-    import comun.mongo as m
-    cliente = mongomock.MongoClient()
-    m.obtener_cliente = lambda: cliente
-    m.base = lambda: cliente["bienestar"]
-    m.ping = lambda: None
+    # Sustitucion en memoria para poder importar los servicios que usan MongoDB.
+    _asegurar_mongo_en_memoria()
 
     contratos = [(s, cargar_contrato(s, a)) for s, a in SERVICIOS.items()]
     contratos += [(s, cargar_contrato_yaml(s, a))

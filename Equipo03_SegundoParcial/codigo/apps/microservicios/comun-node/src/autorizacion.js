@@ -7,6 +7,8 @@
  * (usuarios.permiso y usuarios.perfil_permiso), de modo que el sistema web
  * y los ocho microservicios autorizan con la misma tabla.
  */
+import { registrarBitacora } from "./auditoria.js";
+import { ACCIONES } from "./catalogos-auditoria.js";
 import { ErrorApi } from "./errores.js";
 import { consultar } from "./postgres.js";
 
@@ -31,6 +33,12 @@ export function autorizar(...codigos) {
       const permisos = await permisosDe(req.actor.perfil_id);
       req.permisos = permisos;
       if (!codigos.some((c) => permisos.has(c))) {
+        // Se dispara de forma no bloqueante para dejar evidencia del intento
+        // rechazado sin retrasar ni romper el 403 ante un fallo de auditoria.
+        registrarBitacora(req, ACCIONES.ACCESO_DENEGADO, "RECHAZADO_PERMISO", {
+          tipo_recurso: "ENDPOINT",
+          recurso_id: req?.originalUrl || req?.path || null,
+        }).catch(() => {});
         throw new ErrorApi("SIN_PERMISO",
           `El perfil ${req.actor.perfil || ""} no tiene ninguno de los ` +
           `permisos requeridos: ${codigos.join(", ")}.`, 403);

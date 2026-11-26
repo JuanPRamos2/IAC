@@ -67,6 +67,8 @@ services:
       JWT_MINUTOS: ${JWT_MINUTOS:-15}
       NIVEL_BITACORA: ${NIVEL_BITACORA:-INFO}
       MOSTRAR_ERRORES: ${MOSTRAR_ERRORES:-false}
+      VERSION_DESPLIEGUE: ${VERSION_DESPLIEGUE:-local}
+      NOTIFICATIONS_SERVICE_URL: ${NOTIFICATIONS_SERVICE_URL:-http://notifications-service:8000}
     depends_on:
       datos:
         condition: service_healthy
@@ -138,7 +140,12 @@ services:
       context: ../../apps/microservicios
       dockerfile: documents-service/Dockerfile
     image: bienestar-nexum/documents-service:${VERSION:-local}
-    environment: *entorno_comun
+    environment:
+      <<: *entorno_comun
+      ALMACEN_EVIDENCIAS: /var/lib/bienestar/evidencias
+      ALMACEN_MODO: ${ALMACEN_MODO:-local}
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      URL_FIRMADA_TTL_SEG: ${URL_FIRMADA_TTL_SEG:-300}
     depends_on:
       datos:
         condition: service_healthy

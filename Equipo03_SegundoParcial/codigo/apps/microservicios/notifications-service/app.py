@@ -18,8 +18,12 @@ Dos restricciones del dominio que el código hace cumplir:
    riesgo alto".
 """
 import datetime as dt
+import hashlib
+import hmac
+import json
 import os
 import re
+import time
 import uuid
 
 from flask import g, request
@@ -27,9 +31,10 @@ from flask import g, request
 from comun import (ErrorApi, VERSION_API, crear_servicio, cuerpo_peticion, limite_consumo,
                    obtener_redis, pagina, responder, requiere_permiso,
                    requiere_token, sobre_pagina)
-from comun.datos import consultar_uno, cursor, ping as ping_pg
+from comun.datos import consultar, consultar_uno, cursor, ping as ping_pg
 from comun.mongo import (ASCENDING, DESCENDING, asegurar_indices, base,
                          ping as ping_mongo, verificar_sin_identidad)
+from comun.seguridad import JWT_SECRETO
 
 os.environ.setdefault("NOMBRE_SERVICIO", "notifications-service")
 
@@ -42,6 +47,7 @@ TIPOS = {
     # Los dos que nombra la especificacion y no existian.
     "SOLICITUD_APOYO_ACTUALIZADA": "Cambio el estado de tu solicitud de apoyo",
     "CONFIRMACION_RECIBIDA": "Se registro tu respuesta",
+    "RECUPERACION_ACCESO": "Se genero un codigo temporal para recuperar tu acceso",
 }
 
 # Una notificacion con una cifra de bienestar seria una fuga del mecanismo
@@ -128,12 +134,7 @@ def crear_indices():
 
 
 # ----------------------------------------------------------------- envío
-@app.post(BASE)
-@requiere_permiso("CAMPANIA_ADMIN", "INTERVENCION_APROBAR", "PARAMETRO_ADMIN")
-def enviar():
-    limite_consumo(maximo=60)
-    cuerpo = cuerpo_peticion()
-
+def _validar_y_despachar(cuerpo, enviada_por, error_si_todos_silenciados=True):
     problemas = []
     tipo = (cuerpo.get("tipo") or "").strip().upper()
     if tipo not in TIPOS:
@@ -146,9 +147,12 @@ def enviar():
     if len(mensaje) < 10:
         problemas.append({"campo": "mensaje", "problema": "minimo 10 caracteres"})
 
-    destinatarios = cuerpo.get("destinatarios") or []
+    destinatarios = list(cuerpo.get("destinatarios") or [])
     unidad = cuerpo.get("unidad_organizacional_id")
-    if not destinatarios and not unidad:
+    metadata = cuerpo.get("metadata") if isinstance(cuerpo.get("metadata"), dict) else {}
+    seudonimo = cuerpo.get("seudonimo_id") or metadata.get("seudonimo_id")
+
+    if not destinatarios and not unidad and not seudonimo:
         problemas.append({"campo": "destinatarios",
                           "problema": "indica destinatarios o una unidad"})
     if problemas:
@@ -173,25 +177,33 @@ def enviar():
                              "WHERE unidad_organizacional_id = %s AND activa", (unidad,)):
             raise ErrorApi("UNIDAD_NO_EXISTE",
                            f"La unidad {unidad} no existe o esta inactiva.", 422)
-        from comun.datos import consultar
         filas = consultar(
             "SELECT up.usuario_id FROM usuarios.usuario_perfil up "
             "JOIN usuarios.usuario u USING (usuario_id) "
             "WHERE u.activo AND (up.unidad_alcance_id = %s OR up.unidad_alcance_id IS NULL)",
             (unidad,))
         destinatarios = sorted({f["usuario_id"] for f in filas} | set(destinatarios))
+    elif not destinatarios and seudonimo:
+        fila_seudo = consultar_uno(
+            "SELECT usuario_id FROM portal.v_participacion_propia WHERE seudonimo_id = %s",
+            (seudonimo,))
+        if fila_seudo and fila_seudo.get("usuario_id"):
+            destinatarios = [fila_seudo["usuario_id"]]
 
+    destinatarios = sorted({str(d).strip() for d in destinatarios if d})
     if not destinatarios:
-        raise ErrorApi("SIN_DESTINATARIOS",
-                       "No hay usuarios activos que puedan recibir esta notificacion.", 422)
+        if error_si_todos_silenciados:
+            raise ErrorApi("SIN_DESTINATARIOS",
+                           "No hay usuarios activos que puedan recibir esta notificacion.", 422)
+        return {"lote_id": None, "tipo": tipo, "enviadas": 0, "omitidas": 0,
+                "omitidos": [], "push_encolados": 0, "destinatarios": []}, 200
 
     ahora = dt.datetime.now(dt.timezone.utc)
     expira = ahora + dt.timedelta(days=int(os.environ.get("NOTIF_DIAS", "90")))
     lote = f"LOTE-{uuid.uuid4().hex[:10].upper()}"
 
-    # Las preferencias de todos los destinatarios, en UNA consulta. Una
-    # por destinatario convertiria un envio a una unidad de 200 personas
-    # en 200 viajes a MongoDB.
+    metadata_limpia = {k: v for k, v in metadata.items() if k != "seudonimo_id"}
+
     prefs_por_usuario = {
         d["usuario_id"]: _prefs.normalizar(d.get("preferencias"))
         for d in base()["preferencias_notificacion"].find(
@@ -204,7 +216,7 @@ def enviar():
 
     documentos, cola, omitidos = [], [], []
     for destino in destinatarios:
-        documentos.append({
+        doc_notif = {
             "notificacion_id": f"NTF-{uuid.uuid4().hex[:12].upper()}",
             "lote_id": lote,
             "tipo": tipo,
@@ -215,44 +227,45 @@ def enviar():
             "destinatario_usuario_id": destino,
             "leida": False,
             "fecha_lectura": None,
-            "enviada_por": (g.actor or {}).get("sub"),
+            "enviada_por": enviada_por,
             "fecha_creacion": ahora,
             "fecha_expiracion": expira,
-        })
-    # La bandeja se respeta como preferencia, pero con un limite: hay
-    # tipos que la persona no puede apagarse a si misma. Un aviso de
-    # consentimiento por vencer es una obligacion del programa hacia ella,
-    # no una cortesia, y dejar de enviarlo porque silencio el tipo la
-    # dejaria sin enterarse de algo que le afecta.
-    OBLIGATORIOS = {"CONSENTIMIENTO_POR_VENCER"}
+        }
+        if metadata_limpia:
+            doc_notif["metadata"] = metadata_limpia
+        documentos.append(doc_notif)
+
+    obligatorios = {"CONSENTIMIENTO_POR_VENCER", "RECUPERACION_ACCESO"}
     entregables = []
     for documento in documentos:
         destino = documento["destinatario_usuario_id"]
         preferencias = prefs_por_usuario.get(destino, _prefs.normalizar(None))
-        if (tipo not in OBLIGATORIOS
+        if (tipo not in obligatorios
                 and tipo in preferencias.get("tipos_silenciados", [])):
             omitidos.append({"usuario_id": destino,
                              "motivo": f"el usuario silencio el tipo {tipo}"})
             continue
         entregables.append(documento)
 
-        quiere, motivo = _prefs.debe_encolar_push(preferencias, tipo)
+        quiere, _ = _prefs.debe_encolar_push(preferencias, tipo)
         tokens = dispositivos_por_usuario.get(destino) or []
         if quiere and tokens:
             cola.append(_prefs.sobre_push(documento, tokens))
 
     documentos = entregables
     if not documentos:
-        raise ErrorApi("TODOS_SILENCIARON",
-                       "Todos los destinatarios silenciaron este tipo de "
-                       "notificacion. No se envio nada.", 422)
+        if error_si_todos_silenciados:
+            raise ErrorApi("TODOS_SILENCIARON",
+                           "Todos los destinatarios silenciaron este tipo de "
+                           "notificacion. No se envio nada.", 422)
+        return {"lote_id": lote, "tipo": tipo, "enviadas": 0,
+                "omitidas": len(omitidos), "omitidos": omitidos[:50],
+                "push_encolados": 0, "destinatarios": []}, 200
 
     base()["notificaciones"].insert_many(documentos)
     if cola:
         base()["cola_push"].insert_many(cola)
 
-    # Contador por usuario en Redis: consultar "cuantas sin leer" en cada
-    # carga de pantalla no debe costar una consulta a MongoDB.
     try:
         r = obtener_redis()
         tuberia = r.pipeline()
@@ -263,18 +276,72 @@ def enviar():
         app.logger.warning("No se pudo actualizar el contador en Redis")
 
     _bitacora("CATALOGO_MODIFICADO", "EXITO", recurso=lote)
-    return responder({"lote_id": lote, "tipo": tipo,
-                      "enviadas": len(documentos),
-                      # Se informa a quien NO se le envio y por que. Sin
-                      # esto, quien manda un aviso a una unidad cree que
-                      # llego a las 200 personas y llego a 180.
-                      "omitidas": len(omitidos),
-                      "omitidos": omitidos[:50],
-                      "push_encolados": len(cola),
-                      "destinatarios": [d["destinatario_usuario_id"]
-                                        for d in documentos][:50],
-                      "expira": expira.isoformat()},
-                     201, raiz="notificaciones_enviadas")
+    return {"lote_id": lote, "tipo": tipo,
+            "enviadas": len(documentos),
+            "omitidas": len(omitidos),
+            "omitidos": omitidos[:50],
+            "push_encolados": len(cola),
+            "destinatarios": [d["destinatario_usuario_id"] for d in documentos][:50],
+            "expira": expira.isoformat()}, 201
+
+
+@app.post(BASE)
+@requiere_permiso("CAMPANIA_ADMIN", "INTERVENCION_APROBAR", "PARAMETRO_ADMIN")
+def enviar():
+    limite_consumo(maximo=60)
+    cuerpo = cuerpo_peticion()
+    resultado, codigo = _validar_y_despachar(
+        cuerpo,
+        enviada_por=(g.actor or {}).get("sub"),
+        error_si_todos_silenciados=True,
+    )
+    return responder(resultado, codigo, raiz="notificaciones_enviadas")
+
+
+@app.post(f"{BASE}/evento-interno")
+def evento_interno():
+    """Recibe notificaciones internas firmadas servicio-a-servicio con HMAC-SHA256."""
+    ts_str = (request.headers.get("X-Servicio-Timestamp") or "").strip()
+    firma = (request.headers.get("X-Servicio-Firma") or "").strip()
+    if not ts_str or not firma:
+        raise ErrorApi("FIRMA_AUSENTE",
+                       "Faltan cabeceras de autenticacion entre servicios.", 401)
+    try:
+        ts = int(ts_str)
+    except ValueError:
+        raise ErrorApi("FIRMA_INVALIDA",
+                       "El encabezado X-Servicio-Timestamp es invalido.", 401)
+    if abs(time.time() - ts) > 60:
+        raise ErrorApi("TIMESTAMP_EXPIRADO",
+                       "La marca de tiempo de la firma excedio la tolerancia de 60s.", 401)
+
+    secreto = os.environ.get("JWT_SECRETO") or JWT_SECRETO
+    if not secreto:
+        raise ErrorApi("CONFIGURACION", "Falta JWT_SECRETO en este ambiente", 500)
+
+    crudo = request.get_data() or b""
+    esperada = hmac.new(
+        secreto.encode("utf-8"),
+        f"{ts_str}.".encode("utf-8") + crudo,
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(firma.lower(), esperada.lower()):
+        raise ErrorApi("FIRMA_INVALIDA",
+                       "La firma HMAC-SHA256 del evento interno no es valida.", 401)
+
+    try:
+        cuerpo = json.loads(crudo.decode("utf-8") or "{}")
+    except Exception:
+        raise ErrorApi("JSON_INVALIDO", "El cuerpo del evento interno no es JSON valido.", 400)
+    if not isinstance(cuerpo, dict):
+        raise ErrorApi("VALIDACION", "El cuerpo del evento debe ser un objeto JSON.", 422)
+
+    resultado, codigo = _validar_y_despachar(
+        cuerpo,
+        enviada_por="sistema-interno",
+        error_si_todos_silenciados=False,
+    )
+    return responder(resultado, codigo, raiz="notificaciones_enviadas")
 
 
 # --------------------------------------------------- preferencias

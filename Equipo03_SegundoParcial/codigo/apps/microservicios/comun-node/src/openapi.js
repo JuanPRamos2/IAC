@@ -154,56 +154,113 @@ SwaggerUIBundle({url:"/openapi.json",dom_id:"#swagger",deepLinking:true,
 </script>
 </body></html>`;
 
+const ESPACIO_XML = "http://nexum.com.mx/bienestar/v1";
+const METODOS_HTTP = new Set(["get", "post", "put", "patch", "delete", "options", "head"]);
+
+export const PARAM_FORMATO = {
+  name: "formato",
+  in: "query",
+  required: false,
+  schema: { type: "string", enum: ["json", "xml"] },
+  description: "Alternativa al encabezado Accept para solicitar JSON o XML.",
+};
+
+export function contenidoDual(refEsquema, raizXml, cuerpoXml) {
+  return {
+    "application/json": {
+      schema: { $ref: `#/components/schemas/${refEsquema}` },
+    },
+    "application/xml": {
+      schema: { $ref: `#/components/schemas/${refEsquema}` },
+      example: [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        `<${raizXml} xmlns="${ESPACIO_XML}">`,
+        cuerpoXml,
+        `</${raizXml}>`,
+      ].join("\n"),
+    },
+  };
+}
+
+function respuestaErrorOpenApi(desc, codigoEjemplo, mensajeEjemplo) {
+  return {
+    description: desc,
+    content: {
+      "application/json": {
+        schema: { $ref: "#/components/schemas/Error" },
+        example: {
+          error: {
+            codigo: codigoEjemplo,
+            mensaje: mensajeEjemplo,
+            detalles: [],
+            correlacion_id: "a1b2c3d4e5f60718",
+          },
+        },
+      },
+      "application/xml": {
+        schema: { $ref: "#/components/schemas/Error" },
+        example: [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          `<error_respuesta xmlns="${ESPACIO_XML}">`,
+          "  <error>",
+          `    <codigo>${codigoEjemplo}</codigo>`,
+          `    <mensaje>${mensajeEjemplo}</mensaje>`,
+          "    <detalles/>",
+          "    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>",
+          "  </error>",
+          "</error_respuesta>",
+        ].join("\n"),
+      },
+    },
+  };
+}
+
+export const REF_RESPUESTAS_ERROR = {
+  "400": { $ref: "#/components/responses/SolicitudInvalida" },
+  "401": { $ref: "#/components/responses/NoAutenticado" },
+  "403": { $ref: "#/components/responses/SinPermiso" },
+  "404": { $ref: "#/components/responses/NoEncontrado" },
+  "422": { $ref: "#/components/responses/ValidacionFallida" },
+  "429": { $ref: "#/components/responses/LimiteExcedido" },
+  "500": { $ref: "#/components/responses/ErrorInterno" },
+};
+
 export const RESPUESTAS_COMUNES_OPENAPI = {
-  SolicitudInvalida: {
-    description: "Parametro mal formado o invalido.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  NoAutenticado: {
-    description: "Falta el token, es invalido, expiro o la sesion fue revocada.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  SinPermiso: {
-    description: "El perfil no tiene el permiso necesario.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  NoEncontrado: {
-    description: "El recurso solicitado no existe.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  ValidacionFallida: {
-    description: "La solicitud trae campos invalidos.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  LimiteExcedido: {
-    description: "Se rebaso el limite de consumo.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
-  ErrorInterno: {
-    description: "Falla no prevista del servicio.",
-    content: {
-      "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-      "application/xml": { schema: { $ref: "#/components/schemas/Error" } },
-    },
-  },
+  SolicitudInvalida: respuestaErrorOpenApi(
+    "Parametro mal formado.",
+    "PARAMETRO_INVALIDO",
+    "'tamano' debe estar entre 1 y 100."
+  ),
+  NoAutenticado: respuestaErrorOpenApi(
+    "Falta el token, es invalido, expiro o la sesion fue revocada.",
+    "SESION_REVOCADA",
+    "La sesion fue cerrada o revocada."
+  ),
+  SinPermiso: respuestaErrorOpenApi(
+    "El perfil no tiene el permiso necesario.",
+    "SIN_PERMISO",
+    "El perfil Colaborador no tiene ninguno de los permisos requeridos."
+  ),
+  NoEncontrado: respuestaErrorOpenApi(
+    "El recurso no existe.",
+    "RECURSO_NO_ENCONTRADO",
+    "La ruta solicitada no existe en este servicio."
+  ),
+  ValidacionFallida: respuestaErrorOpenApi(
+    "La solicitud trae campos invalidos. Se devuelven TODOS los problemas de una vez, no solo el primero.",
+    "VALIDACION",
+    "La solicitud tiene campos invalidos."
+  ),
+  LimiteExcedido: respuestaErrorOpenApi(
+    "Se rebaso el limite de consumo.",
+    "LIMITE_EXCEDIDO",
+    "Mas de 120 peticiones por 60 segundos."
+  ),
+  ErrorInterno: respuestaErrorOpenApi(
+    "Falla no prevista. Fuera de developer no se devuelve el detalle.",
+    "ERROR_INTERNO",
+    "Error interno del servicio. El evento quedo registrado."
+  ),
 };
 
 export const ESQUEMA_ERROR_BASE = {
@@ -216,22 +273,62 @@ export const ESQUEMA_ERROR_BASE = {
       properties: {
         codigo: { type: "string" },
         mensaje: { type: "string" },
-        detalles: { type: "array", items: { type: "object" } },
+        detalles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              campo: { type: "string" },
+              problema: { type: "string" },
+            },
+          },
+        },
         correlacion_id: { type: "string" },
       },
     },
   },
 };
 
-export function crearContratoOpenApi({ nombre, version = "1.0.0", descripcion = "", rutas = {}, esquemas = {} }) {
-  return {
+function normalizarRutasOpenApi(rutas = {}) {
+  const salida = {};
+  for (const [ruta, definicion] of Object.entries(rutas)) {
+    const ops = {};
+    for (const [clave, valor] of Object.entries(definicion || {})) {
+      if (METODOS_HTTP.has(clave.toLowerCase()) && valor && typeof valor === "object") {
+        ops[clave] = {
+          ...valor,
+          responses: {
+            ...REF_RESPUESTAS_ERROR,
+            ...(valor.responses || {}),
+          },
+        };
+      } else {
+        ops[clave] = valor;
+      }
+    }
+    salida[ruta] = ops;
+  }
+  return salida;
+}
+
+export function crearContratoOpenApi({ nombre, puerto, version = "1.0.0", descripcion = "", rutas = {}, esquemas = {} }) {
+  const contrato = {
     openapi: "3.0.3",
     info: {
       title: `${nombre} — Bienestar Nexum`,
       version,
       description: descripcion,
     },
-    paths: rutas,
+    ...(puerto !== undefined && puerto !== null && puerto !== ""
+      ? {
+          servers: [
+            { url: `http://localhost:${puerto}`, description: "Desarrollo local" },
+            { url: "/", description: "Mismo origen" },
+          ],
+        }
+      : {}),
+    security: [{ bearerAuth: [] }],
+    paths: normalizarRutasOpenApi(rutas),
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -248,6 +345,7 @@ export function crearContratoOpenApi({ nombre, version = "1.0.0", descripcion = 
       responses: RESPUESTAS_COMUNES_OPENAPI,
     },
   };
+  return contrato;
 }
 
 /** Monta /openapi.json, /docs y los estaticos de Swagger UI. */

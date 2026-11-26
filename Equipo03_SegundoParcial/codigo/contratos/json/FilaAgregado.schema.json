@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/FilaAgregado.schema.json",
+  "title": "FilaAgregado",
+  "description": "Una fila del archivo exportado. Las filas SUPRIMIDAS tambien salen, con valor_protegido nulo y su estado_publicacion: omitirlas haria leer «8 unidades» donde hubo 12.",
+  "properties": {
+    "campania_id": {
+      "example": "CAMP-2026-S4",
+      "type": "string"
+    },
+    "dimension": {
+      "type": "string"
+    },
+    "epsilon_aplicado": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "estado_publicacion": {
+      "description": "PUBLICADO, o el motivo por el que no (GRUPO_INSUFICIENTE, PRESUPUESTO_AGOTADO).",
+      "type": "string"
+    },
+    "mecanismo": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "precision_advertencia": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "unidad": {
+      "type": "string"
+    },
+    "unidad_organizacional_id": {
+      "example": "UO-CC-TURNO-B",
+      "type": "string"
+    },
+    "valor_protegido": {
+      "description": "Nulo cuando no se publico. NO es cero: es ausencia de dato. En CSV se escribe «—» y nunca una celda vacia, porque una celda vacia se suma como cero en una hoja de calculo y el promedio sale mas bajo que el real.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Exportacion": {
+      "properties": {
+        "epsilon_consumido": {
+          "description": "Siempre 0. Se lee de agregado.v_tablero_unidad, que son resultados ya publicados.",
+          "example": 0.0,
+          "type": "number"
+        },
+        "estado": {
+          "enum": [
+            "GENERADA",
+            "DESCARGADA",
+            "VENCIDA",
+            "RECHAZADA"
+          ],
+          "type": "string"
+        },
+        "exportacion_id": {
+          "example": "EXP-1A2B3C4D5E6F7A8B",
+          "type": "string"
+        },
+        "filas_publicadas": {
+          "type": "integer"
+        },
+        "filas_suprimidas": {
+          "description": "Se cuenta aparte a proposito. «Exporte 8 filas» y «exporte 8 de 12, 4 suprimidas» describen situaciones distintas.",
+          "type": "integer"
+        },
+        "formato": {
+          "enum": [
+            "json",
+            "xml",
+            "csv",
+            "pdf"
+          ],
+          "type": "string"
+        },
+        "sello_sha256": {
+          "description": "SHA-256 del archivo. Se recalcula al descargar sobre lo que se va a entregar: si no coincide, no se entrega, porque entregarlo con el sello viejo seria afirmar una integridad que no hay.",
+          "type": "string"
+        },
+        "vence_en": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "RechazoFila": {
+      "description": "Por que se rechazo una fila de la importacion. Se informa fila por fila: un «no se pudo importar» sin detalle obliga a adivinar, y quien sube el archivo no tiene como arreglarlo.",
+      "properties": {
+        "fila": {
+          "type": "integer"
+        },
+        "problema": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

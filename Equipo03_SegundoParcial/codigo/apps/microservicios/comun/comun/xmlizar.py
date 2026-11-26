@@ -142,12 +142,21 @@ def a_xml(datos: dict, raiz: str = "respuesta") -> str:
 # servicio pida, y eso lo hace el servicio.
 # ===========================================================================
 
+_PATRON_XXE = re.compile(r"<!\s*(DOCTYPE|ENTITY)\b", re.IGNORECASE)
+
+
 def de_xml(texto: str) -> dict:
     """Convierte el cuerpo XML de una petición en un diccionario.
 
-    Lanza ValueError si el documento no está bien formado, para que el
-    servicio responda 400 con un mensaje claro en lugar de 500.
+    Rechaza declaraciones DOCTYPE o ENTITY antes de invocar al parser como
+    defensa explícita contra ataques XXE / Billion Laughs.
+    Lanza ValueError si el documento es inseguro o no está bien formado, para
+    que el servicio responda 400 con un mensaje claro en lugar de 500.
     """
+    if not isinstance(texto, str):
+        raise ValueError("El cuerpo XML debe ser una cadena de texto.")
+    if _PATRON_XXE.search(texto):
+        raise ValueError("El cuerpo XML contiene declaraciones DOCTYPE o ENTITY no permitidas.")
     try:
         raiz = ET.fromstring(texto)
     except ET.ParseError as e:

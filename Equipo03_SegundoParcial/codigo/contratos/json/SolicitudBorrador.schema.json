@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/SolicitudBorrador.schema.json",
+  "title": "SolicitudBorrador",
+  "description": "Generado desde el contrato OpenAPI de survey-service. No editar a mano: ejecutar contratos/generar_json.py.",
+  "type": "object",
+  "required": [
+    "respuestas"
+  ],
+  "properties": {
+    "campania_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "respuestas": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "$defs": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "codigo",
+            "mensaje",
+            "detalles",
+            "correlacion_id"
+          ],
+          "properties": {
+            "codigo": {
+              "type": "string"
+            },
+            "mensaje": {
+              "type": "string"
+            },
+            "detalles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "campo": {
+                    "type": "string"
+                  },
+                  "problema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "correlacion_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Cuestionario": {
+      "type": "object",
+      "properties": {
+        "cuestionario_id": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "escala_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "escala_max": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "activo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ListaCuestionarios": {
+      "type": "object",
+      "properties": {
+        "cuestionarios": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Cuestionario"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "ReactivoCuestionario": {
+      "type": "object",
+      "properties": {
+        "reactivo_id": {
+          "type": "string"
+        },
+        "texto": {
+          "type": "string"
+        },
+        "dimension_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "invertido": {
+          "type": "boolean"
+        },
+        "orden": {
+          "type": "integer"
+        },
+        "obligatorio": {
+          "type": "boolean"
+        },
+        "escala_min": {
+          "type": "integer"
+        },
+        "escala_max": {
+          "type": "integer"
+        }
+      }
+    },
+    "DetalleCuestionario": {
+      "type": "object",
+      "properties": {
+        "cuestionario_id": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "escala_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "escala_max": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "activo": {
+          "type": "boolean"
+        },
+        "reactivos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReactivoCuestionario"
+          }
+        },
+        "total_reactivos": {
+          "type": "integer"
+        }
+      }
+    },
+    "Borrador": {
+      "type": "object",
+      "properties": {
+        "cuestionario_id": {
+          "type": "string"
+        },
+        "seudonimo_id": {
+          "type": "string"
+        },
+        "campania_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "respuestas": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "fecha_actualizacion": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BorradorGuardado": {
+      "type": "object",
+      "properties": {
+        "mensaje": {
+          "type": "string"
+        },
+        "cuestionario_id": {
+          "type": "string"
+        },
+        "seudonimo_id": {
+          "type": "string"
+        },
+        "campania_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "respuestas": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "fecha_actualizacion": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "SolicitudRespuestasCuestionario": {
+      "type": "object",
+      "required": [
+        "campania_id",
+        "respuestas"
+      ],
+      "properties": {
+        "campania_id": {
+          "type": "string"
+        },
+        "respuestas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "reactivo_id",
+              "valor"
+            ],
+            "properties": {
+              "reactivo_id": {
+                "type": "string"
+              },
+              "valor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            }
+          }
+        },
+        "comentario": {
+          "type": "string"
+        },
+        "metadatos": {
+          "type": "object"
+        }
+      }
+    },
+    "RegistroRespuestaCuestionario": {
+      "type": "object",
+      "properties": {
+        "estado": {
+          "type": "string"
+        },
+        "mensaje": {
+          "type": "string"
+        },
+        "campania_id": {
+          "type": "string"
+        },
+        "cuestionario_id": {
+          "type": "string"
+        },
+        "total_respuestas": {
+          "type": "integer"
+        },
+        "documento_pendiente": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

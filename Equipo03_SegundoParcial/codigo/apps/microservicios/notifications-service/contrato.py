@@ -2,7 +2,9 @@
 from comun.openapi import PARAMS_PAGINACION, RESPUESTAS_ERROR, registrar_openapi
 
 TIPOS = ["CAMPANIA_ABIERTA", "RECORDATORIO_ENCUESTA", "CONDICION_DETECTADA",
-         "PLAN_APROBADO", "CONSENTIMIENTO_POR_VENCER"]
+         "PLAN_APROBADO", "CONSENTIMIENTO_POR_VENCER",
+         "SOLICITUD_APOYO_ACTUALIZADA", "CONFIRMACION_RECIBIDA",
+         "RECUPERACION_ACCESO"]
 
 ESQUEMAS = {
     "Notificacion": {
@@ -66,6 +68,17 @@ RUTAS = {
                               "mensaje": "La carga percibida bajo a 2.9 puntos",
                               "unidad_organizacional_id": "UO-CC-TURNO-B"}}}}}},
         "responses": dict({"201": {"description": "Notificaciones enviadas"}},
+                          **RESPUESTAS_ERROR)}},
+
+    "/api/v1/notificaciones/evento-interno": {"post": {
+        "tags": ["Envio"], "summary": "Recibe una notificacion interna firmada entre servicios",
+        "description": "Autenticado con HMAC-SHA256 (X-Servicio-Firma + X-Servicio-Timestamp "
+                       "con tolerancia de 60s). Aplica las mismas reglas de privacidad "
+                       "(sin cifras de bienestar ni identidad laboral).",
+        "requestBody": {"required": True, "content": {"application/json": {
+            "schema": {"$ref": "#/components/schemas/SolicitudEnvio"}}}},
+        "responses": dict({"201": {"description": "Notificaciones enviadas"},
+                           "200": {"description": "Sin destinatarios activos o silenciadas"}},
                           **RESPUESTAS_ERROR)}},
 
     "/api/v1/notificaciones/mias": {"get": {

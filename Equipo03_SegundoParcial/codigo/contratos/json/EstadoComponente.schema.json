@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/EstadoComponente.schema.json",
+  "title": "EstadoComponente",
+  "description": "Generado desde el contrato OpenAPI de monitoring-service. No editar a mano: ejecutar contratos/generar_json.py.",
+  "properties": {
+    "componente": {
+      "example": "queries-service",
+      "type": "string"
+    },
+    "degradado_por": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "dependencias": {
+      "additionalProperties": true,
+      "description": "Lo que el componente dice de SUS propias dependencias, con cual es esencial y cual no.",
+      "type": "object"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "estado": {
+      "description": "listo: todo responde.\ndegradado: atiende con una dependencia OPCIONAL caida; devuelve 200 a proposito, porque el servicio SI puede atender y sacarlo de servicio esconderia una pieza sana.\nno_listo: le falta una dependencia esencial y devuelve 503, pero CONTESTO: esta vivo y dice que le falta.\nsin_respuesta: no contesto. Es otra cosa y se arregla en otro lugar; mezclarlo con no_listo hace buscar el problema donde no esta.",
+      "enum": [
+        "listo",
+        "degradado",
+        "no_listo",
+        "sin_respuesta",
+        "desconocido"
+      ],
+      "type": "string"
+    },
+    "falta": {
+      "description": "Dependencias esenciales caidas.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "http": {
+      "description": "Nulo cuando no hubo respuesta.",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "latencia_alta": {
+      "type": "boolean"
+    },
+    "latencia_ms": {
+      "type": "number"
+    }
+  },
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

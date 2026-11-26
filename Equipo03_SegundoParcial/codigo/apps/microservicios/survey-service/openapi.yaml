@@ -2,103 +2,272 @@ openapi: 3.0.3
 info:
   title: survey-service — Bienestar Nexum
   version: 1.0.0
-  description: Servicio de administracion de cuestionarios, escalas, borradores y captura de respuestas de bienestar (Puerto 8112).
+  description: Servicio de administracion de cuestionarios, escalas, borradores y
+    captura de respuestas de bienestar (Puerto 8112).
+servers:
+- url: http://localhost:8112
+  description: Desarrollo local
+- url: /
+  description: Mismo origen
+security:
+- bearerAuth: []
 paths:
   /api/v1/cuestionarios:
     get:
       summary: Lista cuestionarios de evaluacion activos o disponibles
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: activo
-          in: query
-          schema:
-            type: boolean
+      - name: activo
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
       responses:
-        200:
+        '200':
           description: Listado de cuestionarios
-        401:
-          $ref: "#/components/responses/NoAutenticado"
-        403:
-          $ref: "#/components/responses/SinPermiso"
-    post:
-      summary: Crea o actualiza definicion de cuestionario
-      security:
-        - bearerAuth: []
-      responses:
-        201:
-          description: Cuestionario creado
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
-        401:
-          $ref: "#/components/responses/NoAutenticado"
-        403:
-          $ref: "#/components/responses/SinPermiso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaCuestionarios'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ListaCuestionarios'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<cuestionarios_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <cuestionarios>\n\
+                \    <cuestionario>\n      <cuestionario_id>INST-BIENESTAR</cuestionario_id>\n\
+                \      <nombre>Encuesta de Bienestar</nombre>\n      <activo>true</activo>\n\
+                \    </cuestionario>\n  </cuestionarios>\n  <total>1</total>\n</cuestionarios_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/cuestionarios/{id}:
     get:
       summary: Obtiene detalle completo de un cuestionario con sus preguntas y escalas
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
       responses:
-        200:
+        '200':
           description: Detalle del cuestionario
-        404:
-          $ref: "#/components/responses/NoEncontrado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetalleCuestionario'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DetalleCuestionario'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<cuestionario_detalle\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <cuestionario_id>INST-BIENESTAR</cuestionario_id>\n\
+                \  <nombre>Encuesta de Bienestar</nombre>\n  <reactivos/>\n  <total_reactivos>0</total_reactivos>\n\
+                </cuestionario_detalle>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/cuestionarios/{id}/borrador:
     get:
       summary: Recupera el borrador temporal de respuestas del colaborador
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
       responses:
-        200:
+        '200':
           description: Borrador de encuesta
-        404:
-          $ref: "#/components/responses/NoEncontrado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Borrador'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Borrador'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<borrador_encuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <cuestionario_id>INST-BIENESTAR</cuestionario_id>\n\
+                \  <seudonimo_id>SEUD-00042</seudonimo_id>\n  <respuestas/>\n</borrador_encuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
     put:
-      summary: Guarda o actualiza borrador temporal de respuestas (con expiracion TTL)
+      summary: Guarda o actualiza borrador temporal de respuestas (con expiracion
+        TTL)
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudBorrador'
       responses:
-        200:
+        '200':
           description: Borrador guardado exitosamente
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorradorGuardado'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/BorradorGuardado'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<borrador_guardado\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <mensaje>Borrador\
+                \ guardado exitosamente.</mensaje>\n  <cuestionario_id>INST-BIENESTAR</cuestionario_id>\n\
+                \  <seudonimo_id>SEUD-00042</seudonimo_id>\n</borrador_guardado>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/cuestionarios/{id}/respuestas:
     post:
-      summary: Registra respuestas definitivas de la encuesta (valida completitud y evita duplicados)
+      summary: Registra respuestas definitivas de la encuesta (valida completitud
+        y evita duplicados)
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudRespuestasCuestionario'
       responses:
-        201:
+        '201':
           description: Respuestas registradas exitosamente
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
-        409:
-          description: Encuesta ya respondida previamente para esta campania
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroRespuestaCuestionario'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RegistroRespuestaCuestionario'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<registro_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <estado>REGISTRADA</estado>\n\
+                \  <mensaje>Respuesta registrada.</mensaje>\n  <campania_id>CAMP-2026-S1</campania_id>\n\
+                \  <cuestionario_id>INST-BIENESTAR</cuestionario_id>\n  <total_respuestas>2</total_respuestas>\n\
+                \  <documento_pendiente>false</documento_pendiente>\n</registro_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: Encuesta ya respondida previamente o campania no abierta
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 components:
   securitySchemes:
     bearerAuth:
@@ -110,15 +279,15 @@ components:
     Error:
       type: object
       required:
-        - error
+      - error
       properties:
         error:
           type: object
           required:
-            - codigo
-            - mensaje
-            - detalles
-            - correlacion_id
+          - codigo
+          - mensaje
+          - detalles
+          - correlacion_id
           properties:
             codigo:
               type: string
@@ -128,6 +297,11 @@ components:
               type: array
               items:
                 type: object
+                properties:
+                  campo:
+                    type: string
+                  problema:
+                    type: string
             correlacion_id:
               type: string
     Cuestionario:
@@ -137,16 +311,80 @@ components:
           type: string
         nombre:
           type: string
-        tipo:
-          type: string
         descripcion:
           type: string
+          nullable: true
+        tipo:
+          type: string
+        version:
+          type: integer
+          nullable: true
+        escala_min:
+          type: integer
+          nullable: true
+        escala_max:
+          type: integer
+          nullable: true
+        activo:
+          type: boolean
+    ListaCuestionarios:
+      type: object
+      properties:
+        cuestionarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cuestionario'
+        total:
+          type: integer
+    ReactivoCuestionario:
+      type: object
+      properties:
+        reactivo_id:
+          type: string
+        texto:
+          type: string
+        dimension_id:
+          type: string
+          nullable: true
+        invertido:
+          type: boolean
+        orden:
+          type: integer
+        obligatorio:
+          type: boolean
         escala_min:
           type: integer
         escala_max:
           type: integer
+    DetalleCuestionario:
+      type: object
+      properties:
+        cuestionario_id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+        version:
+          type: integer
+          nullable: true
+        escala_min:
+          type: integer
+          nullable: true
+        escala_max:
+          type: integer
+          nullable: true
         activo:
           type: boolean
+        reactivos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactivoCuestionario'
+        total_reactivos:
+          type: integer
     Borrador:
       type: object
       properties:
@@ -154,6 +392,9 @@ components:
           type: string
         seudonimo_id:
           type: string
+        campania_id:
+          type: string
+          nullable: true
         respuestas:
           type: array
           items:
@@ -161,67 +402,214 @@ components:
         fecha_actualizacion:
           type: string
           format: date-time
+    SolicitudBorrador:
+      type: object
+      required:
+      - respuestas
+      properties:
+        campania_id:
+          type: string
+          nullable: true
+        respuestas:
+          type: array
+          items:
+            type: object
+    BorradorGuardado:
+      type: object
+      properties:
+        mensaje:
+          type: string
+        cuestionario_id:
+          type: string
+        seudonimo_id:
+          type: string
+        campania_id:
+          type: string
+          nullable: true
+        respuestas:
+          type: array
+          items:
+            type: object
+        fecha_actualizacion:
+          type: string
+          format: date-time
+    SolicitudRespuestasCuestionario:
+      type: object
+      required:
+      - campania_id
+      - respuestas
+      properties:
+        campania_id:
+          type: string
+        respuestas:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - reactivo_id
+            - valor
+            properties:
+              reactivo_id:
+                type: string
+              valor:
+                type: integer
+                minimum: 1
+                maximum: 5
+        comentario:
+          type: string
+        metadatos:
+          type: object
+    RegistroRespuestaCuestionario:
+      type: object
+      properties:
+        estado:
+          type: string
+        mensaje:
+          type: string
+        campania_id:
+          type: string
+        cuestionario_id:
+          type: string
+        total_respuestas:
+          type: integer
+        documento_pendiente:
+          type: boolean
   responses:
     SolicitudInvalida:
-      description: Parametro mal formado o invalido.
+      description: Parametro mal formado.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: PARAMETRO_INVALIDO
+              mensaje: '''tamano'' debe estar entre 1 y 100.'
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>PARAMETRO_INVALIDO</codigo>\n\
+            \    <mensaje>'tamano' debe estar entre 1 y 100.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     NoAutenticado:
       description: Falta el token, es invalido, expiro o la sesion fue revocada.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SESION_REVOCADA
+              mensaje: La sesion fue cerrada o revocada.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SESION_REVOCADA</codigo>\n\
+            \    <mensaje>La sesion fue cerrada o revocada.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     SinPermiso:
       description: El perfil no tiene el permiso necesario.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SIN_PERMISO
+              mensaje: El perfil Colaborador no tiene ninguno de los permisos requeridos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SIN_PERMISO</codigo>\n\
+            \    <mensaje>El perfil Colaborador no tiene ninguno de los permisos requeridos.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
     NoEncontrado:
-      description: El recurso solicitado no existe.
+      description: El recurso no existe.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: RECURSO_NO_ENCONTRADO
+              mensaje: La ruta solicitada no existe en este servicio.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>RECURSO_NO_ENCONTRADO</codigo>\n\
+            \    <mensaje>La ruta solicitada no existe en este servicio.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
     ValidacionFallida:
-      description: La solicitud trae campos invalidos.
+      description: La solicitud trae campos invalidos. Se devuelven TODOS los problemas
+        de una vez, no solo el primero.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: VALIDACION
+              mensaje: La solicitud tiene campos invalidos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>VALIDACION</codigo>\n\
+            \    <mensaje>La solicitud tiene campos invalidos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     LimiteExcedido:
       description: Se rebaso el limite de consumo.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: LIMITE_EXCEDIDO
+              mensaje: Mas de 120 peticiones por 60 segundos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>LIMITE_EXCEDIDO</codigo>\n\
+            \    <mensaje>Mas de 120 peticiones por 60 segundos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     ErrorInterno:
-      description: Falla no prevista del servicio.
+      description: Falla no prevista. Fuera de developer no se devuelve el detalle.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: ERROR_INTERNO
+              mensaje: Error interno del servicio. El evento quedo registrado.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>ERROR_INTERNO</codigo>\n\
+            \    <mensaje>Error interno del servicio. El evento quedo registrado.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"

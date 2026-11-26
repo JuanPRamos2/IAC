@@ -49,7 +49,10 @@
         "RECORDATORIO_ENCUESTA",
         "CONDICION_DETECTADA",
         "PLAN_APROBADO",
-        "CONSENTIMIENTO_POR_VENCER"
+        "CONSENTIMIENTO_POR_VENCER",
+        "SOLICITUD_APOYO_ACTUALIZADA",
+        "CONFIRMACION_RECIBIDA",
+        "RECUPERACION_ACCESO"
       ],
       "type": "string"
     },
@@ -164,7 +167,10 @@
             "RECORDATORIO_ENCUESTA",
             "CONDICION_DETECTADA",
             "PLAN_APROBADO",
-            "CONSENTIMIENTO_POR_VENCER"
+            "CONSENTIMIENTO_POR_VENCER",
+            "SOLICITUD_APOYO_ACTUALIZADA",
+            "CONFIRMACION_RECIBIDA",
+            "RECUPERACION_ACCESO"
           ],
           "type": "string"
         },

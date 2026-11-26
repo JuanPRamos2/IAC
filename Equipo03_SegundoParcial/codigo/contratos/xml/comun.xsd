@@ -94,6 +94,8 @@
       <xs:enumeration value="EVIDENCIA_CONSENTIMIENTO"/>
       <xs:enumeration value="AVISO_PRIVACIDAD"/>
       <xs:enumeration value="REPORTE_ORGANIZACIONAL"/>
+      <xs:enumeration value="EVIDENCIA_ARCHIVO"/>
+      <xs:enumeration value="EVIDENCIA_APOYO"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -129,6 +131,9 @@
       <xs:enumeration value="CONDICION_DETECTADA"/>
       <xs:enumeration value="PLAN_APROBADO"/>
       <xs:enumeration value="CONSENTIMIENTO_POR_VENCER"/>
+      <xs:enumeration value="SOLICITUD_APOYO_ACTUALIZADA"/>
+      <xs:enumeration value="CONFIRMACION_RECIBIDA"/>
+      <xs:enumeration value="RECUPERACION_ACCESO"/>
     </xs:restriction>
   </xs:simpleType>
 

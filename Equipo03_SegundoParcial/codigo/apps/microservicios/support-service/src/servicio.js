@@ -11,6 +11,7 @@ import { contextoOperativo } from "@bienestar/comun/modelos/Usuario.js";
 import * as Soporte from "@bienestar/comun/modelos/Soporte.js";
 import { texto } from "@bienestar/comun/validacion.js";
 import { registrarBitacora } from "@bienestar/comun/auditoria.js";
+import { notificarEventoInterno } from "@bienestar/comun/notificador.js";
 
 const MIN_MENSAJE = 8;
 const MAX_MENSAJE = 1000;
@@ -122,6 +123,21 @@ export async function actualizarEstadoSolicitud({ id, estado, nota, actor, req =
     await registrarBitacora(req, "CATALOGO_MODIFICADO", "EXITO", {
       tipo_recurso: "solicitud_apoyo",
       recurso_id: solId,
+    });
+  }
+
+  if (actualizado.seudonimo_id) {
+    await notificarEventoInterno({
+      tipo: "SOLICITUD_APOYO_ACTUALIZADA",
+      destinatarios: [],
+      titulo: "Actualizacion de tu solicitud de apoyo",
+      mensaje: `Tu solicitud ${solId} cambio a estado ${nuevoEstado}.`,
+      metadata: {
+        solicitud_id: solId,
+        estado: nuevoEstado,
+        seudonimo_id: actualizado.seudonimo_id,
+      },
+      correlacionId: req?.correlacionId || "",
     });
   }
 

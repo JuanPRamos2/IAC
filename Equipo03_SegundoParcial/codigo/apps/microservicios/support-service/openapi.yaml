@@ -2,100 +2,288 @@ openapi: 3.0.3
 info:
   title: support-service — Bienestar Nexum
   version: 1.0.0
-  description: Servicio de gestion confidencial de solicitudes de apoyo emocional asignadas exclusivamente a especialistas (Puerto 8116).
+  description: Servicio de gestion confidencial de solicitudes de apoyo emocional
+    asignadas exclusivamente a especialistas (Puerto 8116).
+servers:
+- url: http://localhost:8116
+  description: Desarrollo local
+- url: /
+  description: Mismo origen
+security:
+- bearerAuth: []
 paths:
   /api/v1/apoyo/solicitudes:
     post:
       summary: Crea una solicitud voluntaria de apoyo confidencial mediante seudonimo
       security:
-        - bearerAuth: []
-      responses:
-        201:
-          description: Solicitud de apoyo creada exitosamente
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
-        401:
-          $ref: "#/components/responses/NoAutenticado"
-        403:
-          $ref: "#/components/responses/SinPermiso"
-    get:
-      summary: Lista solicitudes de apoyo para atencion por parte de especialistas autorizados
-      security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: estado
-          in: query
-          schema:
-            type: string
-            enum:
-              - ABIERTA
-              - EN_PROCESO
-              - CERRADA
-        - name: pagina
-          in: query
-          schema:
-            type: integer
-        - name: tamano
-          in: query
-          schema:
-            type: integer
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudApoyoCreacion'
       responses:
-        200:
+        '201':
+          description: Solicitud de apoyo creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<solicitud_apoyo\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <id>SOL-ABC123DEF456</id>\n\
+                \  <seudonimo_id>SEUD-00042</seudonimo_id>\n  <estado>ABIERTA</estado>\n\
+                </solicitud_apoyo>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    get:
+      summary: Lista solicitudes de apoyo para atencion por parte de especialistas
+        autorizados
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: estado
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ABIERTA
+          - EN_PROCESO
+          - CERRADA
+      - name: pagina
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: tamano
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      responses:
+        '200':
           description: Listado de solicitudes de apoyo
-        401:
-          $ref: "#/components/responses/NoAutenticado"
-        403:
-          $ref: "#/components/responses/SinPermiso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaSolicitudesApoyo'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ListaSolicitudesApoyo'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<solicitudes_apoyo\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <solicitudes/>\n\
+                \  <total>0</total>\n</solicitudes_apoyo>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/apoyo/solicitudes/{id}:
     get:
       summary: Consulta el detalle y bitacora de atencion de una solicitud
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
       responses:
-        200:
+        '200':
           description: Detalle de la solicitud de apoyo
-        404:
-          $ref: "#/components/responses/NoEncontrado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<solicitud_apoyo\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <id>SOL-ABC123DEF456</id>\n\
+                \  <seudonimo_id>SEUD-00042</seudonimo_id>\n  <estado>ABIERTA</estado>\n\
+                </solicitud_apoyo>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/apoyo/solicitudes/{id}/estado:
     put:
       summary: Actualiza el estado de atencion de la solicitud con notas confidenciales
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudCambioEstadoApoyo'
       responses:
-        200:
+        '200':
           description: Estado actualizado
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
-        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SolicitudApoyo'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<solicitud_apoyo\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <id>SOL-ABC123DEF456</id>\n\
+                \  <estado>EN_PROCESO</estado>\n</solicitud_apoyo>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
           description: Transicion de estado no permitida
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
   /api/v1/apoyo/solicitudes/{id}/mensajes:
     post:
       summary: Registra comunicacion o nota protegida entre especialista y solicitante
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudMensajeApoyo'
       responses:
-        201:
+        '201':
           description: Mensaje agregado
-        400:
-          $ref: "#/components/responses/SolicitudInvalida"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaMensajeApoyo'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RespuestaMensajeApoyo'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mensaje_apoyo_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <resultado>ENVIADO</resultado>\n\
+                \  <solicitud_id>SOL-ABC123DEF456</solicitud_id>\n  <mensaje>Mensaje\
+                \ agregado al expediente confidencial de apoyo.</mensaje>\n</mensaje_apoyo_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
 components:
   securitySchemes:
     bearerAuth:
@@ -107,15 +295,15 @@ components:
     Error:
       type: object
       required:
-        - error
+      - error
       properties:
         error:
           type: object
           required:
-            - codigo
-            - mensaje
-            - detalles
-            - correlacion_id
+          - codigo
+          - mensaje
+          - detalles
+          - correlacion_id
           properties:
             codigo:
               type: string
@@ -125,8 +313,56 @@ components:
               type: array
               items:
                 type: object
+                properties:
+                  campo:
+                    type: string
+                  problema:
+                    type: string
             correlacion_id:
               type: string
+    SolicitudApoyoCreacion:
+      type: object
+      required:
+      - mensaje
+      properties:
+        mensaje:
+          type: string
+          minLength: 8
+          maxLength: 1000
+    SolicitudCambioEstadoApoyo:
+      type: object
+      required:
+      - estado
+      properties:
+        estado:
+          type: string
+          enum:
+          - ABIERTA
+          - EN_PROCESO
+          - CERRADA
+        nota:
+          type: string
+    SolicitudMensajeApoyo:
+      type: object
+      required:
+      - mensaje
+      properties:
+        mensaje:
+          type: string
+          minLength: 3
+          maxLength: 1000
+    RespuestaMensajeApoyo:
+      type: object
+      properties:
+        resultado:
+          type: string
+        solicitud_id:
+          type: string
+        mensaje:
+          type: string
+        fecha:
+          type: string
+          format: date-time
     SolicitudApoyo:
       type: object
       properties:
@@ -142,9 +378,9 @@ components:
         estado:
           type: string
           enum:
-            - ABIERTA
-            - EN_PROCESO
-            - CERRADA
+          - ABIERTA
+          - EN_PROCESO
+          - CERRADA
         fecha_actualizacion:
           type: string
           format: date-time
@@ -153,67 +389,161 @@ components:
           type: array
           items:
             type: object
+    ListaSolicitudesApoyo:
+      type: object
+      properties:
+        solicitudes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolicitudApoyo'
+        total:
+          type: integer
+        paginacion:
+          type: object
+          properties:
+            pagina:
+              type: integer
+            tamano:
+              type: integer
+            total:
+              type: integer
+            total_paginas:
+              type: integer
   responses:
     SolicitudInvalida:
-      description: Parametro mal formado o invalido.
+      description: Parametro mal formado.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: PARAMETRO_INVALIDO
+              mensaje: '''tamano'' debe estar entre 1 y 100.'
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>PARAMETRO_INVALIDO</codigo>\n\
+            \    <mensaje>'tamano' debe estar entre 1 y 100.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     NoAutenticado:
       description: Falta el token, es invalido, expiro o la sesion fue revocada.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SESION_REVOCADA
+              mensaje: La sesion fue cerrada o revocada.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SESION_REVOCADA</codigo>\n\
+            \    <mensaje>La sesion fue cerrada o revocada.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     SinPermiso:
       description: El perfil no tiene el permiso necesario.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SIN_PERMISO
+              mensaje: El perfil Colaborador no tiene ninguno de los permisos requeridos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SIN_PERMISO</codigo>\n\
+            \    <mensaje>El perfil Colaborador no tiene ninguno de los permisos requeridos.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
     NoEncontrado:
-      description: El recurso solicitado no existe.
+      description: El recurso no existe.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: RECURSO_NO_ENCONTRADO
+              mensaje: La ruta solicitada no existe en este servicio.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>RECURSO_NO_ENCONTRADO</codigo>\n\
+            \    <mensaje>La ruta solicitada no existe en este servicio.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
     ValidacionFallida:
-      description: La solicitud trae campos invalidos.
+      description: La solicitud trae campos invalidos. Se devuelven TODOS los problemas
+        de una vez, no solo el primero.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: VALIDACION
+              mensaje: La solicitud tiene campos invalidos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>VALIDACION</codigo>\n\
+            \    <mensaje>La solicitud tiene campos invalidos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     LimiteExcedido:
       description: Se rebaso el limite de consumo.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: LIMITE_EXCEDIDO
+              mensaje: Mas de 120 peticiones por 60 segundos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>LIMITE_EXCEDIDO</codigo>\n\
+            \    <mensaje>Mas de 120 peticiones por 60 segundos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
     ErrorInterno:
-      description: Falla no prevista del servicio.
+      description: Falla no prevista. Fuera de developer no se devuelve el detalle.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: ERROR_INTERNO
+              mensaje: Error interno del servicio. El evento quedo registrado.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
         application/xml:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>ERROR_INTERNO</codigo>\n\
+            \    <mensaje>Error interno del servicio. El evento quedo registrado.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"

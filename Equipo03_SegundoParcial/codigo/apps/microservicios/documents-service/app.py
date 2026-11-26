@@ -53,13 +53,14 @@ def _ping_redis():
     obtener_redis().ping()
 
 
+import archivos
+
 app = crear_servicio(
     "documents-service",
     "Almacena evidencias de consentimiento, avisos versionados y reportes",
     comprobaciones={"postgresql": ping_pg, "mongodb": ping_mongo,
-                    "redis": _ping_redis})
+                    "redis": _ping_redis, "bucket": archivos.ping_bucket})
 
-import archivos
 from contrato import montar as _montar_contrato
 _montar_contrato(app)
 
@@ -196,6 +197,7 @@ def adjuntar_evidencia_apoyo():
     """
     limite_consumo(maximo=20)
     cuerpo = cuerpo_peticion()
+    verificar_sin_identidad(cuerpo)
 
     referencia = (cuerpo.get("referencia") or "").strip()
     contenido_base64 = cuerpo.get("contenido_base64") or ""
@@ -212,8 +214,26 @@ def adjuntar_evidencia_apoyo():
         problemas.append({"campo": "contenido_base64",
                           "problema": f"la imagen pasa de {MAX_EVIDENCIA_MB} MB"})
     if problemas:
+        _bitacora("ARCHIVO_RECHAZADO", "RECHAZADO", recurso=referencia or None)
         raise ErrorApi("VALIDACION", "La solicitud tiene campos invalidos.",
                        422, problemas)
+
+    import base64
+    try:
+        contenido_bytes = base64.b64decode(contenido_base64, validate=True)
+    except Exception:
+        _bitacora("ARCHIVO_RECHAZADO", "RECHAZADO",
+                  recurso=archivos.nombre_presentable(cuerpo.get("nombre_archivo")))
+        raise ErrorApi("BASE64_INVALIDO",
+                       "El campo 'contenido_base64' no es base64 valido.", 400)
+
+    nombre_solicitado = cuerpo.get("nombre_archivo") or "evidencia.jpg"
+    try:
+        extension, sello, nombre = archivos.validar(contenido_bytes, nombre_solicitado)
+    except ErrorApi:
+        _bitacora("ARCHIVO_RECHAZADO", "RECHAZADO",
+                  recurso=archivos.nombre_presentable(nombre_solicitado))
+        raise
 
     actor = (g.actor or {}).get("sub")
     participacion = consultar_uno(
@@ -224,30 +244,42 @@ def adjuntar_evidencia_apoyo():
                        "La cuenta no tiene participacion operativa en el "
                        "programa, asi que no puede adjuntar evidencia.", 403)
 
+    archivos.guardar(contenido_bytes, sello)
+
     documento_id = f"DOC-{uuid.uuid4().hex[:12].upper()}"
     ahora = dt.datetime.now(dt.timezone.utc)
+    tipo_mime = archivos.TIPOS_MIME.get(
+        extension, (cuerpo.get("tipo_mime") or "image/jpeg")[:60]
+    )
     contenido = {
         "solicitud_apoyo_id": referencia,
-        "nombre_archivo": (cuerpo.get("nombre_archivo") or "evidencia.jpg")[:120],
-        "tipo_mime": (cuerpo.get("tipo_mime") or "image/jpeg")[:60],
+        "nombre_archivo": nombre,
+        "extension": extension,
+        "tipo_mime": tipo_mime,
+        "bytes": len(contenido_bytes),
+        "sha256": sello,
         "descripcion": (cuerpo.get("descripcion") or "")[:500],
-        "contenido_base64": contenido_base64,
     }
     doc = {
         "documento_id": documento_id,
+        "identificador": documento_id,
+        "ruta": archivos.ruta_logica_de(sello),
         "tipo": "EVIDENCIA_APOYO",
+        "tamano": len(contenido_bytes),
+        # El seudonimo es el propietario: nunca usuario_id junto a seudonimo_id.
+        "propietario": participacion["seudonimo_id"],
+        "fecha": ahora,
+        "hash": sello,
+        "nivel_privacidad": "CONFIDENCIAL",
+        "estado": "ACTIVO",
+        "metadatos": contenido,
         "version": 1,
-        # El seudonimo lo pone el servicio. Ver el punto 2 de arriba.
         "seudonimo_id": participacion["seudonimo_id"],
         "unidad_organizacional_id": None,
         "campania_id": None,
         "contenido": contenido,
-        "hash_contenido": hashlib.sha256(contenido_base64.encode()).hexdigest(),
-        "etiquetas": ["evidencia", "apoyo"],
-        # `creado_por` NO se guarda aqui, a diferencia del endpoint general:
-        # guardarlo pondria al lado el usuario_id y el seudonimo_id en el
-        # mismo documento, que es exactamente la correspondencia que todo el
-        # sistema evita.
+        "hash_contenido": sello,
+        "etiquetas": ["evidencia", "apoyo", extension],
         "fecha_creacion": ahora,
         "fecha_actualizacion": ahora,
     }
@@ -297,17 +329,25 @@ def subir_archivo():
     """
     limite_consumo(maximo=30)
     cuerpo = cuerpo_peticion()
+    verificar_sin_identidad(cuerpo)
 
     import base64
     crudo = cuerpo.get("contenido_base64") or ""
     try:
         contenido = base64.b64decode(crudo, validate=True)
     except Exception:
+        _bitacora("ARCHIVO_RECHAZADO", "RECHAZADO",
+                  recurso=archivos.nombre_presentable(cuerpo.get("nombre_archivo")))
         raise ErrorApi("BASE64_INVALIDO",
                        "El campo 'contenido_base64' no es base64 valido.", 400)
 
-    extension, sello, nombre = archivos.validar(
-        contenido, cuerpo.get("nombre_archivo"))
+    try:
+        extension, sello, nombre = archivos.validar(
+            contenido, cuerpo.get("nombre_archivo"))
+    except ErrorApi:
+        _bitacora("ARCHIVO_RECHAZADO", "RECHAZADO",
+                  recurso=archivos.nombre_presentable(cuerpo.get("nombre_archivo")))
+        raise
 
     intervencion = (cuerpo.get("intervencion_id") or "").strip()
     if not intervencion:
@@ -328,19 +368,30 @@ def subir_archivo():
 
     documento_id = f"DOC-{uuid.uuid4().hex[:12].upper()}"
     ahora = dt.datetime.now(dt.timezone.utc)
+    tipo_mime = archivos.TIPOS_MIME.get(extension, "application/octet-stream")
     contenido_meta = {
         "clase": "EVIDENCIA_ARCHIVO",
         "intervencion_id": intervencion,
         "nombre_archivo": nombre,
         "extension": extension,
-        "tipo_mime": archivos.TIPOS_MIME.get(extension, "application/octet-stream"),
+        "tipo_mime": tipo_mime,
         "bytes": len(contenido),
         "sha256": sello,
+        "modo_almacen": archivos.modo_almacen(),
         "descripcion": (cuerpo.get("descripcion") or "")[:500],
     }
     doc = {
         "documento_id": documento_id,
+        "identificador": documento_id,
+        "ruta": archivos.ruta_logica_de(sello),
         "tipo": "EVIDENCIA_ARCHIVO",
+        "tamano": len(contenido),
+        "propietario": (g.actor or {}).get("sub"),
+        "fecha": ahora,
+        "hash": sello,
+        "nivel_privacidad": "ORGANIZACIONAL",
+        "estado": "ACTIVO",
+        "metadatos": contenido_meta,
         "version": 1,
         "seudonimo_id": None,
         "unidad_organizacional_id": plan["unidad_organizacional_id"],
@@ -367,6 +418,31 @@ def subir_archivo():
                       "archivo_nuevo": nuevo_blob,
                       "fecha_creacion": ahora.isoformat()},
                      201, raiz="documento_creado")
+
+
+@app.get(f"{BASE}/archivos/<sha256>/url")
+@requiere_permiso("INTERVENCION_SEGUIMIENTO", "INTERVENCION_APROBAR",
+                  "CONSENT_EVIDENCIA_AUDIT", "BITACORA_CONSULTAR")
+def url_de_archivo(sha256):
+    """Dirección temporal para un archivo privado del bucket.
+
+    Solo existe cuando el servicio tiene GCS_BUCKET (o GCS_BUCKET_NAME) y la
+    llave de firma. En developer no hay bucket: se responde 409 y el cliente
+    usa la descarga directa.
+    """
+    limite_consumo(maximo=60)
+    if not re.fullmatch(r"[0-9a-f]{64}", sha256 or ""):
+        raise ErrorApi("PARAMETRO_INVALIDO",
+                       "El sello tiene que ser un SHA-256 en hexadecimal.", 400)
+    url = archivos.url_firmada(sha256)
+    if not url:
+        raise ErrorApi(
+            "URL_NO_DISPONIBLE",
+            "Este ambiente no firma direcciones. El archivo se descarga "
+            "por el servicio.", 409)
+    _bitacora("EVIDENCIA_DESCARGADA", "EXITO", recurso=sha256)
+    return responder({"sha256": sha256, "url": url, "expira_en_segundos": 600},
+                     200, raiz="url_firmada")
 
 
 @app.get(f"{BASE}/archivos/<sha256>")
@@ -407,6 +483,82 @@ def descargar_archivo(sha256):
          "Content-Length": str(len(contenido)),
          # El sello viaja con el archivo: quien lo reciba puede
          # confrontarlo sin volver a pedir nada.
+         "X-Evidencia-Sello": sha256,
+         "X-Content-Type-Options": "nosniff"})
+
+
+@app.get(f"{BASE}/<documento_id>/url-firmada")
+@requiere_permiso("INTERVENCION_SEGUIMIENTO", "INTERVENCION_APROBAR",
+                  "CONSENT_EVIDENCIA_AUDIT", "BITACORA_CONSULTAR")
+def url_firmada(documento_id):
+    """Genera una URL temporal firmada (HMAC local o v4 de GCS) para descargar un archivo."""
+    limite_consumo(maximo=60)
+    doc = base()["documentos"].find_one({"documento_id": documento_id})
+    if not doc:
+        raise ErrorApi("DOCUMENTO_NO_ENCONTRADO",
+                       f"No existe el documento {documento_id}.", 404)
+    sha256 = doc.get("hash") or doc.get("hash_contenido")
+    if not sha256 or (not doc.get("ruta") and doc.get("tipo") not in ("EVIDENCIA_ARCHIVO", "EVIDENCIA_APOYO")):
+        raise ErrorApi("NO_ES_ARCHIVO",
+                       "El documento no corresponde a un archivo almacenado en bucket.", 422)
+
+    ttl_param = request.args.get("ttl")
+    ttl = None
+    if ttl_param is not None:
+        try:
+            ttl = int(ttl_param)
+        except ValueError:
+            raise ErrorApi("PARAMETRO_INVALIDO", "'ttl' debe ser un entero en segundos.", 400)
+
+    meta = doc.get("metadatos") or doc.get("contenido") or {}
+    resultado = archivos.generar_url_firmada(
+        documento_id=documento_id,
+        sha256=sha256,
+        base_url_local=request.host_url.rstrip("/"),
+        ttl=ttl,
+        nombre_archivo=meta.get("nombre_archivo", sha256),
+        tipo_mime=meta.get("tipo_mime", "application/octet-stream"),
+    )
+    _bitacora("URL_FIRMADA_GENERADA", "EXITO", recurso=documento_id)
+    return responder(
+        {"documento_id": documento_id, "sha256": sha256, **resultado},
+        200,
+        raiz="url_firmada_respuesta",
+    )
+
+
+@app.get(f"{BASE}/archivos/<documento_id>/descarga-firmada")
+def descargar_archivo_firmado(documento_id):
+    """Entrega un archivo mediante URL firmada con HMAC-SHA256 y expiracion."""
+    limite_consumo(maximo=60)
+    expira = request.args.get("expira", "")
+    firma = request.args.get("firma", "")
+    try:
+        archivos.verificar_firma_descarga(documento_id, expira, firma)
+    except ErrorApi:
+        _bitacora("EVIDENCIA_DESCARGADA", "RECHAZADO", recurso=documento_id)
+        raise
+
+    doc = base()["documentos"].find_one({"documento_id": documento_id})
+    if not doc:
+        raise ErrorApi("DOCUMENTO_NO_ENCONTRADO",
+                       f"No existe el documento {documento_id}.", 404)
+    sha256 = doc.get("hash") or doc.get("hash_contenido")
+    meta = doc.get("metadatos") or doc.get("contenido") or {}
+    try:
+        contenido = archivos.leer(sha256)
+    except ErrorApi:
+        _bitacora("EVIDENCIA_DESCARGADA", "ERROR_TECNICO", recurso=documento_id)
+        raise
+
+    _bitacora("EVIDENCIA_DESCARGADA", "EXITO", recurso=documento_id)
+    from flask import Response
+    return Response(
+        contenido, 200,
+        {"Content-Type": meta.get("tipo_mime", "application/octet-stream"),
+         "Content-Disposition":
+             f'attachment; filename="{meta.get("nombre_archivo", sha256)}"',
+         "Content-Length": str(len(contenido)),
          "X-Evidencia-Sello": sha256,
          "X-Content-Type-Options": "nosniff"})
 
@@ -465,11 +617,11 @@ def detalle(documento_id):
 def actualizar(documento_id):
     limite_consumo(maximo=30)
     cuerpo = cuerpo_peticion()
+    verificar_sin_identidad(cuerpo)
     contenido = cuerpo.get("contenido")
     if not isinstance(contenido, dict) or not contenido:
         raise ErrorApi("VALIDACION", "La solicitud tiene campos invalidos.", 422,
                        [{"campo": "contenido", "problema": "debe ser un objeto no vacio"}])
-    verificar_sin_identidad(cuerpo)
 
     col = base()["documentos"]
     actual = col.find_one({"documento_id": documento_id})

@@ -4,12 +4,23 @@ import { redis as cfg } from "./entorno.js";
 
 let cliente = null;
 
+export function estrategiaReintentoRedis(intentos) {
+  return Math.min(Math.max(1, intentos) * 250, 3000);
+}
+
 export function obtenerRedis() {
+  if (cliente !== null && cliente.status === "end") {
+    try {
+      cliente.disconnect();
+    } catch { /* la instancia ya termino */ }
+    cliente = null;
+  }
   if (cliente === null) {
     cliente = new Redis({
       host: cfg.host, port: cfg.port,
       connectTimeout: 2000,
-      // Una sola reintento por orden: si Redis no esta, la peticion debe
+      commandTimeout: 2000,
+      // Un solo reintento por orden: si Redis no esta, la peticion debe
       // fallar en menos de lo que tarda en responder la sonda del
       // llamador, no quedarse colgada reintentando.
       maxRetriesPerRequest: 1,
@@ -19,9 +30,14 @@ export function obtenerRedis() {
       // perfectamente levantado.
       enableOfflineQueue: true,
       lazyConnect: false,
-      retryStrategy: (intentos) => (intentos > 10 ? null : Math.min(intentos * 200, 2000)),
+      retryStrategy: estrategiaReintentoRedis,
     });
     cliente.on("error", () => { /* se reporta en /health/ready, no en la consola */ });
+    cliente.on("end", () => {
+      if (cliente && cliente.status === "end") {
+        cliente = null;
+      }
+    });
   }
   return cliente;
 }

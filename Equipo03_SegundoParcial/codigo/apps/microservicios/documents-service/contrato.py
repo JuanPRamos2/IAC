@@ -9,9 +9,20 @@ ESQUEMAS = {
                        "aunque venga anidado.",
         "properties": {
             "documento_id": {"type": "string", "pattern": "^DOC-[0-9A-F]{12}$"},
+            "identificador": {"type": "string"},
+            "ruta": {"type": "string"},
             "tipo": {"type": "string", "enum": ["EVIDENCIA_CONSENTIMIENTO",
                                                "AVISO_PRIVACIDAD",
-                                               "REPORTE_ORGANIZACIONAL"]},
+                                               "REPORTE_ORGANIZACIONAL",
+                                               "EVIDENCIA_ARCHIVO",
+                                               "EVIDENCIA_APOYO"]},
+            "tamano": {"type": "integer"},
+            "propietario": {"type": "string"},
+            "fecha": {"type": "string", "format": "date-time"},
+            "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "nivel_privacidad": {"type": "string"},
+            "estado": {"type": "string"},
+            "metadatos": {"type": "object", "additionalProperties": True},
             "version": {"type": "integer", "minimum": 1},
             "seudonimo_id": {"type": "string", "nullable": True,
                              "pattern": "^SEUD-[0-9]{5}$",
@@ -39,7 +50,9 @@ ESQUEMAS = {
 
 FILTROS = PARAMS_PAGINACION + [
     {"name": "tipo", "in": "query", "schema": {"type": "string",
-     "enum": ["EVIDENCIA_CONSENTIMIENTO", "AVISO_PRIVACIDAD", "REPORTE_ORGANIZACIONAL"]}},
+     "enum": ["EVIDENCIA_CONSENTIMIENTO", "AVISO_PRIVACIDAD",
+              "REPORTE_ORGANIZACIONAL", "EVIDENCIA_ARCHIVO",
+              "EVIDENCIA_APOYO"]}},
     {"name": "unidad", "in": "query", "schema": {"type": "string"}},
     {"name": "campania", "in": "query", "schema": {"type": "string"}},
     {"name": "seudonimo", "in": "query", "schema": {"type": "string"}},
@@ -154,6 +167,49 @@ RUTAS = {
                         "schema": {"type": "string",
                                    "pattern": "^[0-9a-f]{64}$"}}],
         "responses": dict({"200": {"description": "El archivo"}},
+                          **RESPUESTAS_ERROR)}},
+
+    "/api/v1/documentos/archivos/{sha256}/url": {"get": {
+        "tags": ["Documentos"],
+        "summary": "URL firmada y temporal para un archivo privado",
+        "description":
+            "Devuelve una direccion de Cloud Storage que vence a los 10 "
+            "minutos. Solo existe en el despliegue de Google, donde el "
+            "archivo vive en el bucket. En developer responde 409 y el "
+            "cliente usa la descarga directa.",
+        "parameters": [{"name": "sha256", "in": "path", "required": True,
+                        "schema": {"type": "string",
+                                   "pattern": "^[0-9a-f]{64}$"}}],
+        "responses": dict({"200": {"description": "Direccion temporal"}},
+                          **RESPUESTAS_ERROR)}},
+
+    "/api/v1/documentos/{documento_id}/url-firmada": {"get": {
+        "tags": ["Documentos"],
+        "summary": "Genera una URL temporal firmada para descargar un archivo",
+        "description": "En modo local genera una firma HMAC-SHA256 con expiracion; "
+                       "en modo gcs usa blob.generate_signed_url. Registra URL_FIRMADA_GENERADA.",
+        "parameters": [
+            {"name": "documento_id", "in": "path", "required": True,
+             "schema": {"type": "string"}},
+            {"name": "ttl", "in": "query", "required": False,
+             "schema": {"type": "integer", "minimum": 10, "maximum": 3600}},
+        ],
+        "responses": dict({"200": {"description": "URL firmada"}},
+                          **RESPUESTAS_ERROR)}},
+
+    "/api/v1/documentos/archivos/{documento_id}/descarga-firmada": {"get": {
+        "tags": ["Documentos"],
+        "summary": "Descarga un archivo validando firma HMAC-SHA256 y expiracion",
+        "parameters": [
+            {"name": "documento_id", "in": "path", "required": True,
+             "schema": {"type": "string"}},
+            {"name": "expira", "in": "query", "required": True,
+             "schema": {"type": "integer"}},
+            {"name": "firma", "in": "query", "required": True,
+             "schema": {"type": "string"}},
+        ],
+        "responses": dict({"200": {"description": "El archivo"},
+                           "403": {"description": "Firma invalida o URL expirada"}},
                           **RESPUESTAS_ERROR)}},
 
     "/api/v1/documentos/evidencia-apoyo": {"post": {

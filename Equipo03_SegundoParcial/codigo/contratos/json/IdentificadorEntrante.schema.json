@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/IdentificadorEntrante.schema.json",
+  "title": "IdentificadorEntrante",
+  "description": "DOS CADENAS OPACAS y nada mas. Sin nombre, sin correo, sin numero de empleado: guardarlos junto al seudonimo reconstruiria la identificacion completa, que es justo lo que la seudonimizacion evita.",
+  "properties": {
+    "activo": {
+      "default": true,
+      "type": "boolean"
+    },
+    "identificador_externo": {
+      "maxLength": 80,
+      "type": "string"
+    },
+    "seudonimo_id": {
+      "description": "Tiene que existir YA en esta plataforma. Si no existe es un hallazgo, no un alta: ver la descripcion del endpoint.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "identificador_externo",
+    "seudonimo_id"
+  ],
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Hallazgo": {
+      "description": "Por que se rechazo, renglon por renglon y campo por campo. Quien tiene que arreglar el archivo no es quien opera esta plataforma: si el error no dice el renglon y el campo, el arreglo pasa por una cadena de correos.",
+      "properties": {
+        "campo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codigo": {
+          "enum": [
+            "RENGLON_INVALIDO",
+            "CAMPO_DE_PERSONA",
+            "CAMPO_NO_ESPERADO",
+            "IDENTIFICADOR_INVALIDO",
+            "IDENTIFICADOR_REPETIDO",
+            "CAMPO_OBLIGATORIO",
+            "TIPO_INVALIDO",
+            "NO_ES_ENTERO",
+            "PLANTILLA_NEGATIVA",
+            "PADRE_INEXISTENTE",
+            "CICLO",
+            "JERARQUIA_NO_CUADRA",
+            "SEUDONIMO_NO_EXISTE",
+            "APLICACION_FALLIDA"
+          ],
+          "type": "string"
+        },
+        "detalle": {
+          "type": "string"
+        },
+        "renglon": {
+          "description": "Nulo en los hallazgos del archivo como conjunto, como un ciclo o una jerarquia que no cuadra.",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "severidad": {
+          "description": "ERROR impide aplicar; ADVERTENCIA no. La distincion existe porque sin ella todo se vuelve error y la integracion se vuelve inusable, o todo se vuelve advertencia y deja de proteger.",
+          "enum": [
+            "ERROR",
+            "ADVERTENCIA"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "UnidadEntrante": {
+      "description": "Un renglon de estructura. Lista BLANCA de campos: cualquier cosa de mas se reporta, y un campo de persona hace que se rechace el archivo.",
+      "properties": {
+        "activa": {
+          "default": true,
+          "type": "boolean"
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nombre_unidad": {
+          "example": "Call Center T1",
+          "type": "string"
+        },
+        "plantilla_declarada": {
+          "description": "La de un padre tiene que ser la SUMA de sus hijas. No es pulcritud: el control de inferencia resta la plantilla del padre menos la de las hijas conocidas para detectar si alguien esta aislando un grupo por debajo del umbral k. Con un arbol que no cuadra, ese resto da cualquier cosa.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "tipo": {
+          "default": "AREA",
+          "description": "La lista la impone la restriccion `unidad_organizacional_tipo_check` de la base, y el servicio la lee de ahi en lugar de guardar una copia: una copia escrita a mano se separa de la restriccion en algun momento, y la separacion solo se ve al insertar.",
+          "enum": [
+            "DIRECCION",
+            "AREA",
+            "DEPARTAMENTO",
+            "TURNO",
+            "EQUIPO"
+          ],
+          "type": "string"
+        },
+        "unidad_organizacional_id": {
+          "example": "UO-OPS-CC-T1",
+          "pattern": "^[A-Za-z0-9_\\-\\.]{2,40}$",
+          "type": "string"
+        },
+        "unidad_padre_id": {
+          "description": "Nulo para la raiz. Un padre que no viene en el archivo ni existe ya es un error: aplicarlo dejaria una unidad huerfana, y el alcance de todos los perfiles se calcula recorriendo el arbol.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "unidad_organizacional_id",
+        "nombre_unidad"
+      ],
+      "type": "object"
+    }
+  }
+}

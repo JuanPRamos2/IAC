@@ -90,4 +90,23 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="recuperacion_solicitada">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="solicitado" type="xs:boolean"/>
+        <xs:element name="mensaje"    type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="recuperacion_confirmada">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="actualizado"        type="xs:boolean"/>
+        <xs:element name="sesiones_revocadas" type="xs:nonNegativeInteger"/>
+        <xs:element name="mensaje"            type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
 </xs:schema>

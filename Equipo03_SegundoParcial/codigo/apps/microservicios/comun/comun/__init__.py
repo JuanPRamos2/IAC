@@ -6,6 +6,7 @@ from .xmlizar import ESPACIO, a_xml
 from .inferencia import (k_minimo, registrar_consulta, registrar_unidad,
                          verificar_conjunto, verificar_diferencia,
                          REPETICIONES_ANORMALES)
+from .notificador import notificar_evento_interno
 
 __all__ = ["ErrorApi", "quiere_xml", "registrar_manejadores", "VERSION_API",
            "crear_servicio", "cuerpo_peticion", "limite_consumo", "pagina", "responder",
@@ -13,4 +14,4 @@ __all__ = ["ErrorApi", "quiere_xml", "registrar_manejadores", "VERSION_API",
            "requiere_token", "a_xml", "ESPACIO", "k_minimo",
            "registrar_consulta", "registrar_unidad", "verificar_conjunto",
            "verificar_diferencia",
-           "REPETICIONES_ANORMALES"]
+           "REPETICIONES_ANORMALES", "notificar_evento_interno"]

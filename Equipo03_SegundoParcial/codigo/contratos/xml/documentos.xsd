@@ -83,4 +83,30 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="url_firmada_respuesta">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="documento_id" type="IdDocumento"/>
+        <xs:element name="sha256">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="[0-9a-f]{64}"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="url"          type="xs:string"/>
+        <xs:element name="expira"       type="xs:positiveInteger"/>
+        <xs:element name="ttl_segundos" type="xs:positiveInteger"/>
+        <xs:element name="modo">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="local"/>
+              <xs:enumeration value="gcs"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
 </xs:schema>

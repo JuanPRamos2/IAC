@@ -18,10 +18,23 @@ def _dsn():
             f"application_name={os.environ.get('NOMBRE_SERVICIO','microservicio')}")
 
 
+def _statement_timeout_ms() -> int:
+    try:
+        return max(0, int(os.environ.get("PG_STATEMENT_TIMEOUT_MS", "5000")))
+    except ValueError:
+        return 5000
+
+
 def obtener_pool():
     global _pool
     if _pool is None:
-        _pool = pool.ThreadedConnectionPool(1, int(os.environ.get("PG_POOL_MAX", "5")), _dsn())
+        timeout_ms = _statement_timeout_ms()
+        kwargs = {}
+        if timeout_ms > 0:
+            kwargs["options"] = f"-c statement_timeout={timeout_ms}"
+        _pool = pool.ThreadedConnectionPool(
+            1, int(os.environ.get("PG_POOL_MAX", "5")), _dsn(), **kwargs
+        )
     return _pool
 
 

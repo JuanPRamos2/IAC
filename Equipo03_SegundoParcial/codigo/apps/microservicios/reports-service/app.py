@@ -228,11 +228,33 @@ def _ping_redis():
     obtener_redis().ping()
 
 
+def _ping_bucket():
+    modo = (os.environ.get("ALMACEN_MODO") or "local").strip().lower()
+    if modo == "gcs":
+        nombre = (os.environ.get("GCS_BUCKET_NAME") or os.environ.get("GCS_BUCKET") or "").strip()
+        if not nombre:
+            raise RuntimeError("Falta GCS_BUCKET_NAME (o GCS_BUCKET) para ALMACEN_MODO=gcs")
+        from google.cloud import storage
+        llave = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
+        cliente = (
+            storage.Client.from_service_account_json(llave)
+            if llave and os.path.isfile(llave)
+            else storage.Client()
+        )
+        if not cliente.bucket(nombre).exists():
+            raise RuntimeError(f"Bucket GCS no accesible: {nombre}")
+        return
+    carpeta = os.environ.get("ALMACEN_EVIDENCIAS", "/var/lib/bienestar/evidencias")
+    os.makedirs(carpeta, exist_ok=True)
+    if not os.path.isdir(carpeta) or not os.access(carpeta, os.W_OK):
+        raise RuntimeError(f"Almacen local no escribible: {carpeta}")
+
+
 app = crear_servicio(
     "reports-service",
     "Genera, sella y entrega reportes a partir de resultados ya publicados",
     comprobaciones={"postgresql": ping_pg, "mongodb": ping_mongo,
-                    "redis": _ping_redis})
+                    "redis": _ping_redis, "bucket": (_ping_bucket, "opcional")})
 
 from comun import formatos as _formatos
 from contrato import montar as _montar_contrato

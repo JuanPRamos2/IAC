@@ -59,6 +59,7 @@ services:
       - ../../db/migraciones/015_acciones_del_ciclo_de_intervencion.sql:/docker-entrypoint-initdb.d/17_mig_015.sql:ro
       - ../../db/migraciones/016_acciones_de_consentimiento_apoyo_y_gobierno.sql:/docker-entrypoint-initdb.d/18_mig_016.sql:ro
       - ../../db/migraciones/017_endurecimiento_privacidad_node.sql:/docker-entrypoint-initdb.d/19_mig_017.sql:ro
+      - ../../db/migraciones/018_tercer_parcial_seguridad_y_buckets.sql:/docker-entrypoint-initdb.d/20_mig_018.sql:ro
       # Los permisos van DESPUÉS de las migraciones: varias crean
       # tablas y columnas sobre las que este script otorga
       # privilegios.
@@ -108,6 +109,8 @@ services:
       JWT_MINUTOS: ${JWT_MINUTOS:-15}
       NIVEL_BITACORA: ${NIVEL_BITACORA:-INFO}
       MOSTRAR_ERRORES: ${MOSTRAR_ERRORES:-false}
+      VERSION_DESPLIEGUE: ${VERSION_DESPLIEGUE:-local}
+      NOTIFICATIONS_SERVICE_URL: ${NOTIFICATIONS_SERVICE_URL:-http://notifications-service:8000}
     depends_on:
       datos:
         condition: service_healthy

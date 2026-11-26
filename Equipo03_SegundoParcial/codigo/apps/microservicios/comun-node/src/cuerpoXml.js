@@ -77,8 +77,20 @@ function normalizar(valor) {
   return salida;
 }
 
+const PATRON_XXE = /<!\s*(DOCTYPE|ENTITY)\b/i;
+
 /** Convierte el texto XML de una peticion en un objeto plano. */
 export function deXml(texto) {
+  // Defensa explicita anti-XXE / Billion Laughs: aunque fast-xml-parser no
+  // resuelve entidades externas por defecto, rechazar DOCTYPE y ENTITY antes
+  // de validar/parsear bloquea payloads maliciosos con un codigo claro.
+  if (typeof texto === "string" && PATRON_XXE.test(texto)) {
+    throw new ErrorApi(
+      "XML_INSEGURO",
+      "El cuerpo XML contiene declaraciones DOCTYPE o ENTITY no permitidas.",
+      400
+    );
+  }
   // El lector es tolerante por diseno: `<Unidad><nombre>sin cerrar` no le
   // arranca una excepcion, devuelve un arbol a medias. El efecto seria el
   // peor posible: el servicio responderia 422 "campos obligatorios" y el

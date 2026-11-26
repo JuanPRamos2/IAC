@@ -14,7 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY documents-service/ .
 
-RUN useradd --create-home --shell /usr/sbin/nologin servicio && chown -R servicio /app
+RUN useradd --create-home --shell /usr/sbin/nologin servicio \
+ && mkdir -p /var/lib/bienestar/evidencias \
+ && chown -R servicio /app /var/lib/bienestar/evidencias
 USER servicio
 
 EXPOSE 8000

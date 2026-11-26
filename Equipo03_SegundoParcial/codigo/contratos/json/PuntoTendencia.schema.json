@@ -2,22 +2,34 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://nexum.com.mx/bienestar/contratos/PuntoTendencia.schema.json",
   "title": "PuntoTendencia",
-  "description": "Un punto de la serie protegida de una unidad, tal como lo devuelve agregado.v_tendencia. La variación es una columna generada en la base, no un cálculo de este servicio: así dos componentes no pueden reportar variaciones distintas sobre los mismos datos.",
+  "description": "Un punto de la serie, con la lectura de su cambio respecto al punto publicado anterior. Un punto suprimido se conserva con valor nulo: quitarlo haria que dos campanias no consecutivas parecieran consecutivas y el salto entre ellas se leeria como un solo paso.",
   "properties": {
+    "cambio": {
+      "description": "Diferencia con el punto publicado anterior.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "campania_comparada": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "campania_id": {
+      "example": "CAMP-2026-S4",
       "type": "string"
     },
     "campania_nombre": {
-      "type": "string"
-    },
-    "dimension_id": {
       "type": [
         "string",
         "null"
       ]
     },
     "escala_ruido": {
-      "description": "Escala del ruido de Laplace aplicado. Viaja en la respuesta porque es lo que permite juzgar si una diferencia entre dos puntos es real o cabe dentro del ruido.",
+      "description": "Escala del ruido de Laplace aplicado al publicar. Es lo que permite juzgar si una diferencia cabe dentro del ruido.",
       "format": "double",
       "type": [
         "number",
@@ -25,11 +37,9 @@
       ]
     },
     "lectura": {
-      "description": "Lectura en palabras: la base compara la variación contra la escala del ruido y no reporta como cambio una diferencia que no se puede distinguir del azar.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "La interpretacion en palabras. Existe porque un numero con signo no dice si vale la pena mirarlo.",
+      "example": "Cambio de -0.120 frente a CAMP-2026-S3, dentro del ruido (umbral 0.283). No se puede afirmar que haya cambiado nada.",
+      "type": "string"
     },
     "n_observaciones": {
       "type": [
@@ -37,23 +47,27 @@
         "null"
       ]
     },
+    "publicado": {
+      "type": "boolean"
+    },
     "secuencia": {
+      "example": 4,
       "type": "integer"
     },
-    "unidad_nombre": {
-      "type": "string"
-    },
-    "unidad_organizacional_id": {
-      "type": "string"
-    },
-    "valor_protegido": {
-      "format": "double",
+    "supera_el_ruido": {
+      "description": "Nulo en el primer punto y en los suprimidos: no hay con que comparar.",
       "type": [
-        "number",
+        "boolean",
         "null"
       ]
     },
-    "variacion_absoluta": {
+    "umbral_de_ruido": {
+      "description": "sqrt(2) * max(escala_a, escala_b). Por encima de esto el cambio se considera real.",
+      "format": "double",
+      "type": "number"
+    },
+    "valor_protegido": {
+      "description": "Nulo cuando no se publico. NO es cero: es ausencia de dato.",
       "format": "double",
       "type": [
         "number",
@@ -109,171 +123,6 @@
       ],
       "type": "object"
     },
-    "EstadoCache": {
-      "description": "Aciertos y fallos por recurso. Sin números, un 'tenemos caché' no se puede defender en la demostración.",
-      "properties": {
-        "claves": {
-          "description": "Las primeras 50 claves vigentes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "entradas": {
-          "type": "integer"
-        },
-        "por_recurso": {
-          "additionalProperties": {
-            "properties": {
-              "aciertos": {
-                "type": "integer"
-              },
-              "fallos": {
-                "type": "integer"
-              },
-              "tasa_acierto": {
-                "format": "double",
-                "type": "number"
-              },
-              "ttl_segundos": {
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          "type": "object"
-        },
-        "redis_disponible": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "EstadoPresupuesto": {
-      "description": "Épsilon consumido y disponible por campaña y unidad. Es el dato que decide si todavía se puede publicar un agregado.",
-      "properties": {
-        "agotado": {
-          "description": "Cuando es verdadero, la base rechaza cualquier publicacion nueva de esa campania y unidad: el presupuesto es un tope real, no una advertencia.",
-          "type": "boolean"
-        },
-        "campania_id": {
-          "type": "string"
-        },
-        "consultas_realizadas": {
-          "type": "integer"
-        },
-        "epsilon_consumido": {
-          "format": "double",
-          "type": "number"
-        },
-        "epsilon_restante": {
-          "format": "double",
-          "type": "number"
-        },
-        "epsilon_total": {
-          "format": "double",
-          "type": "number"
-        },
-        "unidad_organizacional_id": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "FilaParticipacion": {
-      "description": "Conteos de respuesta, no puntajes. Aun así se marca el grupo chico: un conteo de dos en una unidad de tres ya dice demasiado sobre quién respondió.",
-      "properties": {
-        "campania_id": {
-          "type": "string"
-        },
-        "cobertura_porcentaje": {
-          "format": "double",
-          "type": [
-            "number",
-            "null"
-          ]
-        },
-        "plantilla_declarada": {
-          "type": "integer"
-        },
-        "respuestas": {
-          "type": "integer"
-        },
-        "unidad": {
-          "type": "string"
-        },
-        "unidad_organizacional_id": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "FilaTablero": {
-      "description": "Una dimensión de bienestar ya publicada para una unidad. El valor viene del resultado protegido: trae ruido de Laplace y puede venir suprimido.",
-      "properties": {
-        "campania_id": {
-          "example": "CAMP-2026-S1",
-          "type": "string"
-        },
-        "dimension": {
-          "example": "CARGA",
-          "type": "string"
-        },
-        "epsilon_aplicado": {
-          "description": "Épsilon que ya se gastó cuando se publicó este valor. Consultarlo aquí no gasta nada más.",
-          "format": "double",
-          "type": "number"
-        },
-        "estado_publicacion": {
-          "description": "La base distingue el motivo en lugar de un generico 'suprimido': GRUPO_INSUFICIENTE es que no se alcanzo el umbral k, y PRESUPUESTO_PRIVACIDAD_AGOTADO es que la campania ya gasto su epsilon. En ambos casos valor_protegido viene nulo.",
-          "enum": [
-            "PUBLICADO",
-            "GRUPO_INSUFICIENTE",
-            "PRESUPUESTO_PRIVACIDAD_AGOTADO"
-          ],
-          "type": "string"
-        },
-        "mecanismo": {
-          "example": "LAPLACE",
-          "type": "string"
-        },
-        "participacion_protegida": {
-          "description": "Texto, no numero, y a proposito: devolver el conteo exacto de participantes de un grupo chico seria la via mas facil de deducir quien respondio.",
-          "enum": [
-            "suficiente",
-            "insuficiente",
-            "no disponible: presupuesto de privacidad agotado"
-          ],
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "precision_advertencia": {
-          "type": "boolean"
-        },
-        "secuencia": {
-          "example": 3,
-          "type": "integer"
-        },
-        "unidad": {
-          "example": "Centro de contacto turno B",
-          "type": "string"
-        },
-        "unidad_organizacional_id": {
-          "example": "UO-CC-TURNO-B",
-          "type": "string"
-        },
-        "valor_protegido": {
-          "format": "double",
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
-    },
     "Paginacion": {
       "properties": {
         "pagina": {
@@ -303,34 +152,36 @@
       },
       "type": "object"
     },
-    "ResumenCatalogo": {
+    "ResumenTendencia": {
+      "description": "Direccion de la serie contando SOLO los cambios que superan el ruido. Contar todos haria que una serie plana con ruido pareciera tener movimiento: con seis campanias, el azar produce tres subidas y tres bajadas, y una de ellas siempre es la ultima.",
       "properties": {
-        "campanias_abiertas": {
+        "cambios_a_la_baja": {
           "type": "integer"
         },
-        "instrumentos_activos": {
+        "cambios_al_alza": {
           "type": "integer"
         },
-        "reactivos_activos": {
+        "cambios_sobre_el_ruido": {
           "type": "integer"
         },
-        "unidades_activas": {
+        "campanias_publicadas": {
           "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "SolicitudInvalidar": {
-      "description": "Sin 'recurso' se invalida todo. Se invalida a propósito cuando se publica un agregado nuevo: el tablero debe reflejarlo de inmediato y no al minuto siguiente.",
-      "properties": {
-        "recurso": {
+        },
+        "campanias_suprimidas": {
+          "type": "integer"
+        },
+        "direccion": {
+          "description": "ESTABLE no es 'no cambio': es que si cambio algo, no se distingue del azar. INDETERMINADA es que no hay suficientes campanias publicadas para hablar de tendencia.",
           "enum": [
-            "tablero",
-            "tendencia",
-            "presupuesto",
-            "participacion",
-            "catalogo"
+            "AL_ALZA",
+            "A_LA_BAJA",
+            "MIXTA",
+            "ESTABLE",
+            "INDETERMINADA"
           ],
+          "type": "string"
+        },
+        "lectura": {
           "type": "string"
         }
       },

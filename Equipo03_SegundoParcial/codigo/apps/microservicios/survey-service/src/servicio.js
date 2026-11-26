@@ -10,6 +10,7 @@ import { consultar, consultarUno } from "@bienestar/comun/postgres.js";
 import { guardarDocumentoRespuesta } from "@bienestar/comun/modelos/Encuesta.js";
 import { entero, texto, arreglo, booleano } from "@bienestar/comun/validacion.js";
 import { registrarBitacora } from "@bienestar/comun/auditoria.js";
+import { notificarEventoInterno } from "@bienestar/comun/notificador.js";
 
 const ESTADOS = {
   REGISTRADA: { http: 201, codigo: null },
@@ -216,6 +217,18 @@ export async function registrarRespuestas({
     await registrarBitacora(req, "AUTOREPORTE_ENVIADO", "EXITO", {
       tipo_recurso: "cuestionario",
       recurso_id: cId,
+    });
+  }
+
+  const destinatarioId = req?.actor?.sub || req?.actor?.usuario_id;
+  if (destinatarioId) {
+    await notificarEventoInterno({
+      tipo: "CONFIRMACION_RECIBIDA",
+      destinatarios: [destinatarioId],
+      titulo: "Confirmacion de respuesta registrada",
+      mensaje: `Se registro tu participacion en la campania ${campId}.`,
+      metadata: { campania_id: campId, cuestionario_id: cId },
+      correlacionId,
     });
   }
 

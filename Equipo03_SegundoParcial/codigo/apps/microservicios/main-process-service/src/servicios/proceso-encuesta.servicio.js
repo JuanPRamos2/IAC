@@ -11,6 +11,7 @@ import * as EncuestaModelo from "@bienestar/comun/modelos/Encuesta.js";
 import { registrarEventoProceso } from "@bienestar/comun/modelos/EventosProceso.js";
 import { contextoOperativo } from "@bienestar/comun/modelos/Usuario.js";
 import { guardarAutoreporte } from "@bienestar/comun/servicios/encuesta.servicio.js";
+import { notificarEventoInterno } from "@bienestar/comun/notificador.js";
 
 export async function registrarRespuesta({ actor, cuerpo, correlacionId, colEventos, colRespuestas }) {
   if (!cuerpo || typeof cuerpo !== "object") {
@@ -44,6 +45,21 @@ export async function registrarRespuesta({ actor, cuerpo, correlacionId, colEven
     }, colEventos);
     eventoId = evento.id;
   } catch { /* trazabilidad degradada, respuesta intacta */ }
+
+  const destinatarioId = actor?.sub || actor?.usuario_id;
+  if (destinatarioId) {
+    await notificarEventoInterno({
+      tipo: "CONFIRMACION_RECIBIDA",
+      destinatarios: [destinatarioId],
+      titulo: "Confirmacion de respuesta registrada",
+      mensaje: `Se registro tu participacion en la campania ${resultado.campania_id}.`,
+      metadata: {
+        campania_id: resultado.campania_id,
+        instrumento_id: resultado.instrumento_id,
+      },
+      correlacionId,
+    });
+  }
 
   return { ...resultado, evento_id: eventoId };
 }

@@ -44,8 +44,8 @@ import os
 from flask import g, request
 
 from comun import (ErrorApi, VERSION_API, crear_servicio, cuerpo_peticion,
-                   limite_consumo, obtener_redis, pagina, responder,
-                   requiere_permiso, sobre_pagina)
+                   limite_consumo, notificar_evento_interno, obtener_redis,
+                   pagina, responder, requiere_permiso, sobre_pagina)
 from comun.datos import consultar, consultar_uno, cursor, ping as ping_pg
 
 os.environ.setdefault("NOMBRE_SERVICIO", "interventions-service")
@@ -386,6 +386,27 @@ def cambiar_estado(intervencion_id):
     # uso el permiso de seguimiento» o «alguien registro un avance».
     _bitacora("INTERVENCION_APROBADA" if destino == "APROBADA"
               else "INTERVENCION_ESTADO_CAMBIADO", "EXITO", intervencion_id)
+
+    if destino == "APROBADA":
+        destinatarios = []
+        if plan.get("responsable_usuario_id"):
+            destinatarios.append(plan["responsable_usuario_id"])
+        notificar_evento_interno(
+            tipo="PLAN_APROBADO",
+            destinatarios=destinatarios,
+            unidad_organizacional_id=plan.get("unidad_organizacional_id"),
+            titulo="Plan de intervencion aprobado",
+            mensaje=(
+                f"Se aprobo el plan de intervencion {intervencion_id} "
+                f"para la unidad {plan.get('unidad_organizacional_id')}."
+            ),
+            metadata={
+                "intervencion_id": intervencion_id,
+                "unidad_organizacional_id": plan.get("unidad_organizacional_id"),
+                "tipo_intervencion": plan.get("tipo_intervencion"),
+            },
+        )
+
     return responder({"intervencion_id": intervencion_id,
                       "estado_anterior": origen,
                       "estado": destino,

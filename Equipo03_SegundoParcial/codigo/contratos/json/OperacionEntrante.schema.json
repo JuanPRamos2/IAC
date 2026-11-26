@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/OperacionEntrante.schema.json",
+  "title": "OperacionEntrante",
+  "description": "Una operacion capturada por el cliente, quizas sin red. Va por SEUDONIMO: un empleado_id, correo o nombre aqui se RECHAZA, no se ignora.",
+  "properties": {
+    "campania_id": {
+      "example": "CAMP-2026-S4",
+      "type": "string"
+    },
+    "operacion_cliente_id": {
+      "description": "Lo genera el CLIENTE antes del primer intento y lo repite identico en cada reenvio. Es lo unico que permite distinguir «lo mismo otra vez» de «otro que contesto igual»: comparar por contenido descartaria como duplicada la respuesta legitima de dos personas del mismo turno que contestaron parecido.",
+      "example": "mov-9f3a1c-0007",
+      "maxLength": 80,
+      "type": "string"
+    },
+    "seudonimo_id": {
+      "example": "SD-0007",
+      "type": "string"
+    },
+    "tipo": {
+      "default": "AUTOREPORTE",
+      "enum": [
+        "AUTOREPORTE"
+      ],
+      "type": "string"
+    },
+    "valores": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Reactivo a valor, como lo espera autoreporte.fn_registrar_autoreporte.",
+      "example": {
+        "R-01": 4,
+        "R-02": 3
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "operacion_cliente_id",
+    "seudonimo_id",
+    "campania_id",
+    "valores"
+  ],
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ResultadoOperacion": {
+      "description": "El resultado de UN renglon. El lote no es todo o nada: un renglon mal formado no puede perder los demas, porque el cliente que los capturo sin red no tiene como recuperarlos.",
+      "properties": {
+        "advertencia": {
+          "description": "Presente cuando el mismo operacion_cliente_id llego con OTRO contenido. No se aplico el contenido nuevo: describe un cliente que reusa identificadores.",
+          "type": "string"
+        },
+        "estado": {
+          "description": "APLICADA: se registro.\nDUPLICADA: ya estaba; se devolvio el resultado guardado sin aplicar otra vez.\nEN_CONFLICTO: choco con un dato que ya existia y que NO se sobrescribe.\nRECHAZADA: no paso una validacion o una regla.\nERROR_TEMPORAL: no se pudo aplicar y no se puede afirmar que no se haya aplicado.",
+          "enum": [
+            "APLICADA",
+            "DUPLICADA",
+            "EN_CONFLICTO",
+            "RECHAZADA",
+            "ERROR_TEMPORAL"
+          ],
+          "type": "string"
+        },
+        "estado_base": {
+          "description": "El estado que devolvio autoreporte.fn_registrar_autoreporte, sin traducir. Se expone para que un problema se pueda rastrear hasta la regla que lo causo.",
+          "type": "string"
+        },
+        "intentos": {
+          "type": "integer"
+        },
+        "mensaje": {
+          "type": "string"
+        },
+        "operacion_cliente_id": {
+          "type": "string"
+        },
+        "reintentable": {
+          "description": "Si el cliente DEBE volver a intentarlo. Un rechazo por datos mal formados es false —volveria a fallar igual— y una campania aun no abierta es true, porque una campania programada abre despues.",
+          "type": "boolean"
+        },
+        "renglon": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

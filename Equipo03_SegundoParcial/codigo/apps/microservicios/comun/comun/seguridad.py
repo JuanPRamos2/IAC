@@ -105,6 +105,44 @@ def requiere_token(f):
     return envoltura
 
 
+def _registrar_acceso_denegado(codigos_requeridos):
+    """Registra ACCESO_DENEGADO en auditoria.bitacora sin bloquear el rechazo 403.
+
+    Un fallo al persistir la bitacora nunca debe ocultar ni convertir en 500
+    la denegacion de acceso por falta de permisos.
+    """
+    try:
+        from .datos import cursor
+        actor = getattr(g, "actor", None) or {}
+        origen = request.headers.get("X-Forwarded-For", request.remote_addr) or ""
+        ip = origen.split(",")[0].strip() or None
+        with cursor(commit=True) as cur:
+            cur.execute(
+                "INSERT INTO auditoria.bitacora "
+                " (actor_usuario_id, actor_perfil, accion, tipo_recurso, "
+                "  recurso_id, resultado, correlacion_id, direccion_origen) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (
+                    actor.get("sub"),
+                    (actor.get("perfil") or "ANONIMO")[:30],
+                    "ACCESO_DENEGADO",
+                    "ENDPOINT",
+                    (request.path or "")[:80] or None,
+                    "RECHAZADO_PERMISO",
+                    (getattr(g, "correlacion_id", "") or "")[:60],
+                    ip,
+                ),
+            )
+    except Exception:
+        try:
+            current_app.logger.warning(
+                "No se pudo registrar ACCESO_DENEGADO en bitacora (permisos=%s)",
+                ",".join(codigos_requeridos),
+            )
+        except Exception:
+            pass
+
+
 def requiere_permiso(*codigos):
     """Autorización por permiso, consultado en la base en cada petición.
 
@@ -123,6 +161,7 @@ def requiere_permiso(*codigos):
                 (g.actor.get("perfil_id"),))
             g.permisos = {x["codigo"] for x in filas}
             if not set(codigos) & g.permisos:
+                _registrar_acceso_denegado(codigos)
                 raise ErrorApi(
                     "SIN_PERMISO",
                     f"El perfil {g.actor.get('perfil')} no tiene ninguno de "

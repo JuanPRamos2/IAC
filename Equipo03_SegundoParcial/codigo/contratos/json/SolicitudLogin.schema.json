@@ -97,6 +97,36 @@
       },
       "type": "object"
     },
+    "RespuestaRecuperarConfirmada": {
+      "properties": {
+        "actualizado": {
+          "example": true,
+          "type": "boolean"
+        },
+        "mensaje": {
+          "example": "Contrasena actualizada. Inicia sesion con tu nueva contrasena.",
+          "type": "string"
+        },
+        "sesiones_revocadas": {
+          "example": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "RespuestaRecuperarSolicitada": {
+      "properties": {
+        "mensaje": {
+          "example": "Si el correo esta registrado y activo, recibiras un codigo de recuperacion.",
+          "type": "string"
+        },
+        "solicitado": {
+          "example": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "Sesion": {
       "properties": {
         "emitido_en": {
@@ -154,6 +184,46 @@
           "type": "object"
         }
       },
+      "type": "object"
+    },
+    "SolicitudConfirmarRecuperacion": {
+      "properties": {
+        "codigo": {
+          "example": "482910",
+          "maxLength": 6,
+          "minLength": 6,
+          "type": "string"
+        },
+        "correo": {
+          "example": "mariana.solis@nexum.com.mx",
+          "format": "email",
+          "type": "string"
+        },
+        "nueva_contrasena": {
+          "example": "NuevaClave2026",
+          "format": "password",
+          "minLength": 8,
+          "type": "string"
+        }
+      },
+      "required": [
+        "correo",
+        "codigo",
+        "nueva_contrasena"
+      ],
+      "type": "object"
+    },
+    "SolicitudRecuperarAcceso": {
+      "properties": {
+        "correo": {
+          "example": "mariana.solis@nexum.com.mx",
+          "format": "email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correo"
+      ],
       "type": "object"
     },
     "SolicitudRenovar": {

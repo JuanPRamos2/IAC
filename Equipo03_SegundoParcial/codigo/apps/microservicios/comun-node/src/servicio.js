@@ -9,10 +9,12 @@
  * Lo que NO esta aqui es la logica de negocio: cada servicio tiene una
  * sola responsabilidad y la implementa en su propio archivo.
  */
+import { randomUUID } from "node:crypto";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 
+import { registrarBitacora } from "./auditoria.js";
 import { correlacion } from "./correlacion.js";
 import { cuerpoXml } from "./cuerpoXml.js";
 import { ErrorApi, quiereXml, registrarManejadores } from "./errores.js";
@@ -21,6 +23,10 @@ import { obtenerRedis } from "./redis.js";
 import { aXml } from "./xmlizar.js";
 
 export const VERSION_API = "v1";
+
+const _INICIO = Date.now() / 1000;
+const INSTANCIA = randomUUID().replace(/-/g, "").slice(0, 12);
+const ARRANCADO_EN = new Date(_INICIO * 1000).toISOString();
 
 const NIVELES = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40 };
 
@@ -98,8 +104,17 @@ export function limiteConsumo(maximo = 120, ventana = 60) {
       const n = await r.incr(clave);
       if (n === 1) await r.expire(clave, ventana);
       if (n > maximo) {
+        let restante = await r.ttl(clave);
+        if (!Number.isInteger(restante) || restante < 1) {
+          restante = ventana;
+        }
+        res.setHeader("Retry-After", String(restante));
+        await registrarBitacora(req, "RATE_LIMIT_EXCEDIDO", "RECHAZADO", {
+          tipo_recurso: "API",
+          recurso_id: req.originalUrl || req.path || "",
+        });
         return next(new ErrorApi("LIMITE_EXCEDIDO",
-          `Mas de ${maximo} peticiones por ${ventana} segundos.`, 429));
+          `Mas de ${maximo} peticiones por ${ventana} segundos. Reintenta en ${restante} s.`, 429));
       }
     } catch { /* cache caida: se deja pasar a proposito */ }
     next();
@@ -150,29 +165,76 @@ export function crearServicio(nombre, descripcion, comprobaciones = {}) {
 
   // ----------------------------------------------- endpoints de salud
   app.get("/health/live", (req, res) => {
-    res.json({ servicio: nombre, estado: "vivo", version: VERSION_API });
+    res.json({
+      servicio: nombre,
+      estado: "vivo",
+      version: VERSION_API,
+      version_desplegada: process.env.VERSION_DESPLIEGUE || "local",
+      instancia: INSTANCIA,
+      arrancado_en: ARRANCADO_EN,
+      segundos_arriba: Math.round((Date.now() / 1000 - _INICIO) * 10) / 10,
+    });
   });
 
   app.get("/health/ready", async (req, res) => {
     const detalle = {};
-    let ok = true;
-    for (const [etiqueta, fn] of Object.entries(comprobaciones)) {
+    const esencialesMal = [];
+    const opcionalesMal = [];
+
+    for (const [etiqueta, declaracion] of Object.entries(comprobaciones)) {
+      let fn = declaracion;
+      let opcional = false;
+      if (Array.isArray(declaracion)) {
+        fn = declaracion[0];
+        opcional = String(declaracion[1] || "").toLowerCase() === "opcional";
+      }
       const t = process.hrtime.bigint();
       try {
         await fn();
-        detalle[etiqueta] = { ok: true, ms: Number(process.hrtime.bigint() - t) / 1e6 };
+        detalle[etiqueta] = {
+          ok: true,
+          esencial: !opcional,
+          ms: Math.round((Number(process.hrtime.bigint() - t) / 1e6) * 10) / 10,
+        };
       } catch (e) {
-        ok = false;
-        detalle[etiqueta] = { ok: false, error: String(e?.message || e).slice(0, 200) };
+        detalle[etiqueta] = {
+          ok: false,
+          esencial: !opcional,
+          ms: Math.round((Number(process.hrtime.bigint() - t) / 1e6) * 10) / 10,
+          error: String(e?.message || e).slice(0, 200),
+        };
+        if (opcional) {
+          opcionalesMal.push(etiqueta);
+        } else {
+          esencialesMal.push(etiqueta);
+        }
       }
     }
-    res.status(ok ? 200 : 503).json({
-      servicio: nombre, estado: ok ? "listo" : "no_listo", dependencias: detalle,
-    });
+
+    let estado = "listo";
+    let codigo = 200;
+    if (esencialesMal.length > 0) {
+      estado = "no_listo";
+      codigo = 503;
+    } else if (opcionalesMal.length > 0) {
+      estado = "degradado";
+      codigo = 200;
+    }
+
+    const cuerpo = { servicio: nombre, estado, dependencias: detalle };
+    if (opcionalesMal.length > 0) cuerpo.degradado_por = [...opcionalesMal].sort();
+    if (esencialesMal.length > 0) cuerpo.falta = [...esencialesMal].sort();
+    res.status(codigo).json(cuerpo);
   });
 
   app.get("/health", (req, res) => {
-    res.json({ servicio: nombre, descripcion, version: VERSION_API, ambiente });
+    res.json({
+      servicio: nombre,
+      descripcion,
+      version: VERSION_API,
+      version_desplegada: process.env.VERSION_DESPLIEGUE || "local",
+      ambiente,
+    });
   });
 
   const montar = (ruta, router) => app.use(ruta, router);

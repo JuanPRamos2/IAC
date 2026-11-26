@@ -18,6 +18,7 @@ let pool = null;
 
 export function obtenerPool() {
   if (pool === null) {
+    const statementTimeout = Number(process.env.PG_STATEMENT_TIMEOUT_MS || cfg.statementTimeoutMs || 5000);
     pool = new pg.Pool({
       host: cfg.host, port: cfg.port, database: cfg.database,
       user: cfg.user, password: cfg.password, max: cfg.max,
@@ -26,6 +27,7 @@ export function obtenerPool() {
       // el valor por omision de la biblioteca.
       connectionTimeoutMillis: 1500,
       idleTimeoutMillis: 10000,
+      ...(statementTimeout > 0 ? { statement_timeout: statementTimeout } : {}),
       application_name: process.env.NOMBRE_SERVICIO || "microservicio-node",
     });
     pool.on("error", () => { /* una conexion ociosa que muere no tumba el proceso */ });

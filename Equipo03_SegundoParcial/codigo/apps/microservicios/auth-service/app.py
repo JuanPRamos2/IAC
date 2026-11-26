@@ -13,21 +13,29 @@ revocar de golpe. Un token de acceso de larga duración no se puede
 cancelar sin una lista negra enorme.
 """
 import datetime as dt
+from email.message import EmailMessage
+import hashlib
+import hmac
+import inspect
 import os
+import secrets
+import smtplib
 import uuid
 
 import jwt
-from flask import g, request
+from flask import Blueprint, g, request
 
 from comun import (ErrorApi, VERSION_API, crear_servicio, cuerpo_peticion, limite_consumo,
                    obtener_redis, responder, requiere_token)
-from comun.datos import consultar_uno, ping as ping_pg
+from comun.datos import consultar_uno, cursor, ping as ping_pg
 from comun.seguridad import JWT_ALGORITMO, JWT_SECRETO
 
 MINUTOS_ACCESO = int(os.environ.get("JWT_MINUTOS", "15"))
 DIAS_RENOVACION = int(os.environ.get("JWT_DIAS_RENOVACION", "7"))
 INTENTOS_MAXIMOS = int(os.environ.get("INTENTOS_MAXIMOS", "5"))
 VENTANA_BLOQUEO = int(os.environ.get("VENTANA_BLOQUEO", "900"))
+RECUPERACION_TTL = int(os.environ.get("RECUPERACION_TTL", "600"))
+RECUPERACION_MAX_INTENTOS = int(os.environ.get("RECUPERACION_MAX_INTENTOS", "3"))
 
 os.environ.setdefault("NOMBRE_SERVICIO", "auth-service")
 
@@ -91,19 +99,104 @@ def _emitir(usuario: dict):
 
 
 def _bitacora(accion, resultado, actor=None, perfil=None, recurso=None):
-    from comun.datos import cursor
     try:
         with cursor(commit=True) as cur:
             cur.execute(
                 "INSERT INTO auditoria.bitacora (actor_usuario_id, actor_perfil, "
                 " accion, tipo_recurso, recurso_id, resultado, correlacion_id, "
                 " direccion_origen) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                (actor, (perfil or "ANONIMO")[:30], accion, "USUARIO", recurso,
+                (actor, (perfil or "ANONIMO")[:30], accion, "USUARIO",
+                 (str(recurso)[:80] if recurso is not None else None),
                  resultado, getattr(g, "correlacion_id", ""),
                  (request.headers.get("X-Forwarded-For", request.remote_addr) or "")
                  .split(",")[0].strip() or None))
     except Exception:
         app.logger.error("No se pudo escribir en la bitacora: %s/%s", accion, resultado)
+
+
+def _limite_estricto(maximo: int, ventana: int, recurso: str):
+    """Aplica limite de consumo y registra RATE_LIMIT_EXCEDIDO si se rebasa."""
+    try:
+        limite_consumo(maximo=maximo, ventana=ventana)
+    except ErrorApi as e:
+        if e.codigo == "LIMITE_EXCEDIDO":
+            _bitacora("RATE_LIMIT_EXCEDIDO", "RECHAZADO", recurso=recurso)
+        raise
+
+
+def _revocar_sesiones_usuario(usuario_id: str) -> int:
+    """Revoca en Redis todas las sesiones activas de un usuario tras cambio de clave."""
+    try:
+        r = obtener_redis()
+        revocadas = 0
+        for clave in r.scan_iter("sesion:*", count=500):
+            if r.hget(clave, "usuario_id") == usuario_id:
+                jti = clave.split(":", 1)[1]
+                r.setex(f"revocado:{jti}", DIAS_RENOVACION * 86400, "1")
+                r.delete(clave)
+                revocadas += 1
+        return revocadas
+    except Exception:
+        app.logger.error("No se pudieron revocar las sesiones de %s", usuario_id)
+        return 0
+
+
+def _despachar_notificacion_recuperacion(usuario: dict, codigo: str):
+    """Intenta enviar el OTP via notificador interno y, opcionalmente, SMTP.
+
+    Ambos canales van aislados con try/except porque una falla de entrega
+    no debe provocar errores 500 ni revelar si el correo existe.
+    """
+    usuario_id = usuario["usuario_id"]
+    titulo = "Codigo de recuperacion de acceso"
+    mensaje = (
+        f"Tu codigo temporal de recuperacion es {codigo}. "
+        f"Expira en {RECUPERACION_TTL // 60} minutos."
+    )
+
+    try:
+        from comun.notificador import notificar_evento_interno
+        notificar_evento_interno(
+            tipo="RECUPERACION_ACCESO",
+            destinatarios=[usuario_id],
+            titulo=titulo,
+            mensaje=mensaje,
+            metadata={"expira_segundos": RECUPERACION_TTL},
+        )
+    except Exception as exc:
+        app.logger.warning("No se pudo despachar notificacion interna de recuperacion: %s", exc)
+
+    smtp_host = (os.environ.get("SMTP_HOST") or "").strip()
+    if smtp_host:
+        try:
+            smtp_puerto = int(os.environ.get("SMTP_PUERTO") or os.environ.get("SMTP_PORT", "587"))
+            smtp_usuario = os.environ.get("SMTP_USUARIO") or os.environ.get("SMTP_USER", "")
+            smtp_clave = os.environ.get("SMTP_CLAVE") or os.environ.get("SMTP_PASSWORD", "")
+            smtp_remitente = (
+                os.environ.get("SMTP_REMITENTE")
+                or os.environ.get("SMTP_FROM")
+                or smtp_usuario
+                or "no-reply@nexum.com.mx"
+            )
+            usar_tls = os.environ.get("SMTP_TLS", "true").lower() in ("1", "true", "si", "yes")
+
+            correo_msg = EmailMessage()
+            correo_msg["Subject"] = "Bienestar Nexum — Codigo de recuperacion de acceso"
+            correo_msg["From"] = smtp_remitente
+            correo_msg["To"] = usuario["correo"]
+            correo_msg.set_content(
+                f"Hola {usuario.get('nombre', '')},\n\n"
+                f"{mensaje}\n\n"
+                "Si no solicitaste este restablecimiento, ignora este mensaje.\n"
+            )
+            with smtplib.SMTP(smtp_host, smtp_puerto, timeout=5) as smtp:
+                if usar_tls:
+                    smtp.starttls()
+                if smtp_usuario and smtp_clave:
+                    smtp.login(smtp_usuario, smtp_clave)
+                smtp.send_message(correo_msg)
+        except Exception as exc:
+            app.logger.warning("No se pudo enviar correo SMTP de recuperacion: %s", exc)
 
 
 # ---------------------------------------------------------------- rutas
@@ -264,6 +357,180 @@ def permisos():
     return responder({"perfil": g.actor.get("perfil"),
                       "permisos": (filas or {}).get("codigos") or []},
                      200, raiz="permisos_respuesta")
+
+
+# Blueprints separados para aislar los contadores de `limite_consumo` por ruta
+# sin modificar comun/servicio.py.
+bp_recuperar_solicitar = Blueprint("recuperar_solicitar", __name__)
+bp_recuperar_confirmar = Blueprint("recuperar_confirmar", __name__)
+
+
+@bp_recuperar_solicitar.post(f"{BASE}/recuperar/solicitar")
+def recuperar_solicitar():
+    _limite_estricto(maximo=5, ventana=60, recurso="recuperar_solicitar")
+    cuerpo = cuerpo_peticion()
+    correo = (cuerpo.get("correo") or "").strip()
+    if not correo:
+        raise ErrorApi("CAMPOS_OBLIGATORIOS",
+                       "Faltan campos obligatorios en la solicitud.", 400,
+                       [{"campo": "correo", "problema": "requerido"}])
+
+    correo_lower = correo.lower()
+    usuario = consultar_uno(
+        """
+        SELECT u.usuario_id, u.nombre, u.correo, pf.nombre AS perfil
+          FROM usuarios.usuario u
+          LEFT JOIN usuarios.usuario_perfil up USING (usuario_id)
+          LEFT JOIN usuarios.perfil pf USING (perfil_id)
+         WHERE lower(u.correo) = lower(%s) AND u.activo
+        """,
+        (correo_lower,),
+    )
+
+    if usuario:
+        # OTP criptograficamente seguro; en Redis se guarda solo el SHA-256
+        # para que una lectura de cache no exponga codigos en claro.
+        codigo = f"{secrets.randbelow(1_000_000):06d}"
+        codigo_hash = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+        r = obtener_redis()
+        try:
+            r.setex(f"recuperacion:{correo_lower}", RECUPERACION_TTL, codigo_hash)
+            r.setex(f"recuperacion_intentos:{correo_lower}", RECUPERACION_TTL, "0")
+        except Exception:
+            app.logger.error("Redis no disponible al guardar OTP de recuperacion")
+            raise ErrorApi("DEPENDENCIA_NO_DISPONIBLE",
+                           "No se pudo procesar la solicitud de recuperacion.", 503)
+
+        _despachar_notificacion_recuperacion(usuario, codigo)
+        if os.environ.get("APP_AMBIENTE", "developer") == "developer":
+            app.logger.debug("[DEV] OTP de recuperacion para %s: %s", correo_lower, codigo)
+
+        _bitacora("RECUPERACION_SOLICITADA", "EXITO",
+                  actor=usuario["usuario_id"],
+                  perfil=usuario.get("perfil"),
+                  recurso=usuario["usuario_id"])
+    else:
+        _bitacora("RECUPERACION_SOLICITADA", "RECHAZADO", recurso=correo_lower)
+
+    # Respuesta generica identica exista o no el correo: evita enumeracion de cuentas.
+    return responder({
+        "solicitado": True,
+        "mensaje": "Si el correo esta registrado y activo, recibiras un codigo de recuperacion.",
+    }, 200, raiz="recuperacion_solicitada")
+
+
+@bp_recuperar_confirmar.post(f"{BASE}/recuperar/confirmar")
+def recuperar_confirmar():
+    _limite_estricto(maximo=10, ventana=60, recurso="recuperar_confirmar")
+    cuerpo = cuerpo_peticion()
+    correo = (cuerpo.get("correo") or "").strip()
+    codigo = str(cuerpo.get("codigo") or "").strip()
+    nueva_contrasena = cuerpo.get("nueva_contrasena") or ""
+
+    faltantes = [
+        c for c, v in (("correo", correo), ("codigo", codigo),
+                       ("nueva_contrasena", nueva_contrasena))
+        if not v
+    ]
+    if faltantes:
+        raise ErrorApi("CAMPOS_OBLIGATORIOS",
+                       "Faltan campos obligatorios en la solicitud.", 400,
+                       [{"campo": c, "problema": "requerido"} for c in faltantes])
+
+    if len(nueva_contrasena) < 8:
+        raise ErrorApi("VALIDACION", "La solicitud tiene campos invalidos.", 422,
+                       [{"campo": "nueva_contrasena", "problema": "minimo 8 caracteres"}])
+
+    correo_lower = correo.lower()
+    clave_otp = f"recuperacion:{correo_lower}"
+    clave_intentos = f"recuperacion_intentos:{correo_lower}"
+
+    r = obtener_redis()
+    try:
+        hash_guardado = r.get(clave_otp)
+    except Exception:
+        app.logger.error("Redis no disponible al validar OTP de recuperacion")
+        raise ErrorApi("DEPENDENCIA_NO_DISPONIBLE",
+                       "No se pudo validar el codigo de recuperacion.", 503)
+
+    if not hash_guardado:
+        _bitacora("RECUPERACION_CONFIRMADA", "RECHAZADO", recurso=correo_lower)
+        raise ErrorApi("CODIGO_INVALIDO_O_EXPIRADO",
+                       "El codigo de recuperacion es invalido o expiro.", 400)
+
+    hash_recibido = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    if not hmac.compare_digest(hash_recibido, hash_guardado):
+        try:
+            intentos = r.incr(clave_intentos)
+            if intentos == 1:
+                r.expire(clave_intentos, RECUPERACION_TTL)
+            if intentos >= RECUPERACION_MAX_INTENTOS:
+                r.delete(clave_otp, clave_intentos)
+                _bitacora("RECUPERACION_CONFIRMADA", "RECHAZADO", recurso=correo_lower)
+                raise ErrorApi("CODIGO_BLOQUEADO",
+                               "Se alcanzo el maximo de intentos. Solicita un nuevo codigo.",
+                               429)
+        except ErrorApi:
+            raise
+        except Exception:
+            app.logger.error("Redis no disponible al actualizar intentos de recuperacion")
+            raise ErrorApi("DEPENDENCIA_NO_DISPONIBLE",
+                           "No se pudo validar el codigo de recuperacion.", 503)
+
+        _bitacora("RECUPERACION_CONFIRMADA", "RECHAZADO", recurso=correo_lower)
+        raise ErrorApi("CODIGO_INVALIDO",
+                       "El codigo de recuperacion es incorrecto.", 400)
+
+    usuario = consultar_uno(
+        """
+        SELECT u.usuario_id, pf.nombre AS perfil
+          FROM usuarios.usuario u
+          LEFT JOIN usuarios.usuario_perfil up USING (usuario_id)
+          LEFT JOIN usuarios.perfil pf USING (perfil_id)
+         WHERE lower(u.correo) = lower(%s) AND u.activo
+        """,
+        (correo_lower,),
+    )
+    if not usuario:
+        try:
+            r.delete(clave_otp, clave_intentos)
+        except Exception:
+            pass
+        _bitacora("RECUPERACION_CONFIRMADA", "RECHAZADO", recurso=correo_lower)
+        raise ErrorApi("CODIGO_INVALIDO_O_EXPIRADO",
+                       "El codigo de recuperacion es invalido o expiro.", 400)
+
+    # Actualizacion mediante funcion SECURITY DEFINER para mantener menor privilegio.
+    with cursor(commit=True) as cur:
+        cur.execute(
+            "SELECT usuarios.fn_restablecer_contrasena(%s, %s) AS actualizado",
+            (usuario["usuario_id"], nueva_contrasena),
+        )
+        fila = cur.fetchone()
+        if not fila or not fila["actualizado"]:
+            raise ErrorApi("USUARIO_INACTIVO",
+                           "No fue posible actualizar la contrasena.", 400)
+
+    try:
+        r.delete(clave_otp, clave_intentos, f"intentos:{correo_lower}")
+    except Exception:
+        pass
+
+    revocadas = _revocar_sesiones_usuario(usuario["usuario_id"])
+    _bitacora("RECUPERACION_CONFIRMADA", "EXITO",
+              actor=usuario["usuario_id"],
+              perfil=usuario.get("perfil"),
+              recurso=usuario["usuario_id"])
+
+    return responder({
+        "actualizado": True,
+        "sesiones_revocadas": revocadas,
+        "mensaje": "Contrasena actualizada. Inicia sesion con tu nueva contrasena.",
+    }, 200, raiz="recuperacion_confirmada")
+
+
+app.register_blueprint(bp_recuperar_solicitar)
+app.register_blueprint(bp_recuperar_confirmar)
 
 
 if __name__ == "__main__":

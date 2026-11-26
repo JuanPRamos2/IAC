@@ -51,6 +51,8 @@ x-entorno-python: &entorno
   JWT_MINUTOS: "15"
   NIVEL_BITACORA: INFO
   MOSTRAR_ERRORES: "true"
+  VERSION_DESPLIEGUE: ${VERSION_DESPLIEGUE:-local}
+  NOTIFICATIONS_SERVICE_URL: ${NOTIFICATIONS_SERVICE_URL:-http://notifications-service:8000}
 
 services:
 
@@ -88,6 +90,8 @@ services:
       # al primer uso real, y la sonda de salud no lo detectaba. Hay una
       # prueba que recorre la carpeta y falla si falta alguna: es la que
       # avisó cuando se agregaron la 009 y la 010.
+      - ./db/esquema/00_rol_aplicacion.sh:/docker-entrypoint-initdb.d/00_rol_aplicacion.sh:ro
+      - ./db/esquema/01_esquema.sql:/docker-entrypoint-initdb.d/01_esquema.sql:ro
       - ./db/migraciones/001_rol_motor_y_funciones_definer.sql:/docker-entrypoint-initdb.d/03_mig_001.sql:ro
       - ./db/migraciones/002_acciones_del_sistema_web.sql:/docker-entrypoint-initdb.d/04_mig_002.sql:ro
       - ./db/migraciones/003_registrar_autoreporte.sql:/docker-entrypoint-initdb.d/05_mig_003.sql:ro
@@ -105,6 +109,7 @@ services:
       - ./db/migraciones/015_acciones_del_ciclo_de_intervencion.sql:/docker-entrypoint-initdb.d/17_mig_015.sql:ro
       - ./db/migraciones/016_acciones_de_consentimiento_apoyo_y_gobierno.sql:/docker-entrypoint-initdb.d/18_mig_016.sql:ro
       - ./db/migraciones/017_endurecimiento_privacidad_node.sql:/docker-entrypoint-initdb.d/19_mig_017.sql:ro
+      - ./db/migraciones/018_tercer_parcial_seguridad_y_buckets.sql:/docker-entrypoint-initdb.d/20_mig_018.sql:ro
       # Los permisos van DESPUÉS de las migraciones: varias crean
       # tablas y columnas sobre las que este script otorga
       # privilegios.
@@ -120,7 +125,7 @@ services:
       # psql o DBeaver para revisar los permisos. En production el compose
       # de infra/ NO publica este puerto, y la ausencia está comentada ahí
       # como deliberada.
-      - "5432:5432"
+      - "${PG_PUERTO_HOST:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bienestar"]
       interval: 10s
@@ -281,7 +286,12 @@ services:
     build:
       context: ./apps/microservicios
       dockerfile: documents-service/Dockerfile
-    environment: *entorno
+    environment:
+      <<: *entorno
+      ALMACEN_EVIDENCIAS: /var/lib/bienestar/evidencias
+      ALMACEN_MODO: ${ALMACEN_MODO:-local}
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      URL_FIRMADA_TTL_SEG: ${URL_FIRMADA_TTL_SEG:-300}
     ports: ["8105:8000"]
     depends_on:
       datos: {condition: service_healthy}

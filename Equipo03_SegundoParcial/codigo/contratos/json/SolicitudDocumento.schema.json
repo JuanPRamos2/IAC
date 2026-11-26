@@ -57,18 +57,45 @@
           "pattern": "^DOC-[0-9A-F]{12}$",
           "type": "string"
         },
+        "estado": {
+          "type": "string"
+        },
         "etiquetas": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
+        "fecha": {
+          "format": "date-time",
+          "type": "string"
+        },
         "fecha_creacion": {
           "format": "date-time",
           "type": "string"
         },
+        "hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
         "hash_contenido": {
           "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "identificador": {
+          "type": "string"
+        },
+        "metadatos": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "nivel_privacidad": {
+          "type": "string"
+        },
+        "propietario": {
+          "type": "string"
+        },
+        "ruta": {
           "type": "string"
         },
         "seudonimo_id": {
@@ -79,11 +106,16 @@
             "null"
           ]
         },
+        "tamano": {
+          "type": "integer"
+        },
         "tipo": {
           "enum": [
             "EVIDENCIA_CONSENTIMIENTO",
             "AVISO_PRIVACIDAD",
-            "REPORTE_ORGANIZACIONAL"
+            "REPORTE_ORGANIZACIONAL",
+            "EVIDENCIA_ARCHIVO",
+            "EVIDENCIA_APOYO"
           ],
           "type": "string"
         },

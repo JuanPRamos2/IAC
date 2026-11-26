@@ -22,6 +22,7 @@ export const postgres = {
   user: process.env.PG_USUARIO || "bienestar_app",
   password: process.env.PG_CLAVE || "",
   max: Number(process.env.PG_POOL_MAX || 5),
+  statementTimeoutMs: Number(process.env.PG_STATEMENT_TIMEOUT_MS || 5000),
 };
 
 export const redis = {

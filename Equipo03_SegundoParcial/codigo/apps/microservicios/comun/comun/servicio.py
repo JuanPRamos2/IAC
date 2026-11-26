@@ -113,6 +113,26 @@ def limite_consumo(maximo: int = 120, ventana: int = 60):
             restante = r.ttl(clave)
             if not isinstance(restante, int) or restante < 1:
                 restante = ventana
+            try:
+                from .datos import cursor
+                actor = getattr(g, "actor", None) or {}
+                with cursor(commit=True) as cur:
+                    cur.execute(
+                        "INSERT INTO auditoria.bitacora (actor_usuario_id, actor_perfil, "
+                        " accion, tipo_recurso, recurso_id, resultado, correlacion_id) "
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                        (
+                            actor.get("sub"),
+                            (actor.get("perfil") or "ANONIMO")[:30],
+                            "RATE_LIMIT_EXCEDIDO",
+                            "API",
+                            (request.path or "")[:80],
+                            "RECHAZADO",
+                            getattr(g, "correlacion_id", ""),
+                        ),
+                    )
+            except Exception:
+                pass
             raise ErrorApi(
                 "LIMITE_EXCEDIDO",
                 f"Mas de {maximo} peticiones por {ventana} segundos. "
@@ -176,6 +196,7 @@ def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
         hace falta.
         """
         return jsonify(servicio=nombre, estado="vivo", version=VERSION_API,
+                       version_desplegada=os.environ.get("VERSION_DESPLIEGUE") or "local",
                        instancia=INSTANCIA, arrancado_en=ARRANCADO_EN,
                        segundos_arriba=round(time.time() - _INICIO, 1))
 
@@ -242,7 +263,9 @@ def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
     @app.get("/health")
     def _salud():
         return jsonify(servicio=nombre, descripcion=descripcion,
-                       version=VERSION_API, ambiente=ambiente)
+                       version=VERSION_API,
+                       version_desplegada=os.environ.get("VERSION_DESPLIEGUE") or "local",
+                       ambiente=ambiente)
 
     registrar_manejadores(app)
     return app

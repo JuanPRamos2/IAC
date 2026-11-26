@@ -44,6 +44,33 @@ ESQUEMAS = {
             "perfil_id": {"type": "integer"},
             "unidad_alcance": {"type": "string", "nullable": True},
             "jti": {"type": "string"}, "expira": {"type": "integer"}}},
+    "SolicitudRecuperarAcceso": {
+        "type": "object", "required": ["correo"],
+        "properties": {
+            "correo": {"type": "string", "format": "email",
+                       "example": "mariana.solis@nexum.com.mx"}}},
+    "RespuestaRecuperarSolicitada": {
+        "type": "object",
+        "properties": {
+            "solicitado": {"type": "boolean", "example": True},
+            "mensaje": {"type": "string",
+                        "example": "Si el correo esta registrado y activo, recibiras un codigo de recuperacion."}}},
+    "SolicitudConfirmarRecuperacion": {
+        "type": "object", "required": ["correo", "codigo", "nueva_contrasena"],
+        "properties": {
+            "correo": {"type": "string", "format": "email",
+                       "example": "mariana.solis@nexum.com.mx"},
+            "codigo": {"type": "string", "minLength": 6, "maxLength": 6,
+                       "example": "482910"},
+            "nueva_contrasena": {"type": "string", "format": "password",
+                                 "minLength": 8, "example": "NuevaClave2026"}}},
+    "RespuestaRecuperarConfirmada": {
+        "type": "object",
+        "properties": {
+            "actualizado": {"type": "boolean", "example": True},
+            "sesiones_revocadas": {"type": "integer", "example": 1},
+            "mensaje": {"type": "string",
+                        "example": "Contrasena actualizada. Inicia sesion con tu nueva contrasena."}}},
 }
 
 
@@ -111,6 +138,42 @@ RUTAS = {
             "caducaran todos los tokens ya emitidos."),
         "responses": dict({"200": {"description": "Lista de codigos de permiso"}},
                           **RESPUESTAS_ERROR)}},
+
+    "/api/v1/auth/recuperar/solicitar": {"post": {
+        "tags": ["Sesion"], "summary": "Solicita codigo OTP de recuperacion de acceso",
+        "description": (
+            "Genera un codigo temporal de 6 digitos (TTL 10 minutos) si el correo "
+            "pertenece a un usuario activo. Devuelve siempre una respuesta generica "
+            "para evitar enumeracion de cuentas y aplica limite estricto de 5 "
+            "peticiones por minuto."),
+        "security": [],
+        "requestBody": {"required": True, "content": {"application/json": {
+            "schema": {"$ref": "#/components/schemas/SolicitudRecuperarAcceso"}}}},
+        "responses": dict({"200": _exito(
+            "RespuestaRecuperarSolicitada", "Solicitud recibida",
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<recuperacion_solicitada xmlns="http://nexum.com.mx/bienestar/v1">\n'
+            '  <solicitado>true</solicitado>\n'
+            '  <mensaje>Si el correo esta registrado y activo, recibiras un codigo de recuperacion.</mensaje>\n'
+            '</recuperacion_solicitada>')}, **RESPUESTAS_ERROR)}},
+
+    "/api/v1/auth/recuperar/confirmar": {"post": {
+        "tags": ["Sesion"], "summary": "Confirma OTP y restablece la contrasena",
+        "description": (
+            "Valida el codigo OTP en Redis (maximo 3 intentos antes de invalidarlo), "
+            "actualiza la contrasena mediante funcion SECURITY DEFINER en PostgreSQL, "
+            "revoca sesiones previas y registra el evento en bitacora."),
+        "security": [],
+        "requestBody": {"required": True, "content": {"application/json": {
+            "schema": {"$ref": "#/components/schemas/SolicitudConfirmarRecuperacion"}}}},
+        "responses": dict({"200": _exito(
+            "RespuestaRecuperarConfirmada", "Contrasena restablecida",
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<recuperacion_confirmada xmlns="http://nexum.com.mx/bienestar/v1">\n'
+            '  <actualizado>true</actualizado>\n'
+            '  <sesiones_revocadas>1</sesiones_revocadas>\n'
+            '  <mensaje>Contrasena actualizada. Inicia sesion con tu nueva contrasena.</mensaje>\n'
+            '</recuperacion_confirmada>')}, **RESPUESTAS_ERROR)}},
 }
 
 ETIQUETAS = [{"name": "Sesion",

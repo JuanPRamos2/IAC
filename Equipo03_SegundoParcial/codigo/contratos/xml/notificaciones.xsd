@@ -50,23 +50,40 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="notificaciones_enviadas">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="lote_id"  type="xs:string"/>
-        <xs:element name="tipo"     type="TipoNotificacion"/>
-        <xs:element name="enviadas" type="xs:nonNegativeInteger"/>
-        <xs:element name="destinatarios">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:element name="destinatario" type="IdUsuario"
-                          minOccurs="0" maxOccurs="unbounded"/>
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
-        <xs:element name="expira" type="xs:dateTime"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="NotificacionesEnviadas">
+    <xs:sequence>
+      <xs:element name="lote_id"  type="xs:string"/>
+      <xs:element name="tipo"     type="TipoNotificacion"/>
+      <xs:element name="enviadas" type="xs:nonNegativeInteger"/>
+      <xs:element name="omitidas" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="omitidos" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="omitido" minOccurs="0" maxOccurs="unbounded">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="usuario_id" type="IdUsuario"/>
+                  <xs:element name="motivo"     type="xs:string"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="push_encolados" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="destinatarios">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="destinatario" type="IdUsuario"
+                        minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="expira" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="notificaciones_enviadas"       type="NotificacionesEnviadas"/>
+  <xs:element name="notificacion_interna_respuesta" type="NotificacionesEnviadas"/>
 
 </xs:schema>
