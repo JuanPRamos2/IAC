@@ -52,7 +52,10 @@
             {% if d.ok %}<span style="color:var(--verde)">ok</span> <span class="tenue">{{ d.ms }} ms</span>
             {% else %}<span style="color:var(--rojo)">falla</span>{% endif %}
           </div>
-        {% else %}<span class="tenue">—</span>{% endfor %}
+        {% else %}{% if not f.no_aplican %}<span class="tenue">—</span>{% endif %}{% endfor %}
+        {% for nombre in f.no_aplican %}
+          <div>{{ nombre }}: <span class="tenue">no aplica</span></div>
+        {% endfor %}
       </td>
       <td class="tenue" style="font-size:12px">{{ f.detalle }}</td>
     </tr>

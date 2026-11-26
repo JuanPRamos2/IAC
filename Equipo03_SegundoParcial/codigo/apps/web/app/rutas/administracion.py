@@ -291,7 +291,9 @@ def _clasificar_sonda(respuesta):
         detalle = "degradado por: " + ", ".join(cuerpo["degradado_por"])
     else:
         detalle = cuerpo.get("estado") or ""
-    return estado, detalle, cuerpo.get("dependencias") or {}, cuerpo.get("version_desplegada") or ""
+    return (estado, detalle, cuerpo.get("dependencias") or {},
+            cuerpo.get("version_desplegada") or "",
+            cuerpo.get("no_aplican") or [])
 
 
 def _guardar_sondas(filas):
@@ -420,17 +422,17 @@ def servicios():
     filas = []
     for nombre, responsable, lenguaje, url in catalogo:
         inicio = time.perf_counter()
-        estado, detalle, dependencias, version = "CAIDO", "", {}, ""
+        estado, detalle, dependencias, version, no_aplican = "CAIDO", "", {}, "", []
         try:
             r = requests.get(f"{url}/health/ready", timeout=_tiempo_limite())
-            estado, detalle, dependencias, version = _clasificar_sonda(r)
+            estado, detalle, dependencias, version, no_aplican = _clasificar_sonda(r)
         except Exception as e:
             detalle = str(e)[:120]
         filas.append({
             "servicio": nombre, "responsable": responsable, "lenguaje": lenguaje,
             "url": url, "estado": estado, "detalle": detalle, "version": version,
             "ms": round((time.perf_counter() - inicio) * 1000, 1),
-            "dependencias": dependencias,
+            "dependencias": dependencias, "no_aplican": no_aplican,
         })
     _guardar_sondas(filas)
     errores_n, errores = _errores_24h()

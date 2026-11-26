@@ -59,7 +59,8 @@ app = crear_servicio(
     "documents-service",
     "Almacena evidencias de consentimiento, avisos versionados y reportes",
     comprobaciones={"postgresql": ping_pg, "mongodb": ping_mongo,
-                    "redis": _ping_redis, "bucket": archivos.ping_bucket})
+                    "redis": _ping_redis,
+                    "almacen": (archivos.ping_bucket, "opcional")})
 
 from contrato import montar as _montar_contrato
 _montar_contrato(app)

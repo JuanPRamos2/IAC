@@ -221,7 +221,14 @@ export function crearServicio(nombre, descripcion, comprobaciones = {}) {
       codigo = 200;
     }
 
-    const cuerpo = { servicio: nombre, estado, dependencias: detalle };
+    const sistema = ["postgresql", "mongodb", "redis", "almacen"];
+    const cuerpo = {
+      servicio: nombre,
+      estado,
+      dependencias: detalle,
+      version_desplegada: process.env.VERSION_DESPLIEGUE || "local",
+      no_aplican: sistema.filter((d) => !(d in detalle)).sort(),
+    };
     if (opcionalesMal.length > 0) cuerpo.degradado_por = [...opcionalesMal].sort();
     if (esencialesMal.length > 0) cuerpo.falta = [...esencialesMal].sort();
     res.status(codigo).json(cuerpo);

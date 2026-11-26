@@ -145,6 +145,10 @@ def limite_consumo(maximo: int = 120, ventana: int = 60):
 
 
 
+# Lo que todo servicio tiene que declarar en la sonda, lo use o no.
+DEPENDENCIAS_DEL_SISTEMA = frozenset({"postgresql", "mongodb", "redis", "almacen"})
+
+
 # El analisis complejo recorre series en Python. statement_timeout no
 # cancela ese bucle, asi que la peticion lleva su propio plazo.
 TIEMPO_MAXIMO_PETICION_S = float(os.environ.get("TIEMPO_MAXIMO_PETICION", "20"))
@@ -281,7 +285,11 @@ def crear_servicio(nombre: str, descripcion: str, comprobaciones=None) -> Flask:
             estado, codigo = "listo", 200
 
         cuerpo = {"servicio": nombre, "estado": estado, "dependencias": detalle,
-                  "version_desplegada": os.environ.get("VERSION_DESPLIEGUE") or "local"}
+                  "version_desplegada": os.environ.get("VERSION_DESPLIEGUE") or "local",
+                  # postgresql, mongodb, redis y almacen. Lo que este
+                  # servicio no usa va aqui, para que una clave ausente
+                  # no se confunda con una comprobacion que no corrio.
+                  "no_aplican": sorted(DEPENDENCIAS_DEL_SISTEMA - set(comprobaciones))}
         if opcionales_mal:
             cuerpo["degradado_por"] = sorted(opcionales_mal)
         if esenciales_mal:

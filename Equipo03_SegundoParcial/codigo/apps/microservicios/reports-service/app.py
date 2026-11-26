@@ -254,7 +254,7 @@ app = crear_servicio(
     "reports-service",
     "Genera, sella y entrega reportes a partir de resultados ya publicados",
     comprobaciones={"postgresql": ping_pg, "mongodb": ping_mongo,
-                    "redis": _ping_redis, "bucket": (_ping_bucket, "opcional")})
+                    "redis": _ping_redis, "almacen": (_ping_bucket, "opcional")})
 
 from comun import formatos as _formatos
 from contrato import montar as _montar_contrato
