@@ -1,0 +1,37 @@
+BIENESTAR NEXUM - APLICACION DE ESCRITORIO (XML)
+================================================
+
+Habla solo XML contra los mismos microservicios que la aplicacion
+Android usa en JSON. Valida cada respuesta contra los XSD de
+codigo/contratos/xml.
+
+INSTALACION, UNA SOLA VEZ
+-------------------------
+1. Doble clic en Instalar.bat
+2. Espera a que diga LISTO
+
+Si falta Python, descargalo de python.org y marca
+"Add python.exe to PATH". El entorno queda en esta carpeta
+(entorno\) y no toca el Python del sistema.
+
+COMO SE ABRE
+------------
+Doble clic en Iniciar.bat
+
+Antes, los servicios tienen que estar corriendo en esta maquina:
+
+    docker compose up -d
+
+Por omision usa 127.0.0.1, puertos 8101 a 8109.
+Entra con mariana.solis@nexum.com.mx y la contrasena demo123.
+
+PESTANAS
+--------
+Sesion, solicitudes de apoyo, tablero protegido, riesgo,
+reportes y diagnostico. Diagnostico muestra el XML tal cual.
+
+OPCIONAL
+--------
+Crear_EXE.bat, despues de Instalar.bat, deja
+dist\BienestarNexumEscritorio.exe
+Para entregar y probar basta Instalar.bat e Iniciar.bat.
