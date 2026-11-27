@@ -71,9 +71,9 @@ class PersonaEnElPortal(HttpUser):
         self.client.verify = VERIFICAR_TLS
         correo, clave = random.choice(CUENTAS)
         with self.client.post(
-                "/sesion/entrar",
+                "/entrar",
                 data={"correo": correo, "contrasena": clave},
-                name="POST /sesion/entrar",
+                name="POST /entrar",
                 allow_redirects=True,
                 catch_response=True) as r:
             # El portal contesta 200 con la página siguiente tras redirigir.
