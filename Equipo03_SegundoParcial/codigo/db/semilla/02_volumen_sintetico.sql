@@ -6,6 +6,13 @@ DECLARE
     v_t INT[] := ARRAY[210,195,140,120,95,70,55,45,38,32,28,122];
     i INT; j INT; v_emp INT := 200; v_seud TEXT;
 BEGIN
+    -- La migracion 020 ya dejo el disparador activo cuando corre esta
+    -- semilla. Cada INSERT de una hija se rechaza si el padre sigue en
+    -- 120. Se sube antes; el UPDATE del final lo deja en la suma real.
+    UPDATE organizacion.unidad_organizacional
+       SET plantilla_declarada = 1186
+     WHERE unidad_organizacional_id = 'UO-OPERACIONES';
+
     FOR i IN 1..array_length(v_u,1) LOOP
         INSERT INTO organizacion.unidad_organizacional
           (unidad_organizacional_id,nombre,tipo,unidad_padre_id,nivel_jerarquico,plantilla_declarada)
