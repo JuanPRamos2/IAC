@@ -1,0 +1,24 @@
+==> arbol organizacional: 120 unidades
+    120 unidades insertadas: 0.02s
+==> empleados: 25,365 con seudonimo y consentimiento
+    25,365 empleados, 23,314 consentidos: 1.73s
+==> campanias: 12
+==> respuestas: hasta 279,768 con detalle por reactivo
+    campania 1/12: 16,967 acumuladas
+    campania 2/12: 34,020 acumuladas
+    campania 3/12: 50,853 acumuladas
+    campania 4/12: 67,447 acumuladas
+    campania 5/12: 84,285 acumuladas
+    campania 6/12: 100,785 acumuladas
+    campania 7/12: 117,047 acumuladas
+    campania 8/12: 134,077 acumuladas
+    campania 9/12: 151,194 acumuladas
+    campania 10/12: 168,296 acumuladas
+    campania 11/12: 185,208 acumuladas
+    campania 12/12: 202,435 acumuladas
+    202,435 respuestas (1,012,175 valores): 42.67s
+==> agregados protegidos: 110 unidades x 12 campanias x 6
+    CAMP-M006: 110 unidades procesadas
+    CAMP-M007: 220 unidades procesadas
+    CAMP-M008: 330 unidades procesadas
+    CAMP-M009: 440 unidades procesadas

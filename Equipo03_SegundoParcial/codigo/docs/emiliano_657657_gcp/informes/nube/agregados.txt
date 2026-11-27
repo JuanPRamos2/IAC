@@ -1,0 +1,33 @@
+nohup: ignoring input
+=== REANUDACION DE AGREGADOS ===
+==> arbol organizacional: 120 unidades
+    120 unidades insertadas: 0.01s
+==> agregados protegidos: 110 unidades x 12 campanias x 6
+    CAMP-M006: 110 unidades procesadas
+    CAMP-M007: 220 unidades procesadas
+    CAMP-M008: 330 unidades procesadas
+    CAMP-M009: 440 unidades procesadas
+    CAMP-M010: 550 unidades procesadas
+    CAMP-M011: 660 unidades procesadas
+    CAMP-M012: 770 unidades procesadas
+    CAMP-M013: 880 unidades procesadas
+    CAMP-M014: 990 unidades procesadas
+    CAMP-M015: 1100 unidades procesadas
+    CAMP-M016: 1210 unidades procesadas
+    CAMP-M017: 1320 unidades procesadas
+    7,920 agregados: 369.35s
+
+==> RESUMEN
+    respuestas:        206,315
+    valores:           1,031,575
+    agregados:         8,280
+    escala de ruido:   media 0.0369  minima 0.0127
+    unidades anomalas inyectadas:  5
+    unidades decayendo inyectadas: 5
+    tiempo total:      369.6s
+
+==> CONSUMO DE RECURSOS
+    generador, memoria pico:  25.2 MB
+    backend: sin /proc, no se pudo medir su consumo
+    tamano de la base:        179 MB
+    calculo de agregados:     8,280 en 369.4 s (44.6 ms cada uno, limitado por CPU)

@@ -801,3 +801,27 @@ medir**: sin MongoDB en el ambiente no hay `explain()`, así que se
 analizaron las 44 consultas contra los índices declarados. Cuatro de las
 seis eran ordenamientos sin índice, que es el caso que no se degrada sino
 que falla.
+
+---
+
+## 7. Medición de Emiliano en su máquina de pruebas
+
+El 26 de noviembre de 2026 Emiliano corrió el generador, el análisis y
+Locust en una máquina propia (`maquina-nexum`, proyecto
+`integracion-505221`, 2 vCPU y 3.8 GiB). No es la máquina compartida
+`nexum-equipo03`. Los archivos están en
+`docs/emiliano_657657_gcp/`.
+
+| | |
+|---|---|
+| Empleados generados en esa sesión | 25 365, y la comprobación posterior contó 26 526 |
+| Respuestas | 202 435 en la inserción; 206 315 en el total posterior |
+| Valores | 1 012 175 nuevos |
+| Agregados | 7 920 en la reanudación; 8 280 en el total |
+| Inserción de respuestas | 42.67 s |
+| Análisis en su portal | CAMP-M017, 110 unidades, 148.86 ms |
+| Locust | 140 usuarios, 5 297 peticiones, 1 fallo (0.02 %), mediana 20 ms, p95 1 600 ms, p99 12 000 ms |
+
+Esa corrida de Locust no es contra https://34.41.26.94.sslip.io. El
+informe de Emiliano lo deja dicho. El corte de 20 segundos tampoco se
+repitió en esa máquina.
