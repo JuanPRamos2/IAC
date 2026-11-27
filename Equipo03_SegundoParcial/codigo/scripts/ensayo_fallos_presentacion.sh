@@ -6,7 +6,9 @@
 # no corrompe datos y se recupera.
 #
 # Se corre en la maquina donde ya esta levantado el proyecto:
-#   - laptop:  cd codigo && bash scripts/ensayo_fallos_presentacion.sh
+#   - laptop Windows, en CMD, desde codigo:
+#       powershell -ExecutionPolicy Bypass -File scripts\ensayo_fallos_presentacion.ps1
+#     El comando bash de Windows abre WSL y falla si no hay distribucion.
 #   - nube:    ssh a nexum-equipo03, cd ~/IAC/Equipo03_SegundoParcial/codigo
 #              bash scripts/ensayo_fallos_presentacion.sh
 #
