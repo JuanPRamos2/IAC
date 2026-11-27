@@ -15,8 +15,8 @@ El backend de **Bienestar Nexum** está compuesto por **24 microservicios** inde
 
 | Puerto (`developer`) | Servicio | Lenguaje | Integrante | Responsabilidad principal |
 |---:|---|---|---|---|
-| `8101` | `auth-service` | Python | Juan Pablo (I1) | Emisión, renovación con rotación, validación, revocación Redis y recuperación OTP de JWT |
-| `8102` | `users-service` | Python | Juan Pablo (I1) | Administración de usuarios, perfiles, permisos y alcance organizacional |
+| `8101` | `auth-service` | Python | Equipo 03 | Emisión, renovación con rotación, validación, revocación Redis y recuperación OTP de JWT |
+| `8102` | `users-service` | Python | Equipo 03 | Administración de usuarios, perfiles, permisos y alcance organizacional |
 | `8103` | `catalog-service` | **Node.js** | **Ricardo (I2)** | Unidades organizacionales, instrumentos, versiones, reactivos, campañas y caché Redis |
 | `8104` | `main-process-service` | **Node.js** | **Ricardo (I2)** | Proceso principal: captura de respuestas de encuesta (regla D-01) y solicitudes de apoyo |
 | `8105` | `documents-service` | Python | Gerardo (I4) | Evidencias, avisos versionados, archivos en almacén dual (`local`/`gcs`) y URLs firmadas |
@@ -24,16 +24,16 @@ El backend de **Bienestar Nexum** está compuesto por **24 microservicios** inde
 | `8107` | `queries-service` | Python | Emiliano (I3) | Lectura cacheada de agregados publicados y estado de presupuesto épsilon |
 | `8108` | `reports-service` | Python | Emiliano (I3) | Generación, sellado SHA-256 y entrega de reportes organizacionales |
 | `8109` | `algorithms-service` | Python | Emiliano (I3) | Motor de reglas de riesgo sobre agregados ya publicados (`riesgo.fn_evaluar_unidad`) |
-| `8110` | `consent-service` | Python | Juan Pablo (I1) | Aviso de privacidad, otorgamiento y revocación de consentimiento sin borrado |
-| `8111` | `privacy-service` | Python | Juan Pablo (I1) | Seudonimización y consulta de umbral mínimo $k$ (sin calcular ruido Laplace) |
+| `8110` | `consent-service` | Python | Equipo 03 | Aviso de privacidad, otorgamiento y revocación de consentimiento sin borrado |
+| `8111` | `privacy-service` | Python | Equipo 03 | Seudonimización y consulta de umbral mínimo $k$ (sin calcular ruido Laplace) |
 | `8112` | `survey-service` | **Node.js** | **Ricardo (I2)** | Cuestionarios versionados, borradores en MongoDB y registro de respuesta única por campaña |
 | `8113` | `indicators-service` | **Node.js** | **Ricardo (I2)** | Indicadores de bienestar agregados protegidos ($k \ge 5$) e histórico organizacional |
 | `8114` | `trends-service` | Python | Emiliano (I3) | Análisis longitudinal entre campañas filtrando señal real contra ruido ($b\sqrt{2}$) |
 | `8115` | `interventions-service` | Python | Emiliano (I3) | Planes de intervención organizacional, aprobaciones, seguimiento y evaluación |
 | `8116` | `support-service` | **Node.js** | **Ricardo (I2)** | Ciclo de vida confidencial de solicitudes de apoyo emocional contra seudónimo |
 | `8117` | `organizational-service` | **Node.js** | **Ricardo (I2)** | Organigrama empresarial, árbol jerárquico con CTE recursivo y plantilla mínima $\ge 5$ |
-| `8118` | `audit-service` | Python | Juan Pablo (I1) | Consulta de bitácora inmutable y trazabilidad por `correlacion_id` |
-| `8119` | `data-governance-service` | Python | Juan Pablo (I1) | Minimización, políticas de retención, verificación de garantías y baja lógica |
+| `8118` | `audit-service` | Python | Equipo 03 | Consulta de bitácora inmutable y trazabilidad por `correlacion_id` |
+| `8119` | `data-governance-service` | Python | Equipo 03 | Minimización, políticas de retención, verificación de garantías y baja lógica |
 | `8120` | `sync-service` | Python | Gerardo (I4) | Sincronización idempotente de lotes capturados sin red (aplicación renglón por renglón) |
 | `8121` | `export-service` | Python | Emiliano (I3) | Egreso controlado de agregados protegidos con verificación de fuga y bitácora |
 | `8122` | `configuration-service` | Python | Gerardo (I4) | Administración de parámetros de privacidad, umbral $k$ y presupuestos épsilon |
@@ -190,7 +190,7 @@ A continuación se reportan **exclusivamente** las ejecuciones reales verificada
 | `pruebas/test_archivos_evidencia.py` | `python -m pytest -q -o addopts="" --noconftest pruebas/test_archivos_evidencia.py` | **18/18 pasaron** (0.76 s) | Magic bytes, path traversal, deduplicación SHA-256, escritura atómica `.parcial`, detección de corrupción `409 ARCHIVO_ALTERADO`, `url_firmada` sin bucket y ruta `/archivos/<sha256>/url` |
 | `pruebas/test_seguridad_y_fallos_t3.py` | `python -m pytest -q -o addopts="" --noconftest pruebas/test_seguridad_y_fallos_t3.py` | **13/13 pasaron** (1.39 s, sin Redis/PG/Mongo ni `mongomock`) | Token expirado 401, sesión revocada 401 y Redis caído 503, flujo OTP completo (anti-enumeración, SHA-256 en Redis, bloqueo 3 fallos -> 429, `fn_restablecer_contrasena`, revocación sesiones), RBAC 403 + bitácora `ACCESO_DENEGADO`, anti-XXE (3 variantes -> 400), dual local + 10 metadatos sin binario + D-01, magic bytes falsificados (`ARCHIVO_RECHAZADO` -> 422), URL firmada (200 / 403 `FIRMA_INVALIDA` / 403 `URL_EXPIRADA` / 409 `ARCHIVO_ALTERADO`), `/health/live` (`version_desplegada`), `/health/ready` (`degradado` 200 vs `no_listo` 503), rate limit 429 + degradación Redis, `notificar_evento_interno` HMAC + caída sin excepción |
 | `apps/microservicios/comun/tests/test_fase2.py` | `python -m pytest -q -o addopts="" --noconftest apps/microservicios/comun/tests/test_fase2.py` | **6/6 pasaron** (1.17 s) | `PG_STATEMENT_TIMEOUT_MS`, `version_desplegada`, `notificador` HMAC, `archivos` modo `local` y mock `gcs`, receptor `evento-interno` |
-| `pruebas/test_servicios_juan_pablo_y_ricardo.py` | `python -m pytest -q -o addopts="" --noconftest pruebas/test_servicios_juan_pablo_y_ricardo.py` | **7/7 pasaron** (0.69 s) | Sondas `/health/live`, `/health`, `/docs`, `/openapi.json`, `401 TOKEN_AUSENTE`, no reimplementación Laplace, verificación de los 6 servicios en Node |
+| `pruebas/test_servicios_identidad_y_node.py` | `python -m pytest -q -o addopts="" --noconftest pruebas/test_servicios_identidad_y_node.py` | **7/7 pasaron** (0.69 s) | Sondas `/health/live`, `/health`, `/docs`, `/openapi.json`, `401 TOKEN_AUSENTE`, no reimplementación Laplace, verificación de los 6 servicios en Node |
 | `pruebas/test_arranque_de_la_base.py` | `python -m pytest -q -o addopts="" --noconftest pruebas/test_arranque_de_la_base.py` | **14 pasaron, 1 omitida, 3 fallaron** (2.94 s; host sin PostgreSQL vivo) | Todas las validaciones estáticas pasaron (14/14: montaje de esquema, migraciones 001–018, `90_permisos.sh`, semillas `91–94`, orden de `scripts/arranque_base.sh` y acciones/resultados de bitácora; 1 omitida en `docker-compose.base.yml` sin semillas). Las 3 pruebas de BD viva (`gobernanza.fn_verificar_garantias()`) fallaron al no haber contenedor PostgreSQL activo en `datos:5432` en el host. |
 | Contratos JSON y XML/XSD | `python contratos/generar_json.py` + `lxml.etree.XMLSchema` + `test_contratos_json.py` (esquemas estáticos) | **106 `.schema.json`** válidos (`Draft202012Validator`, 2/2 pasaron) y **16 `.xsd`** válidos | Generación desde los 24 OpenAPI (151 emisiones -> 106 archivos únicos) y validación XSD |
 | Configuración Docker Compose | `docker compose config --quiet` y `docker compose -f docker-compose.yml -f docker-compose.gcp.yml config --quiet` | **Exitosos (exit code 0)** | Sintaxis válida del stack base y de la capa `docker-compose.gcp.yml` |

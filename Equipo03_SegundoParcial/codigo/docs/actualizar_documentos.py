@@ -596,8 +596,8 @@ def main():
         "queries-service": "Emiliano", "reports-service": "Emiliano",
         "algorithms-service": "Emiliano", "trends-service": "Emiliano",
         "interventions-service": "Emiliano", "export-service": "Emiliano",
-        "consent-service": "Juan Pablo", "privacy-service": "Juan Pablo",
-        "audit-service": "Juan Pablo", "data-governance-service": "Juan Pablo",
+        "consent-service": "Equipo 03", "privacy-service": "Equipo 03",
+        "audit-service": "Equipo 03", "data-governance-service": "Equipo 03",
         "survey-service": "Ricardo", "indicators-service": "Ricardo",
         "support-service": "Ricardo", "organizational-service": "Ricardo",
     }

@@ -3,7 +3,7 @@
 Esta rama junta lo que cada integrante subió para el tercer parcial, sin
 perder el trabajo de los demás.
 
-- **Juan Pablo.** Despliegue en Google Compute Engine: `docker-compose.gcp.yml`,
+- **Equipo 03.** Despliegue en Google Compute Engine: `docker-compose.gcp.yml`,
   `infra/caddy/Caddyfile` y el bucket `nexum-610248-evidencias`. El portal
   compartido es https://34.41.26.94.sslip.io mientras la máquina
   `nexum-equipo03` esté encendida. La llave `signer.json` no está en Git.

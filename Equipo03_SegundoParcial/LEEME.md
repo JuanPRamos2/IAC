@@ -1,7 +1,7 @@
 # Segundo parcial integrado — Equipo 03
 
 La base es la corrección de Emiliano y Gerardo. Encima están los servicios
-de Juan Pablo y Ricardo para completar los 24 microservicios.
+de Equipo 03 y Ricardo para completar los 24 microservicios.
 
 Proyecto 4. Plataforma de Bienestar Laboral y Prevención de Burnout
 Integración de Aplicaciones Computacionales · UDEM · Equipo 03
@@ -11,7 +11,7 @@ Integración de Aplicaciones Computacionales · UDEM · Equipo 03
 | Emiliano Pascual Piñales Sánchez | #657657 |
 | Gerardo Quiroga Ramírez | #650313 |
 | Ricardo Arath Sánchez Aguirre | #583928 |
-| Juan Pablo Ramos Salazar | #610248 |
+| Equipo 03 | — |
 
 Este paquete ya no es solo la parte de Emiliano y Gerardo. Esa corrección
 está integrada, y encima están los ocho servicios que faltaban para el
@@ -19,7 +19,7 @@ reparto de 24 (puertos 8110, 8111, 8112, 8113, 8116, 8117, 8118 y 8119):
 
 | Integrante | Servicios nuevos |
 |---|---|
-| Juan Pablo #610248 | consent 8110, privacy 8111, audit 8118, data-governance 8119 |
+| Equipo 03 | consent 8110, privacy 8111, audit 8118, data-governance 8119 |
 | Ricardo #583928 | survey 8112, indicators 8113, support 8116, organizational 8117 |
 
 auth, users, catalog y main-process siguen. El ruido de Laplace no se

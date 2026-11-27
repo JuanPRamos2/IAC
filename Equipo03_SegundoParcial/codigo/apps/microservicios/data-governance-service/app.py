@@ -1,7 +1,7 @@
 """
 data-governance-service — minimización, retención y baja.
 
-Puerto 8119. Juan Pablo Ramos (#610248).
+Puerto 8119. Equipo 03.
 
 La matriz gobernanza.minimizacion_dato dice qué se captura y qué está
 prohibido (correo, GPS, teclado, diagnóstico). Un dato con

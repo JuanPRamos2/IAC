@@ -3,7 +3,7 @@
 Integración de Aplicaciones Computacionales · UDEM  
 Fecha: 26 de noviembre de 2026, hora del centro de México  
 Repositorio del equipo: https://github.com/JuanPRamos2/IAC  
-Rama que ya junta el tercer parcial: `cursor/tercer-parcial-juan-pablo-1881`  
+Rama que ya junta el tercer parcial: `Ricardo`  
 Pull request: https://github.com/JuanPRamos2/IAC/pull/6 (contra `Ricardo`, prueba de GitHub en verde, sin mezclar)  
 Portal en la nube: https://34.41.26.94.sslip.io
 
@@ -13,9 +13,9 @@ Este documento dice, requisito por requisito, qué ya tenemos, qué está a medi
 
 | Lugar | Qué tiene |
 |---|---|
-| Rama `Ricardo` | Seguridad de Ricardo y los archivos de Google Cloud de Juan Pablo. No trae el algoritmo ni Locust de Emiliano y Gerardo. |
+| Rama `Ricardo` | Seguridad de Ricardo y los archivos de Google Cloud de Equipo 03. No trae el algoritmo ni Locust de Emiliano y Gerardo. |
 | `main` | El paquete de Emiliano y Gerardo comprimido en `Parcial3_Emiliano_Gerardo.zip`. No trae la carpeta `Equipo03_SegundoParcial` ni el despliegue. |
-| `cursor/tercer-parcial-juan-pablo-1881` | Las tres partes juntas. Parte de `Ricardo` y encima entra el zip. La migración de análisis se renombró a `021_analisis_complejo_y_rendimiento.sql` para no pisar la `018` de Ricardo. |
+| `Ricardo` | Las tres partes juntas. Parte de `Ricardo` y encima entra el zip. La migración de análisis se renombró a `021_analisis_complejo_y_rendimiento.sql` para no pisar la `018` de Ricardo. |
 | Máquina `nexum-equipo03` | Portal HTTPS, 24 servicios, PostgreSQL, MongoDB, Redis, bucket y una URL firmada de prueba (`evidencia-1.txt`). Corre el código anterior a esta rama. |
 
 La integración de código ya se hizo en esa rama. No hay otro merge manual pendiente entre los cuatro. Lo que falta de “bajarlo” es que las laptops y la máquina virtual usen esa rama.
@@ -204,7 +204,7 @@ La reconexión de Redis de los servicios Node ya estaba en `comun-node`. Entra c
 
 ## 11. Qué falta y ya está en GitHub
 
-Nada de esta lista hay que volver a programarlo ni que volver a juntarlo a mano. Está en `cursor/tercer-parcial-juan-pablo-1881`.
+Nada de esta lista hay que volver a programarlo ni que volver a juntarlo a mano. Está en `Ricardo`.
 
 - Paquete `analitica` y el `algorithms-service` que lo expone.
 - `exigir_tiempo` en la librería común.
@@ -222,7 +222,7 @@ En la laptop, dentro de la carpeta del repositorio IAC:
 
 ```bat
 git fetch origin
-git checkout cursor/tercer-parcial-juan-pablo-1881
+git checkout Ricardo
 git pull
 ```
 
@@ -230,7 +230,7 @@ En la VM, el usuario `DELL` y la carpeta del código (`Equipo03_SegundoParcial/c
 
 ```bash
 git fetch origin
-git checkout cursor/tercer-parcial-juan-pablo-1881
+git checkout Ricardo
 git pull
 bash scripts/desplegar_gcp.sh
 ```
@@ -253,4 +253,4 @@ Estas piezas no están esperando en otro branch. O se ejecutan, o se demuestran,
 
 ## 13. Lectura corta
 
-El tercer parcial, como código de los cuatro integrantes, ya está junto en `cursor/tercer-parcial-juan-pablo-1881`. La nube ya tiene el portal, el firewall, el certificado y el bucket, con el código anterior. Lo que sigue es bajar esa rama en la laptop y en la VM, y en la VM correr `scripts/desplegar_gcp.sh`. Locust contra la URL pública, la carga masiva y la pasada de fallos en vivo son ejecuciones. El video, la presentación y la reflexión individual no forman parte de ese pull.
+El tercer parcial, como código de los cuatro integrantes, ya está junto en `Ricardo`. La nube ya tiene el portal, el firewall, el certificado y el bucket, con el código anterior. Lo que sigue es bajar esa rama en la laptop y en la VM, y en la VM correr `scripts/desplegar_gcp.sh`. Locust contra la URL pública, la carga masiva y la pasada de fallos en vivo son ejecuciones. El video, la presentación y la reflexión individual no forman parte de ese pull.

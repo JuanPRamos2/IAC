@@ -7,7 +7,7 @@ Monorepo del Proyecto 4, Equipo 03 · Integración de Aplicaciones Computacional
 | Emiliano Pascual Piñales Sánchez | #657657 |
 | Gerardo Quiroga Ramírez | #650313 |
 | Ricardo Arath Sánchez Aguirre | #583928 |
-| Juan Pablo Ramos Salazar | #610248 |
+| Equipo 03 | — |
 
 ---
 
@@ -192,8 +192,8 @@ devuelven el mismo sobre de error y serializan XML con las mismas reglas.
 
 | Servicio | Responsable | Lenguaje | Puerto |
 |---|---|---|---|
-| `auth-service` | Juan Pablo (1) | Python | 8101 |
-| `users-service` | Juan Pablo (1) | Python | 8102 |
+| `auth-service` | Equipo 03 | Python | 8101 |
+| `users-service` | Equipo 03 | Python | 8102 |
 | `catalog-service` | Ricardo (2) | Node | 8103 |
 | `main-process-service` | Ricardo (2) | Node | 8104 |
 | `documents-service` | Gerardo (4) | Python | 8105 |
@@ -201,16 +201,16 @@ devuelven el mismo sobre de error y serializan XML con las mismas reglas.
 | `queries-service` | Emiliano (3) | Python | 8107 |
 | `reports-service` | Emiliano (3) | Python | 8108 |
 | `algorithms-service` | Emiliano (3) | Python | 8109 |
-| `consent-service` | Juan Pablo (1) | Python | 8110 |
-| `privacy-service` | Juan Pablo (1) | Python | 8111 |
+| `consent-service` | Equipo 03 | Python | 8110 |
+| `privacy-service` | Equipo 03 | Python | 8111 |
 | `survey-service` | Ricardo (2) | Node | 8112 |
 | `indicators-service` | Ricardo (2) | Node | 8113 |
 | `trends-service` | Emiliano (3) | Python | 8114 |
 | `interventions-service` | Emiliano (3) | Python | 8115 |
 | `support-service` | Ricardo (2) | Node | 8116 |
 | `organizational-service` | Ricardo (2) | Node | 8117 |
-| `audit-service` | Juan Pablo (1) | Python | 8118 |
-| `data-governance-service` | Juan Pablo (1) | Python | 8119 |
+| `audit-service` | Equipo 03 | Python | 8118 |
+| `data-governance-service` | Equipo 03 | Python | 8119 |
 | `sync-service` | Gerardo (4) | Python | 8120 |
 | `export-service` | Emiliano (3) | Python | 8121 |
 | `configuration-service` | Gerardo (4) | Python | 8122 |

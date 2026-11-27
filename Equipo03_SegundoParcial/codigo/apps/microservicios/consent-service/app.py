@@ -1,7 +1,7 @@
 """
 consent-service — aviso de privacidad, otorgamiento y revocación.
 
-Puerto 8110. Juan Pablo Ramos (#610248).
+Puerto 8110. Equipo 03.
 
 Tres decisiones, y la consecuencia de cada una:
 
