@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
@@ -327,8 +328,15 @@ private fun PantallaEncuesta(modelo: AppViewModel, estado: EstadoApp) {
                 Button(
                     onClick = { modelo.responder(reactivo.reactivoId, valor) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    colors = if (elegido) CardDefaults.buttonColors()
-                             else CardDefaults.outlinedButtonColors(),
+                    // ButtonDefaults y no CardDefaults: los colores de
+                    // un Button los define ButtonDefaults. CardDefaults es
+                    // el de las tarjetas y no tiene `buttonColors`, asi que
+                    // esto fallaba con «Unresolved reference». El import de
+                    // CardDefaults ya estaba —se usa mas arriba para una
+                    // tarjeta de verdad— y por eso el nombre se veia
+                    // valido al leerlo.
+                    colors = if (elegido) ButtonDefaults.buttonColors()
+                             else ButtonDefaults.outlinedButtonColors(),
                 ) { Text("$valor — $etiqueta") }
             }
 

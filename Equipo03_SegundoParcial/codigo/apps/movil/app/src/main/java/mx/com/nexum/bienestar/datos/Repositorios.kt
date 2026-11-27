@@ -105,13 +105,30 @@ class EncuestaRepositorio(
         campaniaId: String,
         respuestas: Map<String, Int>,
     ): JSONObject {
-        val arreglo = JSONArray()
-        respuestas.forEach { (reactivoId, valor) ->
-            arreglo.put(JSONObject().put("reactivo_id", reactivoId).put("valor", valor))
-        }
+        // `valores`, y como OBJETO { reactivo_id: valor }.
+        //
+        // EL DEFECTO QUE ESTO CORRIGE
+        // La aplicacion mandaba la clave `respuestas` con un ARREGLO de
+        // objetos `{reactivo_id, valor}`. El servicio espera `valores` como
+        // un objeto, y rechazaba el envio con:
+        //
+        //   PARAMETRO_INVALIDO
+        //   'valores' debe ser un objeto { reactivo_id: valor }.
+        //
+        // Es decir: la encuesta NUNCA se pudo enviar desde el telefono.
+        // Entraba, cargaba los reactivos, dejaba contestar las cinco, y
+        // fallaba en el ultimo paso. Solo se ve ejecutando la aplicacion
+        // contra el servicio: ninguna prueba del lado movil lo habria
+        // encontrado, porque el formato que armaba era valido como JSON.
+        //
+        // Manda el servicio y no la aplicacion porque la forma del cuerpo
+        // es parte del contrato publicado, y el portal web y el servicio
+        // de proceso ya la usan asi (`Object.keys(d.valores)`).
+        val valores = JSONObject()
+        respuestas.forEach { (reactivoId, valor) -> valores.put(reactivoId, valor) }
         val cuerpo = JSONObject()
             .put("campania_id", campaniaId)
-            .put("respuestas", arreglo)
+            .put("valores", valores)
         // Nótese lo que NO se manda: ningún identificador de empleado. El
         // servicio lo rechazaría (regla D-01), y mandarlo sería pedirle al
         // servidor que rompiera su propia garantía.

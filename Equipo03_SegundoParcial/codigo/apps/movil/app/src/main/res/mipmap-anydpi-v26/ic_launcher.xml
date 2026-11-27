@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  El icono de la aplicacion.
+
+  POR QUE ESTE ARCHIVO EXISTE
+
+  El manifiesto declaraba `android:icon="@mipmap/ic_launcher"` y no habia
+  ninguna carpeta mipmap. El proyecto sincronizaba sin quejarse y fallaba
+  al compilar con «Android resource linking failed» sobre el bloque
+  application, sin decir cual de sus ocho atributos era el del recurso que
+  falta. Costo una compilacion de dos minutos descubrirlo.
+
+  Es adaptativo (mipmap-anydpi-v26) y no un PNG porque minSdk es 26: desde
+  esa version Android compone el icono con una capa de fondo y una de
+  frente, y recorta la forma segun el lanzador del telefono. Un PNG
+  cuadrado se veria con un marco blanco alrededor en la mayoria de los
+  telefonos actuales.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_fondo"/>
+    <foreground android:drawable="@drawable/ic_launcher_frente"/>
+</adaptive-icon>

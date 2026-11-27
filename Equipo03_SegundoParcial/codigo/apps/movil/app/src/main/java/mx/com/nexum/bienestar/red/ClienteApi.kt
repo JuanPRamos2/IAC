@@ -124,7 +124,13 @@ class ClienteApi(
                     val error = json.getJSONObject("error")
                     throw ErrorApi(
                         codigo = error.optString("codigo", "ERROR"),
-                        mensaje = error.optString("mensaje", "Error del servicio."),
+                        // `message` y no `mensaje`: el parametro del
+                        // constructor sobreescribe `Exception.message`, y
+                        // `mensaje` es solo un alias de LECTURA declarado
+                        // abajo (`val mensaje get() = message`). Un alias no
+                        // sirve como argumento con nombre, asi que esto no
+                        // compilaba.
+                        message = error.optString("mensaje", "Error del servicio."),
                         http = codigoHttp,
                         detalles = error.optJSONArray("detalles").aListaDeDetalles(),
                         correlacionId = error.optString("correlacion_id", ""),
