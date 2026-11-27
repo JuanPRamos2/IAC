@@ -1,0 +1,618 @@
+openapi: 3.0.3
+info:
+  title: organizational-service — Bienestar Nexum
+  version: 1.0.0
+  description: Servicio de administracion de jerarquias organizacionales y control
+    de plantilla minima k >= 5 para prevencion de inferencia (Puerto 8117).
+servers:
+- url: http://localhost:8117
+  description: Desarrollo local
+- url: /
+  description: Mismo origen
+security:
+- bearerAuth: []
+paths:
+  /api/v1/organizacion/unidades:
+    get:
+      summary: Lista unidades organizacionales disponibles o activas
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: activa
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      responses:
+        '200':
+          description: Listado de unidades
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaUnidadesOrganizacion'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ListaUnidadesOrganizacion'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<unidades_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidades/>\n  <total>0</total>\n\
+                </unidades_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    post:
+      summary: Crea una nueva unidad organizacional (exige plantilla declarada >=
+        5)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudAltaUnidad'
+      responses:
+        '201':
+          description: Unidad creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<unidad_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidad>\n    <unidad_organizacional_id>UO-OPERACIONES</unidad_organizacional_id>\n\
+                \    <nombre>Operaciones</nombre>\n    <plantilla_declarada>15</plantilla_declarada>\n\
+                \    <activa>true</activa>\n  </unidad>\n</unidad_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ValidacionFallida'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /api/v1/organizacion/unidades/{id}:
+    get:
+      summary: Obtiene detalle de una unidad organizacional
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      responses:
+        '200':
+          description: Detalle de la unidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<unidad_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidad>\n    <unidad_organizacional_id>UO-OPERACIONES</unidad_organizacional_id>\n\
+                \    <nombre>Operaciones</nombre>\n    <activa>true</activa>\n  </unidad>\n\
+                </unidad_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    put:
+      summary: Actualiza los atributos de una unidad organizacional
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudActualizacionUnidad'
+      responses:
+        '200':
+          description: Unidad actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<unidad_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidad>\n    <unidad_organizacional_id>UO-OPERACIONES</unidad_organizacional_id>\n\
+                \    <nombre>Operaciones</nombre>\n    <activa>true</activa>\n  </unidad>\n\
+                </unidad_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    delete:
+      summary: Baja logica de la unidad (valida que no tenga dependencias hijas activas)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      responses:
+        '200':
+          description: Unidad desactivada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RespuestaUnidadOrganizacion'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<unidad_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidad>\n    <unidad_organizacional_id>UO-OPERACIONES</unidad_organizacional_id>\n\
+                \    <activa>false</activa>\n  </unidad>\n</unidad_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: Tiene dependencias hijas activas
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /api/v1/organizacion/unidades/{id}/arbol:
+    get:
+      summary: Recupera la jerarquia y arbol subordinado completo usando CTE recursivo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: formato
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - xml
+        description: Alternativa al encabezado Accept para solicitar JSON o XML.
+      responses:
+        '200':
+          description: Arbol jerarquico de unidades subordinadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbolOrganizacional'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ArbolOrganizacional'
+              example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<arbol_organizacional_respuesta\
+                \ xmlns=\"http://nexum.com.mx/bienestar/v1\">\n  <unidad_raiz_id>UO-OPERACIONES</unidad_raiz_id>\n\
+                \  <total_nodos>1</total_nodos>\n  <nodos/>\n</arbol_organizacional_respuesta>"
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '422':
+          $ref: '#/components/responses/ValidacionFallida'
+        '429':
+          $ref: '#/components/responses/LimiteExcedido'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT emitido por auth-service.
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - codigo
+          - mensaje
+          - detalles
+          - correlacion_id
+          properties:
+            codigo:
+              type: string
+            mensaje:
+              type: string
+            detalles:
+              type: array
+              items:
+                type: object
+                properties:
+                  campo:
+                    type: string
+                  problema:
+                    type: string
+            correlacion_id:
+              type: string
+    UnidadOrganizacional:
+      type: object
+      properties:
+        unidad_organizacional_id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+        unidad_padre_id:
+          type: string
+          nullable: true
+        nivel_jerarquico:
+          type: integer
+        plantilla_declarada:
+          type: integer
+        activa:
+          type: boolean
+        fecha_creacion:
+          type: string
+          format: date-time
+        fecha_actualizacion:
+          type: string
+          format: date-time
+    SolicitudAltaUnidad:
+      type: object
+      required:
+      - nombre
+      - plantilla_declarada
+      properties:
+        unidad_id:
+          type: string
+        nombre:
+          type: string
+          minLength: 3
+          maxLength: 100
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+          default: DEPARTAMENTO
+        padre_id:
+          type: string
+          nullable: true
+        nivel:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+        plantilla_declarada:
+          type: integer
+          minimum: 5
+        activa:
+          type: boolean
+          default: true
+    SolicitudActualizacionUnidad:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 3
+          maxLength: 100
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+        padre_id:
+          type: string
+          nullable: true
+        nivel:
+          type: integer
+          minimum: 1
+        plantilla_declarada:
+          type: integer
+          minimum: 5
+        activa:
+          type: boolean
+    RespuestaUnidadOrganizacion:
+      type: object
+      properties:
+        unidad:
+          $ref: '#/components/schemas/UnidadOrganizacional'
+    ListaUnidadesOrganizacion:
+      type: object
+      properties:
+        unidades:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnidadOrganizacional'
+        total:
+          type: integer
+    NodoArbolOrganizacional:
+      type: object
+      properties:
+        unidad_organizacional_id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+        unidad_padre_id:
+          type: string
+          nullable: true
+        nivel_jerarquico:
+          type: integer
+        plantilla_declarada:
+          type: integer
+        activa:
+          type: boolean
+        fecha_creacion:
+          type: string
+          format: date-time
+        fecha_actualizacion:
+          type: string
+          format: date-time
+        profundidad:
+          type: integer
+    ArbolOrganizacional:
+      type: object
+      properties:
+        unidad_raiz_id:
+          type: string
+        total_nodos:
+          type: integer
+        nodos:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodoArbolOrganizacional'
+  responses:
+    SolicitudInvalida:
+      description: Parametro mal formado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: PARAMETRO_INVALIDO
+              mensaje: '''tamano'' debe estar entre 1 y 100.'
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>PARAMETRO_INVALIDO</codigo>\n\
+            \    <mensaje>'tamano' debe estar entre 1 y 100.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
+    NoAutenticado:
+      description: Falta el token, es invalido, expiro o la sesion fue revocada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SESION_REVOCADA
+              mensaje: La sesion fue cerrada o revocada.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SESION_REVOCADA</codigo>\n\
+            \    <mensaje>La sesion fue cerrada o revocada.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
+    SinPermiso:
+      description: El perfil no tiene el permiso necesario.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: SIN_PERMISO
+              mensaje: El perfil Colaborador no tiene ninguno de los permisos requeridos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>SIN_PERMISO</codigo>\n\
+            \    <mensaje>El perfil Colaborador no tiene ninguno de los permisos requeridos.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
+    NoEncontrado:
+      description: El recurso no existe.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: RECURSO_NO_ENCONTRADO
+              mensaje: La ruta solicitada no existe en este servicio.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>RECURSO_NO_ENCONTRADO</codigo>\n\
+            \    <mensaje>La ruta solicitada no existe en este servicio.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"
+    ValidacionFallida:
+      description: La solicitud trae campos invalidos. Se devuelven TODOS los problemas
+        de una vez, no solo el primero.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: VALIDACION
+              mensaje: La solicitud tiene campos invalidos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>VALIDACION</codigo>\n\
+            \    <mensaje>La solicitud tiene campos invalidos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
+    LimiteExcedido:
+      description: Se rebaso el limite de consumo.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: LIMITE_EXCEDIDO
+              mensaje: Mas de 120 peticiones por 60 segundos.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>LIMITE_EXCEDIDO</codigo>\n\
+            \    <mensaje>Mas de 120 peticiones por 60 segundos.</mensaje>\n    <detalles/>\n\
+            \    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n  </error>\n</error_respuesta>"
+    ErrorInterno:
+      description: Falla no prevista. Fuera de developer no se devuelve el detalle.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: ERROR_INTERNO
+              mensaje: Error interno del servicio. El evento quedo registrado.
+              detalles: []
+              correlacion_id: a1b2c3d4e5f60718
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error_respuesta xmlns=\"\
+            http://nexum.com.mx/bienestar/v1\">\n  <error>\n    <codigo>ERROR_INTERNO</codigo>\n\
+            \    <mensaje>Error interno del servicio. El evento quedo registrado.</mensaje>\n\
+            \    <detalles/>\n    <correlacion_id>a1b2c3d4e5f60718</correlacion_id>\n\
+            \  </error>\n</error_respuesta>"

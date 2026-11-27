@@ -1,0 +1,77 @@
+==> midiendo tres unidades por volumen (deterministas: ver `unidades_representativas`)
+    chica    UO-CC-TURNO-B    CAMP-2026-S1     48 respuestas
+    mediana  UO-MX-D004-U010  CAMP-M015       870 respuestas
+    grande   UO-MX-D006-U007  CAMP-M014     1,896 respuestas
+
+==> consultas
+    tablero_de_una_unidad
+      chica        48 respuestas  mediana     0.43 ms  p95     0.46 ms        6 filas
+      mediana     870 respuestas  mediana     0.43 ms  p95     0.59 ms        6 filas
+      grande    1,896 respuestas  mediana     0.43 ms  p95     0.49 ms        6 filas
+    serie_completa_de_una_unidad
+      chica        48 respuestas  mediana     0.68 ms  p95     0.69 ms       24 filas
+      mediana     870 respuestas  mediana     0.82 ms  p95     0.89 ms       72 filas
+      grande    1,896 respuestas  mediana     0.86 ms  p95     2.56 ms       72 filas
+    matriz_de_toda_una_campania
+      chica        48 respuestas  mediana     0.54 ms  p95     2.48 ms       65 filas
+      mediana     870 respuestas  mediana     2.90 ms  p95     6.43 ms      550 filas
+      grande    1,896 respuestas  mediana     1.83 ms  p95     4.94 ms      550 filas
+    recuento_de_respuestas_por_unidad
+      chica        48 respuestas  mediana     1.16 ms  p95     2.47 ms       14 filas
+      mediana     870 respuestas  mediana     7.26 ms  p95     9.04 ms      110 filas
+      grande    1,896 respuestas  mediana     6.86 ms  p95     8.36 ms      110 filas
+    union_de_una_unidad_y_campania
+      chica        48 respuestas  mediana     0.95 ms  p95     2.15 ms        5 filas
+      mediana     870 respuestas  mediana     1.29 ms  p95     2.82 ms        5 filas
+      grande    1,896 respuestas  mediana     4.03 ms  p95     4.30 ms        5 filas
+    tamano_del_grupo_con_consentimiento
+      chica        48 respuestas  mediana    39.46 ms  p95    58.08 ms        1 filas
+      mediana     870 respuestas  mediana    12.89 ms  p95    21.96 ms        1 filas
+      grande    1,896 respuestas  mediana    13.05 ms  p95    13.41 ms        1 filas
+
+==> plan, cpu y memoria sobre la unidad mas grande (UO-MX-D006-U007 / CAMP-M014)
+    tablero_de_una_unidad                mediana     0.39 ms  p95     0.40 ms        6 filas  [indice]
+      bloques: 0 de disco (0 kB), 5 en memoria (100.0% de aciertos)
+    serie_completa_de_una_unidad         mediana     0.66 ms  p95     0.74 ms       72 filas  [indice]
+      recorre entera(s): campania
+      bloques: 0 de disco (0 kB), 181 en memoria (100.0% de aciertos)
+      memoria de trabajo pico 28 kB, sin derrames a disco
+    matriz_de_toda_una_campania          mediana     1.21 ms  p95     1.28 ms      550 filas  [indice]
+      bloques: 0 de disco (0 kB), 17 en memoria (100.0% de aciertos)
+    recuento_de_respuestas_por_unidad    mediana     2.30 ms  p95     2.53 ms      110 filas  [indice]
+      bloques: 0 de disco (0 kB), 36 en memoria (100.0% de aciertos)
+    union_de_una_unidad_y_campania       mediana     1.29 ms  p95     1.39 ms        5 filas  [indice]
+      bloques: 0 de disco (0 kB), 3,813 en memoria (100.0% de aciertos)
+      memoria de trabajo pico 24 kB, sin derrames a disco
+    tamano_del_grupo_con_consentimiento  mediana    13.19 ms  p95    19.15 ms        1 filas  [indice]
+      bloques: 0 de disco (0 kB), 21,474 en memoria (100.0% de aciertos)
+      memoria de trabajo pico 49 kB, sin derrames a disco
+
+==> camino caliente: fn_calcular_agregado_protegido
+    mediana 40.23 ms  (min 26.96  max 51.94)
+    7 920 llamadas para 110 unidades x 12 campanias x 6 agregados. A 89 ms eran 705 s; a 21 ms son 166 s.
+
+==> la vista de consentimiento resuelve por indice
+    indice ix_consent_vigente  (18.17 ms), sin ordenamiento de la tabla completa
+
+==> cache
+    sin cache: 1.405 ms
+    con cache: 0.369 ms
+    mejora:    3.8x  (ahorra 1.036 ms por consulta)
+
+==> consumo de recursos del servidor
+    shared_buffers 128MB   work_mem 4MB   20 conexiones cliente
+    pico de este guion: 36.4 MB (el cliente, que no es donde esta el trabajo)
+
+==> tamanos
+    respuesta_detalle            113 MB  indices      69 MB   1,031,575 filas
+    respuesta                     34 MB  indices      16 MB     206,315 filas
+    resultado_protegido         2880 kB  indices    1496 kB       8,286 filas
+    consulta_privada            1288 kB  indices     448 kB       8,234 filas
+    presupuesto_privacidad       984 kB  indices     184 kB       1,372 filas
+    bitacora                     648 kB  indices     240 kB         889 filas
+    unidad_organizacional        112 kB  indices      64 kB         136 filas
+    tipo_accion                   80 kB  indices      32 kB          55 filas
+
+==> informe en informes/nube/rendimiento.json
+=== MEDICION COMPLETADA ===

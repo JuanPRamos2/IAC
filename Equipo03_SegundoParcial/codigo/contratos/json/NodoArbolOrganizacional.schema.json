@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/NodoArbolOrganizacional.schema.json",
+  "title": "NodoArbolOrganizacional",
+  "description": "Generado desde el contrato OpenAPI de organizational-service. No editar a mano: ejecutar contratos/generar_json.py.",
+  "type": "object",
+  "properties": {
+    "unidad_organizacional_id": {
+      "type": "string"
+    },
+    "nombre": {
+      "type": "string"
+    },
+    "descripcion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tipo": {
+      "type": "string"
+    },
+    "unidad_padre_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nivel_jerarquico": {
+      "type": "integer"
+    },
+    "plantilla_declarada": {
+      "type": "integer"
+    },
+    "activa": {
+      "type": "boolean"
+    },
+    "fecha_creacion": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fecha_actualizacion": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "profundidad": {
+      "type": "integer"
+    }
+  },
+  "$defs": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "codigo",
+            "mensaje",
+            "detalles",
+            "correlacion_id"
+          ],
+          "properties": {
+            "codigo": {
+              "type": "string"
+            },
+            "mensaje": {
+              "type": "string"
+            },
+            "detalles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "campo": {
+                    "type": "string"
+                  },
+                  "problema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "correlacion_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "UnidadOrganizacional": {
+      "type": "object",
+      "properties": {
+        "unidad_organizacional_id": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "unidad_padre_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nivel_jerarquico": {
+          "type": "integer"
+        },
+        "plantilla_declarada": {
+          "type": "integer"
+        },
+        "activa": {
+          "type": "boolean"
+        },
+        "fecha_creacion": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "fecha_actualizacion": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "SolicitudAltaUnidad": {
+      "type": "object",
+      "required": [
+        "nombre",
+        "plantilla_declarada"
+      ],
+      "properties": {
+        "unidad_id": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tipo": {
+          "type": "string",
+          "default": "DEPARTAMENTO"
+        },
+        "padre_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nivel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1
+        },
+        "plantilla_declarada": {
+          "type": "integer",
+          "minimum": 5
+        },
+        "activa": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "SolicitudActualizacionUnidad": {
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "padre_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nivel": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "plantilla_declarada": {
+          "type": "integer",
+          "minimum": 5
+        },
+        "activa": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RespuestaUnidadOrganizacion": {
+      "type": "object",
+      "properties": {
+        "unidad": {
+          "$ref": "#/$defs/UnidadOrganizacional"
+        }
+      }
+    },
+    "ListaUnidadesOrganizacion": {
+      "type": "object",
+      "properties": {
+        "unidades": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnidadOrganizacional"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "ArbolOrganizacional": {
+      "type": "object",
+      "properties": {
+        "unidad_raiz_id": {
+          "type": "string"
+        },
+        "total_nodos": {
+          "type": "integer"
+        },
+        "nodos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NodoArbolOrganizacional"
+          }
+        }
+      }
+    }
+  }
+}

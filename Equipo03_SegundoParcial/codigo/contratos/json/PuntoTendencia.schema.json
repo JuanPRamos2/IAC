@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/PuntoTendencia.schema.json",
+  "title": "PuntoTendencia",
+  "description": "Un punto de la serie, con la lectura de su cambio respecto al punto publicado anterior. Un punto suprimido se conserva con valor nulo: quitarlo haria que dos campanias no consecutivas parecieran consecutivas y el salto entre ellas se leeria como un solo paso.",
+  "properties": {
+    "cambio": {
+      "description": "Diferencia con el punto publicado anterior.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "campania_comparada": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "campania_id": {
+      "example": "CAMP-2026-S4",
+      "type": "string"
+    },
+    "campania_nombre": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "escala_ruido": {
+      "description": "Escala del ruido de Laplace aplicado al publicar. Es lo que permite juzgar si una diferencia cabe dentro del ruido.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "lectura": {
+      "description": "La interpretacion en palabras. Existe porque un numero con signo no dice si vale la pena mirarlo.",
+      "example": "Cambio de -0.120 frente a CAMP-2026-S3, dentro del ruido (umbral 0.283). No se puede afirmar que haya cambiado nada.",
+      "type": "string"
+    },
+    "n_observaciones": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "publicado": {
+      "type": "boolean"
+    },
+    "secuencia": {
+      "example": 4,
+      "type": "integer"
+    },
+    "supera_el_ruido": {
+      "description": "Nulo en el primer punto y en los suprimidos: no hay con que comparar.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "umbral_de_ruido": {
+      "description": "sqrt(2) * max(escala_a, escala_b). Por encima de esto el cambio se considera real.",
+      "format": "double",
+      "type": "number"
+    },
+    "valor_protegido": {
+      "description": "Nulo cuando no se publico. NO es cero: es ausencia de dato.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ResumenTendencia": {
+      "description": "Direccion de la serie contando SOLO los cambios que superan el ruido. Contar todos haria que una serie plana con ruido pareciera tener movimiento: con seis campanias, el azar produce tres subidas y tres bajadas, y una de ellas siempre es la ultima.",
+      "properties": {
+        "cambios_a_la_baja": {
+          "type": "integer"
+        },
+        "cambios_al_alza": {
+          "type": "integer"
+        },
+        "cambios_sobre_el_ruido": {
+          "type": "integer"
+        },
+        "campanias_publicadas": {
+          "type": "integer"
+        },
+        "campanias_suprimidas": {
+          "type": "integer"
+        },
+        "direccion": {
+          "description": "ESTABLE no es 'no cambio': es que si cambio algo, no se distingue del azar. INDETERMINADA es que no hay suficientes campanias publicadas para hablar de tendencia.",
+          "enum": [
+            "AL_ALZA",
+            "A_LA_BAJA",
+            "MIXTA",
+            "ESTABLE",
+            "INDETERMINADA"
+          ],
+          "type": "string"
+        },
+        "lectura": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

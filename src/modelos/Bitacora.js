@@ -1,5 +1,6 @@
 import { mongoDb, conectarMongo } from "../config/mongo.js";
 import { validarCodigosAuditoria } from "./Catalogo.js";
+import { pipelineConteoBitacoraPorAccion } from "./pipelinesMongo.js";
 
 export function colBitacora() {
   return mongoDb().collection("bitacora_auditoria");
@@ -45,4 +46,14 @@ export async function listarBitacoraDeActor(actorId, { limite = 50 } = {}) {
     .sort({ timestamp: -1 })
     .limit(Math.min(Number(limite) || 50, 200))
     .toArray();
+}
+
+export async function conteoBitacoraPorAccion(filtros = {}, col) {
+  const c = col || (await conectarMongo(), colBitacora());
+  return c.aggregate(pipelineConteoBitacoraPorAccion(filtros)).toArray();
+}
+
+export async function bitacoraPorCorrelacion(correlacionId, col) {
+  const c = col || (await conectarMongo(), colBitacora());
+  return c.find({ correlacion_id: correlacionId }).sort({ timestamp: 1 }).toArray();
 }

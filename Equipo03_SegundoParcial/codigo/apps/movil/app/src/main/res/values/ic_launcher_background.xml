@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- El azul del portal, para que el icono y la web se reconozcan como
+         el mismo producto. -->
+    <color name="ic_launcher_fondo">#1E3A5F</color>
+</resources>

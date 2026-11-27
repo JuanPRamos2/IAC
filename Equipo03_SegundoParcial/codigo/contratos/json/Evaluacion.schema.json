@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/Evaluacion.schema.json",
+  "title": "Evaluacion",
+  "description": "Comparacion entre dos campanias sobre valores YA PUBLICADOS. No consume presupuesto de epsilon.",
+  "properties": {
+    "campania_antes": {
+      "type": "string"
+    },
+    "campania_despues": {
+      "type": "string"
+    },
+    "conclusion": {
+      "description": "Las tres primeras se guardan; SIN_DATOS_SUFICIENTES no, porque no es una conclusion sino la ausencia de una.\n\nSIN_DATOS_SUFICIENTES cuando el valor de antes o el de despues vino suprimido. NO se toma como cero: un valor suprimido es ausencia de dato, y tratarlo como cero produciria una mejora o un empeoramiento inventados.",
+      "enum": [
+        "MEJORA",
+        "DETERIORO",
+        "SIN_CAMBIO",
+        "SIN_DATOS_SUFICIENTES"
+      ],
+      "type": "string"
+    },
+    "epsilon_consumido": {
+      "example": 0.0,
+      "type": "number"
+    },
+    "nota_metodologica": {
+      "description": "Deja dicho que la evaluacion NO atribuye causalidad: registra que la unidad se movio despues de la intervencion, no que se movio POR la intervencion.",
+      "type": "string"
+    },
+    "valor_antes": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "valor_despues": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "variacion": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "type": "object",
+  "$defs": {
+    "Error": {
+      "properties": {
+        "error": {
+          "properties": {
+            "codigo": {
+              "description": "Codigo estable; el cliente programa contra esto, no contra el mensaje.",
+              "example": "SIN_PERMISO",
+              "type": "string"
+            },
+            "correlacion_id": {
+              "example": "a1b2c3d4e5f60718",
+              "type": "string"
+            },
+            "detalles": {
+              "items": {
+                "properties": {
+                  "campo": {
+                    "example": "correo",
+                    "type": "string"
+                  },
+                  "problema": {
+                    "example": "no es un correo valido",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "mensaje": {
+              "example": "El perfil Colaborador no tiene el permiso requerido.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "codigo",
+            "mensaje"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "Paginacion": {
+      "properties": {
+        "pagina": {
+          "example": 1,
+          "type": "integer"
+        },
+        "tamano": {
+          "example": 20,
+          "type": "integer"
+        },
+        "tiene_anterior": {
+          "example": false,
+          "type": "boolean"
+        },
+        "tiene_siguiente": {
+          "example": true,
+          "type": "boolean"
+        },
+        "total": {
+          "example": 143,
+          "type": "integer"
+        },
+        "total_paginas": {
+          "example": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "PlanIntervencion": {
+      "description": "Una accion sobre una UNIDAD organizacional. Nunca sobre una persona: el modelo de datos no tiene donde guardar un objetivo individual.",
+      "properties": {
+        "campania_linea_base": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estado": {
+          "enum": [
+            "PROPUESTA",
+            "APROBADA",
+            "EN_EJECUCION",
+            "FINALIZADA",
+            "CANCELADA"
+          ],
+          "type": "string"
+        },
+        "fecha_fin": {
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fecha_inicio": {
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intervencion_id": {
+          "type": "integer"
+        },
+        "justificacion": {
+          "description": "Obligatoria, minimo 20 caracteres. Intervenir sobre un equipo sin dejar dicho por que es lo que convierte un programa de bienestar en una herramienta de presion.",
+          "type": "string"
+        },
+        "responsable_usuario_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resultado_esperado": {
+          "description": "Obligatorio: sin el no hay nada contra que evaluar despues.",
+          "type": "string"
+        },
+        "tipo_intervencion": {
+          "example": "REDISTRIBUCION_CARGA",
+          "type": "string"
+        },
+        "unidad": {
+          "type": "string"
+        },
+        "unidad_organizacional_id": {
+          "example": "UO-CC-TURNO-B",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+Fri Nov 27 05:24:14 UTC 2026
+CONTAINER ID   NAME                                  CPU %     MEM USAGE / LIMIT     MEM %     NET I/O          BLOCK I/O         PIDS
+c91d10794a26   nexum-emiliano-datos-1                74.49%    208.5MiB / 3.821GiB   5.33%     37MB / 121MB     37.5MB / 1.16GB   26
+056374c96864   nexum-emiliano-cache-1                0.14%     7.348MiB / 3.821GiB   0.19%     40.6MB / 109MB   4.98MB / 950kB    5
+b1bf32c20f25   nexum-emiliano-algorithms-service-1   0.13%     106.6MiB / 3.821GiB   2.72%     55MB / 67.1MB    4.1kB / 0B        13

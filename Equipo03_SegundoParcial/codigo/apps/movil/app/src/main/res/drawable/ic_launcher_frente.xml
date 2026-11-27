@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  La capa de frente del icono adaptativo.
+
+  El lienzo es de 108x108 dp y el lanzador recorta hasta 18 dp de cada
+  borde, asi que todo lo que importa vive en los 72x72 dp centrales. Por
+  eso el dibujo esta contenido entre 27 y 81: fuera de ahi se puede perder
+  segun la forma que use el telefono.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Tres barras de altura creciente: el indice de bienestar de una
+         unidad a lo largo de las campanias. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,66 h7 v15 h-7 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,56 h7 v25 h-7 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M64,43 h7 v38 h-7 z" />
+
+    <!-- La linea de base, que es el umbral k: nada se publica debajo. -->
+    <path
+        android:fillColor="#7FB3D5"
+        android:pathData="M32,83 h44 v3 h-44 z" />
+</vector>

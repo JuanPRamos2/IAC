@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/SolicitudCambioEstadoApoyo.schema.json",
+  "title": "SolicitudCambioEstadoApoyo",
+  "description": "Generado desde el contrato OpenAPI de support-service. No editar a mano: ejecutar contratos/generar_json.py.",
+  "type": "object",
+  "required": [
+    "estado"
+  ],
+  "properties": {
+    "estado": {
+      "type": "string",
+      "enum": [
+        "ABIERTA",
+        "EN_PROCESO",
+        "CERRADA"
+      ]
+    },
+    "nota": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "codigo",
+            "mensaje",
+            "detalles",
+            "correlacion_id"
+          ],
+          "properties": {
+            "codigo": {
+              "type": "string"
+            },
+            "mensaje": {
+              "type": "string"
+            },
+            "detalles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "campo": {
+                    "type": "string"
+                  },
+                  "problema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "correlacion_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "SolicitudApoyoCreacion": {
+      "type": "object",
+      "required": [
+        "mensaje"
+      ],
+      "properties": {
+        "mensaje": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 1000
+        }
+      }
+    },
+    "SolicitudMensajeApoyo": {
+      "type": "object",
+      "required": [
+        "mensaje"
+      ],
+      "properties": {
+        "mensaje": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 1000
+        }
+      }
+    },
+    "RespuestaMensajeApoyo": {
+      "type": "object",
+      "properties": {
+        "resultado": {
+          "type": "string"
+        },
+        "solicitud_id": {
+          "type": "string"
+        },
+        "mensaje": {
+          "type": "string"
+        },
+        "fecha": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "SolicitudApoyo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "seudonimo_id": {
+          "type": "string"
+        },
+        "mensaje": {
+          "type": "string"
+        },
+        "fecha": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "estado": {
+          "type": "string",
+          "enum": [
+            "ABIERTA",
+            "EN_PROCESO",
+            "CERRADA"
+          ]
+        },
+        "fecha_actualizacion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "historial": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "ListaSolicitudesApoyo": {
+      "type": "object",
+      "properties": {
+        "solicitudes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SolicitudApoyo"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "paginacion": {
+          "type": "object",
+          "properties": {
+            "pagina": {
+              "type": "integer"
+            },
+            "tamano": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "integer"
+            },
+            "total_paginas": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

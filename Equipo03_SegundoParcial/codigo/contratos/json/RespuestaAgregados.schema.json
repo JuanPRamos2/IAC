@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexum.com.mx/bienestar/contratos/RespuestaAgregados.schema.json",
+  "title": "RespuestaAgregados",
+  "description": "Generado desde el contrato OpenAPI de indicators-service. No editar a mano: ejecutar contratos/generar_json.py.",
+  "type": "object",
+  "properties": {
+    "campania_id": {
+      "type": "string"
+    },
+    "unidad_id": {
+      "type": "string"
+    },
+    "indicadores": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AgregadoIndicador"
+      }
+    },
+    "total": {
+      "type": "integer"
+    },
+    "fuente": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "codigo",
+            "mensaje",
+            "detalles",
+            "correlacion_id"
+          ],
+          "properties": {
+            "codigo": {
+              "type": "string"
+            },
+            "mensaje": {
+              "type": "string"
+            },
+            "detalles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "campo": {
+                    "type": "string"
+                  },
+                  "problema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "correlacion_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Indicador": {
+      "type": "object",
+      "properties": {
+        "clave": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "dimension_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unidad_medida": {
+          "type": "string"
+        },
+        "umbral_alerta": {
+          "type": "number"
+        }
+      }
+    },
+    "ListaIndicadores": {
+      "type": "object",
+      "properties": {
+        "indicadores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Indicador"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "AgregadoIndicador": {
+      "type": "object",
+      "properties": {
+        "clave": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "dimension_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valor": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "n_observaciones": {
+          "type": "integer"
+        },
+        "k_umbral": {
+          "type": "integer"
+        },
+        "suprimido_por_umbral": {
+          "type": "boolean"
+        },
+        "nivel_riesgo": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "string"
+        }
+      }
+    },
+    "PuntoHistoricoIndicador": {
+      "type": "object",
+      "properties": {
+        "campania_id": {
+          "type": "string"
+        },
+        "campania": {
+          "type": "string"
+        },
+        "fecha": {
+          "type": "string",
+          "format": "date"
+        },
+        "dimension_id": {
+          "type": "string"
+        },
+        "valor": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "suprimido_por_umbral": {
+          "type": "boolean"
+        },
+        "n_observaciones": {
+          "type": "integer"
+        }
+      }
+    },
+    "RespuestaHistorico": {
+      "type": "object",
+      "properties": {
+        "unidad_id": {
+          "type": "string"
+        },
+        "dimension_id": {
+          "type": "string"
+        },
+        "puntos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PuntoHistoricoIndicador"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "SolicitudCalculoIndicadores": {
+      "type": "object",
+      "required": [
+        "campania_id"
+      ],
+      "properties": {
+        "campania_id": {
+          "type": "string"
+        }
+      }
+    },
+    "RespuestaCalculoIndicadores": {
+      "type": "object",
+      "properties": {
+        "resultado": {
+          "type": "string"
+        },
+        "campania_id": {
+          "type": "string"
+        },
+        "unidades_consolidadas": {
+          "type": "integer"
+        },
+        "mensaje": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

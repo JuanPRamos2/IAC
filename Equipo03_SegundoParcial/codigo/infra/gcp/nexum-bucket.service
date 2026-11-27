@@ -1,0 +1,13 @@
+[Unit]
+Description=Montaje del bucket de evidencias de Nexum
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/nexum/montar-bucket.sh
+ExecStop=/bin/fusermount -u /mnt/evidencias
+
+[Install]
+WantedBy=multi-user.target

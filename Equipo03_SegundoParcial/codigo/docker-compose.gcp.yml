@@ -1,0 +1,113 @@
+# Capa de Google Cloud. Se usa encima del compose de developer, en la
+# máquina nexum-equipo03, y no en la laptop de cada integrante:
+#
+#   sudo docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d --build
+#
+# El portal queda solo en 127.0.0.1:8000. Caddy, en el puerto 443, es quien
+# lo publica. Las bases y los microservicios no se publican al exterior:
+# entre ellos se hablan por la red interna de Docker.
+#
+# La llave signer.json NO está en este repositorio. Vive en la virtual, en
+# /opt/nexum/signer.json, y se monta dentro de documents-service.
+
+x-gcp-env: &gcp-env
+  VERSION_DESPLIEGUE: tercer-parcial-gcp
+
+services:
+  datos:
+    ports: !reset []
+  cache:
+    ports: !reset []
+  documentos:
+    ports: !reset []
+
+  web:
+    environment:
+      <<: *gcp-env
+    ports: !override
+      - "127.0.0.1:8000:8000"
+    volumes: !override
+      - /mnt/evidencias:/var/lib/bienestar/evidencias
+
+  auth-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  users-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  catalog-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  main-process-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  documents-service:
+    environment:
+      <<: *gcp-env
+      ALMACEN_MODO: gcs
+      ALMACEN_EVIDENCIAS: /var/lib/bienestar/evidencias
+      GCS_BUCKET: nexum-610248-evidencias
+      GCS_BUCKET_NAME: nexum-610248-evidencias
+      GOOGLE_APPLICATION_CREDENTIALS: /run/gcp/signer.json
+      URL_FIRMADA_TTL_SEG: "600"
+    volumes:
+      - /mnt/evidencias:/var/lib/bienestar/evidencias
+      - /opt/nexum/signer.json:/run/gcp/signer.json:ro
+    ports: !reset []
+  notifications-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  queries-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  reports-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  algorithms-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  trends-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  interventions-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  export-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  configuration-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  monitoring-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  sync-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  integration-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  consent-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  privacy-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  survey-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  indicators-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  support-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  organizational-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  audit-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []
+  data-governance-service:
+    environment: { <<: *gcp-env }
+    ports: !reset []

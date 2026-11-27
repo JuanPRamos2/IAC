@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block titulo %}Estado de los microservicios{% endblock %}
+{% block contenido %}
+<h1>Estado de los microservicios</h1>
+<p class="subtitulo">
+  Última verificación: {{ verificacion }} (hora del centro de México).
+  Cada apertura de esta pantalla vuelve a sondear y deja el resultado en el historial.
+</p>
+
+{% set caidos = filas | selectattr('estado', 'equalto', 'CAIDO') | list %}
+{% set degradados = filas | selectattr('estado', 'equalto', 'DEGRADADO') | list %}
+{% set sin_dep = filas | selectattr('estado', 'equalto', 'NO_LISTO') | list %}
+{% if caidos %}
+<div class="aviso aviso-info">
+  <strong>{{ caidos|length }} servicio(s) no responden, y el portal sigue funcionando.</strong>
+  Eso es lo esperado: la arquitectura obligatoria exige que el sistema web
+  opere de manera independiente del módulo de microservicios.
+</div>
+{% elif sin_dep or degradados %}
+<div class="aviso aviso-medio">
+  <strong>{{ sin_dep|length }} sin una dependencia esencial y {{ degradados|length }} degradado(s).</strong>
+  El proceso sigue vivo. Sin dependencia hay que revisar la base; degradado
+  significa que una pieza opcional, como el bucket o MongoDB, no responde.
+</div>
+{% else %}
+<div class="aviso aviso-ok">Los {{ filas|length }} microservicios responden.</div>
+{% endif %}
+
+<div class="tabla-envoltura">
+<table>
+  <thead><tr>
+    <th>Servicio</th><th>Responsable</th><th>Estado</th><th>Tiempo</th>
+    <th>Versión</th><th>Dependencias</th><th>Detalle</th>
+  </tr></thead>
+  <tbody>
+  {% for f in filas %}
+    <tr>
+      <td><strong>{{ f.servicio }}</strong><div class="tenue" style="font-size:12px">{{ f.url }}</div></td>
+      <td>{{ f.responsable }}
+        <div class="tenue" style="font-size:12px">{{ f.lenguaje }}</div></td>
+      <td>
+        {% if f.estado == 'DISPONIBLE' %}<span class="insignia insignia-ok">Disponible</span>
+        {% elif f.estado == 'DEGRADADO' %}<span class="insignia insignia-medio">Degradado</span>
+        {% elif f.estado == 'NO_LISTO' %}<span class="insignia insignia-neutra">Sin dependencia</span>
+        {% else %}<span class="insignia insignia-alto">Caído</span>{% endif %}
+      </td>
+      <td>{{ f.ms }} ms</td>
+      <td class="tenue">{{ f.version or "—" }}</td>
+      <td>
+        {% for nombre, d in f.dependencias.items() %}
+          <div>{{ nombre }}:
+            {% if d.ok %}<span style="color:var(--verde)">ok</span> <span class="tenue">{{ d.ms }} ms</span>
+            {% else %}<span style="color:var(--rojo)">falla</span>{% endif %}
+          </div>
+        {% else %}{% if not f.no_aplican %}<span class="tenue">—</span>{% endif %}{% endfor %}
+        {% for nombre in f.no_aplican %}
+          <div>{{ nombre }}: <span class="tenue">no aplica</span></div>
+        {% endfor %}
+      </td>
+      <td class="tenue" style="font-size:12px">{{ f.detalle }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Errores en las últimas 24 horas</h2>
+{% if errores_n is none %}
+<p class="tenue">No se pudo leer la bitácora.</p>
+{% else %}
+<p>Eventos que no fueron éxito: <strong>{{ errores_n }}</strong>.
+  Un rechazo de permiso o un grupo insuficiente es el control funcionando, no una caída.</p>
+{% if errores %}
+<div class="tabla-envoltura">
+<table>
+  <thead><tr><th>Acción</th><th>Resultado</th><th>Veces</th><th>Último</th></tr></thead>
+  <tbody>
+  {% for e in errores %}
+    <tr>
+      <td>{{ e.accion }}</td>
+      <td>{{ e.resultado }}</td>
+      <td>{{ e.n }}</td>
+      <td class="tenue">{{ e.ultimo }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="tenue">En esta ventana no hay eventos distintos de éxito.</p>
+{% endif %}
+{% endif %}
+
+<h2>Historial de disponibilidad, últimas 24 horas</h2>
+{% if historial %}
+<div class="tabla-envoltura">
+<table>
+  <thead><tr>
+    <th>Servicio</th><th>Muestras</th><th>Disponible</th>
+    <th>Degradado</th><th>Sin dependencia</th><th>Caído</th><th>Última muestra</th>
+  </tr></thead>
+  <tbody>
+  {% for h in historial %}
+    <tr>
+      <td>{{ h.servicio }}</td>
+      <td>{{ h.muestras }}</td>
+      <td>{{ h.disponibilidad }} %</td>
+      <td>{{ h.degradados }}</td>
+      <td>{{ h.sin_dependencia }}</td>
+      <td>{{ h.caidos }}</td>
+      <td class="tenue">{{ h.ultima }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="tenue">
+  Todavía no hay historial. Aparece al abrir esta pantalla después de aplicar
+  la migración <code>022_historial_disponibilidad.sql</code>. Cada visita agrega una muestra.
+</p>
+{% endif %}
+
+<p class="tenue" style="margin-top:14px">
+  Dieciocho servicios están en Python y seis en Node, porque los
+  escribieron integrantes distintos. Un cliente no puede notarlo: los veinticuatro
+  firman el JWT con el mismo secreto, leen la misma sesión en Redis,
+  devuelven el mismo sobre de error y serializan el XML con las mismas
+  reglas. Que el contrato mande sobre la implementación es justamente lo que
+  esta tabla demuestra.
+</p>
+
+<p class="tenue" style="margin-top:14px">
+  Cada servicio expone <code>/health/live</code> (el proceso responde),
+  <code>/health/ready</code> (sus dependencias responden) y <code>/docs</code>
+  (su contrato en Swagger).
+</p>
+{% endblock %}
