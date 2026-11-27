@@ -288,7 +288,7 @@ def datos_de_correcciones(svc):
 
     reparto = [["Integrante", "Componentes", "Puertos"]]
     reparto.append([
-        "Emiliano Pascual Piñales Sánchez #657657",
+        "Integrante 3",
         "queries-service, reports-service, algorithms-service, "
         "trends-service, interventions-service, export-service",
         ", ".join(por_nombre.get(n, "?") for n in
@@ -296,7 +296,7 @@ def datos_de_correcciones(svc):
                    "trends-service", "interventions-service",
                    "export-service"))])
     reparto.append([
-        "Gerardo Quiroga Ramírez #650313",
+        "Integrante 4",
         "documents-service, notifications-service, sync-service, "
         "configuration-service, monitoring-service, integration-service",
         ", ".join(por_nombre.get(n, "?") for n in
@@ -590,16 +590,16 @@ def main():
         "auth-service": "Integrante 1", "users-service": "Integrante 1",
         "catalog-service": "Integrante 2",
         "main-process-service": "Integrante 2",
-        "documents-service": "Gerardo", "notifications-service": "Gerardo",
-        "sync-service": "Gerardo", "configuration-service": "Gerardo",
-        "monitoring-service": "Gerardo", "integration-service": "Gerardo",
-        "queries-service": "Emiliano", "reports-service": "Emiliano",
-        "algorithms-service": "Emiliano", "trends-service": "Emiliano",
-        "interventions-service": "Emiliano", "export-service": "Emiliano",
-        "consent-service": "Equipo 03", "privacy-service": "Equipo 03",
-        "audit-service": "Equipo 03", "data-governance-service": "Equipo 03",
-        "survey-service": "Ricardo", "indicators-service": "Ricardo",
-        "support-service": "Ricardo", "organizational-service": "Ricardo",
+        "documents-service": "Integrante 4", "notifications-service": "Integrante 4",
+        "sync-service": "Integrante 4", "configuration-service": "Integrante 4",
+        "monitoring-service": "Integrante 4", "integration-service": "Integrante 4",
+        "queries-service": "Integrante 3", "reports-service": "Integrante 3",
+        "algorithms-service": "Integrante 3", "trends-service": "Integrante 3",
+        "interventions-service": "Integrante 3", "export-service": "Integrante 3",
+        "consent-service": "Integrante 1", "privacy-service": "Integrante 1",
+        "audit-service": "Integrante 1", "data-governance-service": "Integrante 1",
+        "survey-service": "Integrante 2", "indicators-service": "Integrante 2",
+        "support-service": "Integrante 2", "organizational-service": "Integrante 2",
     }
     for s in sorted(svc, key=lambda x: x["puerto"] or "9999"):
         filas_servicios.append([s["nombre"],

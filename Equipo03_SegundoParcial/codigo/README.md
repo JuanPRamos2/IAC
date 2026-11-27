@@ -4,10 +4,10 @@ Monorepo del Proyecto 4, Equipo 03 · Integración de Aplicaciones Computacional
 
 | | |
 |---|---|
-| Emiliano Pascual Piñales Sánchez | #657657 |
-| Gerardo Quiroga Ramírez | #650313 |
-| Ricardo Arath Sánchez Aguirre | #583928 |
-| Equipo 03 | — |
+| Integrante 3 |
+| Integrante 4 |
+| Integrante 2 |  |
+| Integrante 1 | — |
 
 ---
 
@@ -116,18 +116,18 @@ apps/
     users-service/        Integrante 1 — usuarios, perfiles y alcance
     catalog-service/      Integrante 2 — catálogos (Node)
     main-process-service/ Integrante 2 — proceso de encuesta y apoyo (Node)
-    documents-service/    Gerardo — evidencias, avisos y archivos
-    notifications-service/ Gerardo — notificaciones internas
-    queries-service/      Emiliano — lectura con caché, sin gastar épsilon
-    reports-service/      Emiliano — generación, sellado y descarga
-    algorithms-service/   Emiliano — motor de reglas sobre lo ya publicado
-    trends-service/       Emiliano — cambio real contra ruido
-    interventions-service/ Emiliano — planes organizacionales y su evaluación
-    export-service/       Emiliano — egreso controlado de agregados
-    sync-service/         Gerardo — sincronización con red intermitente
-    configuration-service/ Gerardo — parámetros, umbrales y presupuestos
-    monitoring-service/   Gerardo — salud, latencia, alertas y reinicios
-    integration-service/  Gerardo — puerta hacia el sistema corporativo
+    documents-service/    Integrante 4 — evidencias, avisos y archivos
+    notifications-service/ Integrante 4 — notificaciones internas
+    queries-service/      Integrante 3 — lectura con caché, sin gastar épsilon
+    reports-service/      Integrante 3 — generación, sellado y descarga
+    algorithms-service/   Integrante 3 — motor de reglas sobre lo ya publicado
+    trends-service/       Integrante 3 — cambio real contra ruido
+    interventions-service/ Integrante 3 — planes organizacionales y su evaluación
+    export-service/       Integrante 3 — egreso controlado de agregados
+    sync-service/         Integrante 4 — sincronización con red intermitente
+    configuration-service/ Integrante 4 — parámetros, umbrales y presupuestos
+    monitoring-service/   Integrante 4 — salud, latencia, alertas y reinicios
+    integration-service/  Integrante 4 — puerta hacia el sistema corporativo
   escritorio/             aplicación de escritorio (Tkinter), consume solo XML
     cliente.py            la capa de red, sin Tkinter: por eso se puede probar
     app.py                la ventana
@@ -192,30 +192,30 @@ devuelven el mismo sobre de error y serializan XML con las mismas reglas.
 
 | Servicio | Responsable | Lenguaje | Puerto |
 |---|---|---|---|
-| `auth-service` | Equipo 03 | Python | 8101 |
-| `users-service` | Equipo 03 | Python | 8102 |
-| `catalog-service` | Ricardo (2) | Node | 8103 |
-| `main-process-service` | Ricardo (2) | Node | 8104 |
-| `documents-service` | Gerardo (4) | Python | 8105 |
-| `notifications-service` | Gerardo (4) | Python | 8106 |
-| `queries-service` | Emiliano (3) | Python | 8107 |
-| `reports-service` | Emiliano (3) | Python | 8108 |
-| `algorithms-service` | Emiliano (3) | Python | 8109 |
-| `consent-service` | Equipo 03 | Python | 8110 |
-| `privacy-service` | Equipo 03 | Python | 8111 |
-| `survey-service` | Ricardo (2) | Node | 8112 |
-| `indicators-service` | Ricardo (2) | Node | 8113 |
-| `trends-service` | Emiliano (3) | Python | 8114 |
-| `interventions-service` | Emiliano (3) | Python | 8115 |
-| `support-service` | Ricardo (2) | Node | 8116 |
-| `organizational-service` | Ricardo (2) | Node | 8117 |
-| `audit-service` | Equipo 03 | Python | 8118 |
-| `data-governance-service` | Equipo 03 | Python | 8119 |
-| `sync-service` | Gerardo (4) | Python | 8120 |
-| `export-service` | Emiliano (3) | Python | 8121 |
-| `configuration-service` | Gerardo (4) | Python | 8122 |
-| `monitoring-service` | Gerardo (4) | Python | 8123 |
-| `integration-service` | Gerardo (4) | Python | 8124 |
+| `auth-service` | Integrante 1 | Python | 8101 |
+| `users-service` | Integrante 1 | Python | 8102 |
+| `catalog-service` | Integrante 2 | Node | 8103 |
+| `main-process-service` | Integrante 2 | Node | 8104 |
+| `documents-service` | Integrante 4 | Python | 8105 |
+| `notifications-service` | Integrante 4 | Python | 8106 |
+| `queries-service` | Integrante 3 | Python | 8107 |
+| `reports-service` | Integrante 3 | Python | 8108 |
+| `algorithms-service` | Integrante 3 | Python | 8109 |
+| `consent-service` | Integrante 1 | Python | 8110 |
+| `privacy-service` | Integrante 1 | Python | 8111 |
+| `survey-service` | Integrante 2 | Node | 8112 |
+| `indicators-service` | Integrante 2 | Node | 8113 |
+| `trends-service` | Integrante 3 | Python | 8114 |
+| `interventions-service` | Integrante 3 | Python | 8115 |
+| `support-service` | Integrante 2 | Node | 8116 |
+| `organizational-service` | Integrante 2 | Node | 8117 |
+| `audit-service` | Integrante 1 | Python | 8118 |
+| `data-governance-service` | Integrante 1 | Python | 8119 |
+| `sync-service` | Integrante 4 | Python | 8120 |
+| `export-service` | Integrante 3 | Python | 8121 |
+| `configuration-service` | Integrante 4 | Python | 8122 |
+| `monitoring-service` | Integrante 4 | Python | 8123 |
+| `integration-service` | Integrante 4 | Python | 8124 |
 
 Detalle, decisiones y cómo levantarlos: `apps/microservicios/README.md`.
 

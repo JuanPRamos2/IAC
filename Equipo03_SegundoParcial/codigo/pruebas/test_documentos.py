@@ -198,7 +198,7 @@ def test_los_documentos_nombran_a_los_dos_responsables_reales(servicios):
         if documento not in DOCUMENTOS:
             continue
         texto = _texto(documento)
-        for nombre in ("Emiliano", "Gerardo"):
+        for nombre in ("Integrante 3", "Integrante 4"):
             if nombre not in texto:
                 faltan.append(f"{documento} no menciona a {nombre}")
     assert not faltan, faltan

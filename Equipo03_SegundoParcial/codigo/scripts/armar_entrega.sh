@@ -18,7 +18,7 @@ set -euo pipefail
 
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SALIDA="${1:-$RAIZ/../salida}"
-NOMBRE="Parcial2_Correcciones_Emiliano_Gerardo"
+NOMBRE="Parcial2_Correcciones_Equipo"
 ARMADO="$(mktemp -d)"
 DESTINO="$ARMADO/$NOMBRE"
 

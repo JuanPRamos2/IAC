@@ -1,6 +1,6 @@
 # Capítulo del Expediente — Plan de Pruebas de Autenticación y Roles
 
-**Autor:** Ricardo Arath Sánchez Aguirre (#583928) — Integrante 2  
+**Autor:** Integrante 2 — Integrante 2  
 **Proyecto:** Bienestar Nexum · Equipo 03 · UDEM  
 **Alcance:** Plan de pruebas funcionales, de seguridad, control de acceso basado en roles (RBAC) y tolerancia a fallos sobre autenticación, sesión y microservicios Node.js/Python.
 
@@ -16,7 +16,7 @@
 | `AUDITOR` | `roberto.garcia@nexum.com.mx` | Global de lectura | Consulta de `auditoria.bitacora`, verificación de garantías de gobernanza, evidencias de consentimiento y monitoreo | Sin modificación de catálogos ni borrado en bitácora (`bienestar_app` tiene prohibido `DELETE`) |
 | `ADMINISTRADOR` | `carlos.ramirez@nexum.com.mx` | Administración TI | CRUD de unidades/instrumentos/campañas (`catalog-service`, `organizational-service`), usuarios, parámetros y panel **Servicios** | **Sin permiso `APOYO_ATENDER`** (migración `017`): TI no puede leer solicitudes confidenciales de apoyo |
 
-> **Regla operativa de ensayo en vivo:** Para las pruebas de bloqueo de 5 intentos fallidos (`PA-03`) se utiliza **exclusivamente** una cuenta de prueba dedicada (ej. `prueba.bloqueo.ricardo@nexum.com.mx`), **nunca** `carlos.ramirez@nexum.com.mx`, para no bloquear el acceso administrativo durante la demostración.
+> **Regla operativa de ensayo en vivo:** Para las pruebas de bloqueo de 5 intentos fallidos (`PA-03`) se utiliza **exclusivamente** una cuenta de prueba dedicada (ej. `prueba.bloqueo@nexum.com.mx`), **nunca** `carlos.ramirez@nexum.com.mx`, para no bloquear el acceso administrativo durante la demostración.
 
 ---
 
@@ -25,10 +25,10 @@
 | ID | Caso de prueba | Entrada / Estímulo | Resultado esperado (HTTP y efectos) | Verificación automática / manual |
 |---|---|---|---|---|
 | **PA-01** | Emisión dual JWT (`login`) | `POST /api/v1/auth/login` con `ana.perez@nexum.com.mx` / `demo123` | `200`, entrega `token_acceso` (15 min) + `token_renovacion` (7 días), crea `sesion:{jti}` en Redis, sin permisos dentro del JWT | `test_auth_y_usuarios.py`, `smoke_docker_t3.py` |
-| **PA-02** | Login inválido anti-enumeración | Credenciales erróneas para correo existente y para correo inexistente | Ambos responden idéntico `401 CREDENCIALES_INVALIDAS` e incrementan `intentos:{correo}` (TTL 900 s) | `test_auth_y_usuarios.py`, `ensayo_seguridad_ricardo.py` |
-| **PA-03** | Bloqueo temporal tras 5 intentos fallidos | 5 peticiones `POST /login` fallidas con `prueba.bloqueo.ricardo@nexum.com.mx` | Del 1.º al 4.º: `401`; al 5.º/6.º: `429 CUENTA_BLOQUEADA` durante 15 min y registro `LOGIN_FALLIDO` en `auditoria.bitacora` | `test_seguridad_y_fallos_t3.py`, `ensayo_seguridad_ricardo.py` |
-| **PA-04** | Rotación de refresh token | `POST /api/v1/auth/renovar` con `token_renovacion` válido; luego reintentar con el mismo refresh | Primer llamado `200` con nuevo par de tokens; segundo intento con el refresh viejo responde `401 SESION_REVOCADA` | `test_auth_y_usuarios.py`, `ensayo_seguridad_ricardo.py` |
-| **PA-05** | Revocación distribuida Python → Node | `POST /api/v1/auth/logout` en `:8101`; luego `GET /api/v1/catalogos/unidades` en `:8103` con el mismo JWT | Ambos servicios (Python y Node) rechazan inmediatamente con `401 SESION_REVOCADA` al consultar Redis | `smoke_docker_t3.py`, `ensayo_seguridad_ricardo.py` |
+| **PA-02** | Login inválido anti-enumeración | Credenciales erróneas para correo existente y para correo inexistente | Ambos responden idéntico `401 CREDENCIALES_INVALIDAS` e incrementan `intentos:{correo}` (TTL 900 s) | `test_auth_y_usuarios.py`, `ensayo_seguridad.py` |
+| **PA-03** | Bloqueo temporal tras 5 intentos fallidos | 5 peticiones `POST /login` fallidas con `prueba.bloqueo@nexum.com.mx` | Del 1.º al 4.º: `401`; al 5.º/6.º: `429 CUENTA_BLOQUEADA` durante 15 min y registro `LOGIN_FALLIDO` en `auditoria.bitacora` | `test_seguridad_y_fallos_t3.py`, `ensayo_seguridad.py` |
+| **PA-04** | Rotación de refresh token | `POST /api/v1/auth/renovar` con `token_renovacion` válido; luego reintentar con el mismo refresh | Primer llamado `200` con nuevo par de tokens; segundo intento con el refresh viejo responde `401 SESION_REVOCADA` | `test_auth_y_usuarios.py`, `ensayo_seguridad.py` |
+| **PA-05** | Revocación distribuida Python → Node | `POST /api/v1/auth/logout` en `:8101`; luego `GET /api/v1/catalogos/unidades` en `:8103` con el mismo JWT | Ambos servicios (Python y Node) rechazan inmediatamente con `401 SESION_REVOCADA` al consultar Redis | `smoke_docker_t3.py`, `ensayo_seguridad.py` |
 | **PA-06** | Flujo OTP completo + bloqueo a 3 fallos | `POST /recuperar/solicitar` → 3 códigos malos en `/confirmar` → OTP correcto desde `notifications-service` | Solicitud siempre `200` (anti-enumeración); 3 fallos → `429 CODIGO_BLOQUEADO`; éxito ejecuta `fn_restablecer_contrasena`, revoca sesiones previas y registra `RECUPERACION_CONFIRMADA` | `test_seguridad_y_fallos_t3.py`, `smoke_docker_t3.py` |
 | **PA-07** | Rechazo RBAC `403` y auditoría | Colaborador (`ana.perez`) intenta `POST /api/v1/catalogos/unidades` en `:8103` | `403 SIN_PERMISO` con `correlacion_id` y fila `ACCESO_DENEGADO` (`RECHAZADO_PERMISO`) en `auditoria.bitacora` | `test_seguridad_y_fallos_t3.py`, `smoke_docker_t3.py` |
 | **PA-08** | Segregación de privacidad (`ADMINISTRADOR`) | `carlos.ramirez` intenta listar/atender solicitudes en `support-service` (`:8116`) | Rechazado con `403 SIN_PERMISO` conforme a migración `017` | Matriz RBAC y `test_seguridad_y_fallos_t3.py` |

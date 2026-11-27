@@ -1,26 +1,26 @@
 # Segundo parcial integrado — Equipo 03
 
-La base es la corrección de Emiliano y Gerardo. Encima están los servicios
-de Equipo 03 y Ricardo para completar los 24 microservicios.
+La base es la corrección de Integrante 3 y Integrante 4. Encima están los servicios
+de Integrante 1 y Integrante 2 para completar los 24 microservicios.
 
 Proyecto 4. Plataforma de Bienestar Laboral y Prevención de Burnout
 Integración de Aplicaciones Computacionales · UDEM · Equipo 03
 
 | | |
 |---|---|
-| Emiliano Pascual Piñales Sánchez | #657657 |
-| Gerardo Quiroga Ramírez | #650313 |
-| Ricardo Arath Sánchez Aguirre | #583928 |
-| Equipo 03 | — |
+| Integrante 3 |
+| Integrante 4 |
+| Integrante 2 |  |
+| Integrante 1 | — |
 
-Este paquete ya no es solo la parte de Emiliano y Gerardo. Esa corrección
+Este paquete ya no es solo la parte de Integrante 3 y Integrante 4. Esa corrección
 está integrada, y encima están los ocho servicios que faltaban para el
 reparto de 24 (puertos 8110, 8111, 8112, 8113, 8116, 8117, 8118 y 8119):
 
 | Integrante | Servicios nuevos |
 |---|---|
-| Equipo 03 | consent 8110, privacy 8111, audit 8118, data-governance 8119 |
-| Ricardo #583928 | survey 8112, indicators 8113, support 8116, organizational 8117 |
+| Integrante 1 | consent 8110, privacy 8111, audit 8118, data-governance 8119 |
+| Integrante 2 | survey 8112, indicators 8113, support 8116, organizational 8117 |
 
 auth, users, catalog y main-process siguen. El ruido de Laplace no se
 recalcula en privacy-service: sigue en `agregado.fn_ruido_laplace`.
@@ -76,8 +76,8 @@ servicio contestaba que todo salió bien y no había guardado nada.
 
 | Integrante | Microservicios | Puertos |
 |---|---|---|
-| **Emiliano** #657657 | queries, reports, algorithms, trends, interventions, export | 8107, 8108, 8109, 8114, 8115, 8121 |
-| **Gerardo** #650313 | documents, notifications, sync, configuration, monitoring, integration | 8105, 8106, 8120, 8122, 8123, 8124 |
+| **Integrante 3**  | queries, reports, algorithms, trends, interventions, export | 8107, 8108, 8109, 8114, 8115, 8121 |
+| **Integrante 4**  | documents, notifications, sync, configuration, monitoring, integration | 8105, 8106, 8120, 8122, 8123, 8124 |
 
 Los de los integrantes 1 y 2 (auth, users, catalog, main-process) siguen
 como estaban.
@@ -117,13 +117,13 @@ Seis microservicios, con sus migraciones y sus pruebas:
 
 | Servicio | Puerto | De quién | Qué resuelve |
 |---|---|---|---|
-| `trends-service` | 8114 | Emiliano | Si un cambio entre campañas es real o cabe dentro del ruido de Laplace |
-| `interventions-service` | 8115 | Emiliano | Planes **organizacionales**, su ciclo de aprobación y su evaluación |
-| `export-service` | 8121 | Emiliano | Egreso controlado de agregados, con control de fuga antes de escribir |
-| `sync-service` | 8120 | Gerardo | Que reenviar un lote con red intermitente sea inofensivo |
-| `configuration-service` | 8122 | Gerardo | Umbrales k, límites de consulta y presupuestos de privacidad |
-| `monitoring-service` | 8123 | Gerardo | Salud, latencia, errores, **alertas** y **supervisión de reinicios** de los demás |
-| `integration-service` | 8124 | Gerardo | La puerta hacia el sistema corporativo, con validación XSD |
+| `trends-service` | 8114 | Integrante 3 | Si un cambio entre campañas es real o cabe dentro del ruido de Laplace |
+| `interventions-service` | 8115 | Integrante 3 | Planes **organizacionales**, su ciclo de aprobación y su evaluación |
+| `export-service` | 8121 | Integrante 3 | Egreso controlado de agregados, con control de fuga antes de escribir |
+| `sync-service` | 8120 | Integrante 4 | Que reenviar un lote con red intermitente sea inofensivo |
+| `configuration-service` | 8122 | Integrante 4 | Umbrales k, límites de consulta y presupuestos de privacidad |
+| `monitoring-service` | 8123 | Integrante 4 | Salud, latencia, errores, **alertas** y **supervisión de reinicios** de los demás |
+| `integration-service` | 8124 | Integrante 4 | La puerta hacia el sistema corporativo, con validación XSD |
 
 ### Dos de ellos deciden al contrario, y conviene saber por qué
 

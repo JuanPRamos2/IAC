@@ -1,6 +1,6 @@
 ﻿# Entrega Integrante 2 — Proceso Principal, PostgreSQL y MongoDB (Segundo Parcial)
 
-**Responsable:** Ricardo Arath Sánchez Aguirre (#583928)  
+**Responsable:** Integrante 2  
 **Equipo:** 03 — Bienestar Nexum  
 **Microservicios asignados:** catalog-service y main-process-service
 
@@ -34,4 +34,4 @@
    - docker-compose.microservicios.yml: Archivo listo para que el Integrante 4 lo levante junto con la infraestructura central.
 
 5. **Documentación Completa:**
-   - BITACORA_APORTACIONES_RICARDO.md: Documento maestro detallando qué, por qué y cómo se construyó cada pieza.
+   - BITACORA_APORTACIONES.md: Documento maestro detallando qué, por qué y cómo se construyó cada pieza.

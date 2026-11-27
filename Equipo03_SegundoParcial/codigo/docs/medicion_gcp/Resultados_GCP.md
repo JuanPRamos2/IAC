@@ -1,9 +1,9 @@
 # NEXUM — Equipo 03 | Resultados de pruebas en GCP
-Emiliano Pascual Piñales Sánchez — 657657
+Integrante 3
 26 de noviembre de 2026 (hora de Monterrey; registros del 27 de noviembre en UTC).
 
 ## Alcance
-Pruebas en la VM independiente maquina-nexum, proyecto integracion-505221, Ubuntu 22.04, 2 vCPU y 3.8 GiB de RAM. Se utilizó el ZIP del tercer parcial, con configuración Docker separada y una ruta de análisis agregada al portal de pruebas. Se levantaron diez microservicios, tres bases de datos y el portal. No se ha verificado equivalencia con los últimos commits de Juan y Ricardo ni con el despliegue oficial. El acceso al portal de pruebas se hizo por túnel SSH. Los datos son sintéticos.
+Pruebas en la VM independiente maquina-nexum, proyecto integracion-505221, Ubuntu 22.04, 2 vCPU y 3.8 GiB de RAM. Se utilizó el ZIP del tercer parcial, con configuración Docker separada y una ruta de análisis agregada al portal de pruebas. Se levantaron diez microservicios, tres bases de datos y el portal. No se ha verificado equivalencia con los últimos commits del resto del equipo ni con el despliegue oficial. El acceso al portal de pruebas se hizo por túnel SSH. Los datos son sintéticos.
 
 ## Datos masivos y algoritmo
 - Se generaron 120 unidades organizacionales, 25,365 empleados (23,314 con consentimiento), 12 campañas, 202,435 respuestas y 1,012,175 valores nuevos. Inserción de respuestas: 42.67 s.

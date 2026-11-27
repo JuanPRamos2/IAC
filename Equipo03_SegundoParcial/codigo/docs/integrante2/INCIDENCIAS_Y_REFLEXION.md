@@ -1,4 +1,4 @@
-# Registro de Incidencias (Aporte Integrante 2) y Reflexión Individual — Ricardo Sánchez (#583928)
+# Registro de Incidencias (Aporte Integrante 2) y Reflexión Individual — Integrante 2
 
 ---
 
@@ -15,7 +15,7 @@
 
 ---
 
-## Parte 2 — Reflexión Individual (Ricardo Arath Sánchez Aguirre · #583928)
+## Parte 2 — Reflexión Individual (Integrante 2 · )
 
 Construir e integrar **Bienestar Nexum** a lo largo de los tres parciales transformó por completo mi forma de entender una arquitectura distribuida real. Al principio, el reto parecía limitarse a dividir rutas entre **24 microservicios** en Python y Node.js; sin embargo, en la recta final comprobé que lo verdaderamente difícil ocurre en las fronteras entre componentes: cuando el cliente de escritorio envía XML y los servicios de Node esperan el mismo contrato que Flask, cuando una misma sesión JWT emitida en Python debe validarse y revocarse al instante en Redis desde Express, o cuando una migración numérica mal ordenada o un límite de 40 conexiones en PostgreSQL provoca que un contenedor se marque `healthy` aunque no pueda atender peticiones reales.
 

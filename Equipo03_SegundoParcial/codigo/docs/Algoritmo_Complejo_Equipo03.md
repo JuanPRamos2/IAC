@@ -5,7 +5,7 @@ Integración de Aplicaciones Computacionales · UDEM · Equipo 03 · Tercer parc
 
 | | |
 |---|---|
-| Emiliano Pascual Piñales Sánchez | #657657 |
+| Integrante 3 |
 | Rol en este parcial | Integrante 3 — algoritmos, bases de datos y pruebas de rendimiento |
 
 Código: `apps/microservicios/analitica/` (paquete `analitica`)

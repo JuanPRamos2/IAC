@@ -5,7 +5,7 @@ Integración de Aplicaciones Computacionales · UDEM · Equipo 03 · Tercer parc
 
 | | |
 |---|---|
-| Emiliano Pascual Piñales Sánchez | #657657 |
+| Integrante 3 |
 | Rol en este parcial | Integrante 3 — algoritmos, bases de datos y pruebas de rendimiento |
 
 Guiones: `scripts/datos_masivos.py`, `scripts/rendimiento.py`,
@@ -804,13 +804,13 @@ que falla.
 
 ---
 
-## 7. Medición de Emiliano en su máquina de pruebas
+## 7. Medición de Integrante 3 en su máquina de pruebas
 
-El 26 de noviembre de 2026 Emiliano corrió el generador, el análisis y
+El 26 de noviembre de 2026 Integrante 3 corrió el generador, el análisis y
 Locust en una máquina propia (`maquina-nexum`, proyecto
 `integracion-505221`, 2 vCPU y 3.8 GiB). No es la máquina compartida
 `nexum-equipo03`. Los archivos están en
-`docs/emiliano_657657_gcp/`.
+`docs/medicion_gcp/`.
 
 | | |
 |---|---|
@@ -823,5 +823,5 @@ Locust en una máquina propia (`maquina-nexum`, proyecto
 | Locust | 140 usuarios, 5 297 peticiones, 1 fallo (0.02 %), mediana 20 ms, p95 1 600 ms, p99 12 000 ms |
 
 Esa corrida de Locust no es contra https://34.41.26.94.sslip.io. El
-informe de Emiliano lo deja dicho. El corte de 20 segundos tampoco se
+informe de Integrante 3 lo deja dicho. El corte de 20 segundos tampoco se
 repitió en esa máquina.

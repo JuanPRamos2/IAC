@@ -2,7 +2,7 @@
 
 **Proyecto:** Bienestar Nexum — Plataforma de Bienestar Laboral y Prevención de Burnout  
 **Materia:** Integración de Aplicaciones Computacionales (IAC) · UDEM · Equipo 03  
-**Integrante responsable:** **Ricardo Arath Sánchez Aguirre (#583928)** — Integrante 2  
+**Integrante responsable:** **Integrante 2** — Integrante 2  
 **Alcance del documento:** Arquitectura de los 24 microservicios, detalle técnico de los 6 microservicios en Node.js y capa común (`comun` / `comun-node`), contratos JSON/XML/OpenAPI, autenticación y ciclo de sesión, seguridad avanzada, auditoría de operaciones/rechazos, pruebas verificadas y bitácora de incidencias resueltas.
 
 ---
@@ -15,34 +15,34 @@ El backend de **Bienestar Nexum** está compuesto por **24 microservicios** inde
 
 | Puerto (`developer`) | Servicio | Lenguaje | Integrante | Responsabilidad principal |
 |---:|---|---|---|---|
-| `8101` | `auth-service` | Python | Equipo 03 | Emisión, renovación con rotación, validación, revocación Redis y recuperación OTP de JWT |
-| `8102` | `users-service` | Python | Equipo 03 | Administración de usuarios, perfiles, permisos y alcance organizacional |
-| `8103` | `catalog-service` | **Node.js** | **Ricardo (I2)** | Unidades organizacionales, instrumentos, versiones, reactivos, campañas y caché Redis |
-| `8104` | `main-process-service` | **Node.js** | **Ricardo (I2)** | Proceso principal: captura de respuestas de encuesta (regla D-01) y solicitudes de apoyo |
-| `8105` | `documents-service` | Python | Gerardo (I4) | Evidencias, avisos versionados, archivos en almacén dual (`local`/`gcs`) y URLs firmadas |
-| `8106` | `notifications-service` | Python | Gerardo (I4) | Bandeja, preferencias, cola push y receptor HMAC `evento-interno` sin cifras decimales |
-| `8107` | `queries-service` | Python | Emiliano (I3) | Lectura cacheada de agregados publicados y estado de presupuesto épsilon |
-| `8108` | `reports-service` | Python | Emiliano (I3) | Generación, sellado SHA-256 y entrega de reportes organizacionales |
-| `8109` | `algorithms-service` | Python | Emiliano (I3) | Motor de reglas de riesgo sobre agregados ya publicados (`riesgo.fn_evaluar_unidad`) |
-| `8110` | `consent-service` | Python | Equipo 03 | Aviso de privacidad, otorgamiento y revocación de consentimiento sin borrado |
-| `8111` | `privacy-service` | Python | Equipo 03 | Seudonimización y consulta de umbral mínimo $k$ (sin calcular ruido Laplace) |
-| `8112` | `survey-service` | **Node.js** | **Ricardo (I2)** | Cuestionarios versionados, borradores en MongoDB y registro de respuesta única por campaña |
-| `8113` | `indicators-service` | **Node.js** | **Ricardo (I2)** | Indicadores de bienestar agregados protegidos ($k \ge 5$) e histórico organizacional |
-| `8114` | `trends-service` | Python | Emiliano (I3) | Análisis longitudinal entre campañas filtrando señal real contra ruido ($b\sqrt{2}$) |
-| `8115` | `interventions-service` | Python | Emiliano (I3) | Planes de intervención organizacional, aprobaciones, seguimiento y evaluación |
-| `8116` | `support-service` | **Node.js** | **Ricardo (I2)** | Ciclo de vida confidencial de solicitudes de apoyo emocional contra seudónimo |
-| `8117` | `organizational-service` | **Node.js** | **Ricardo (I2)** | Organigrama empresarial, árbol jerárquico con CTE recursivo y plantilla mínima $\ge 5$ |
-| `8118` | `audit-service` | Python | Equipo 03 | Consulta de bitácora inmutable y trazabilidad por `correlacion_id` |
-| `8119` | `data-governance-service` | Python | Equipo 03 | Minimización, políticas de retención, verificación de garantías y baja lógica |
-| `8120` | `sync-service` | Python | Gerardo (I4) | Sincronización idempotente de lotes capturados sin red (aplicación renglón por renglón) |
-| `8121` | `export-service` | Python | Emiliano (I3) | Egreso controlado de agregados protegidos con verificación de fuga y bitácora |
-| `8122` | `configuration-service` | Python | Gerardo (I4) | Administración de parámetros de privacidad, umbral $k$ y presupuestos épsilon |
-| `8123` | `monitoring-service` | Python | Gerardo (I4) | Sondas agregadas de salud, latencia interna, alertas y supervisión de reinicios (`instancia`) |
-| `8124` | `integration-service` | Python | Gerardo (I4) | Puerta todo-o-nada hacia sistema corporativo con validación XSD (`integracion.xsd`) |
+| `8101` | `auth-service` | Python | Integrante 1 | Emisión, renovación con rotación, validación, revocación Redis y recuperación OTP de JWT |
+| `8102` | `users-service` | Python | Integrante 1 | Administración de usuarios, perfiles, permisos y alcance organizacional |
+| `8103` | `catalog-service` | **Node.js** | **Integrante 2** | Unidades organizacionales, instrumentos, versiones, reactivos, campañas y caché Redis |
+| `8104` | `main-process-service` | **Node.js** | **Integrante 2** | Proceso principal: captura de respuestas de encuesta (regla D-01) y solicitudes de apoyo |
+| `8105` | `documents-service` | Python | Integrante 4 | Evidencias, avisos versionados, archivos en almacén dual (`local`/`gcs`) y URLs firmadas |
+| `8106` | `notifications-service` | Python | Integrante 4 | Bandeja, preferencias, cola push y receptor HMAC `evento-interno` sin cifras decimales |
+| `8107` | `queries-service` | Python | Integrante 3 | Lectura cacheada de agregados publicados y estado de presupuesto épsilon |
+| `8108` | `reports-service` | Python | Integrante 3 | Generación, sellado SHA-256 y entrega de reportes organizacionales |
+| `8109` | `algorithms-service` | Python | Integrante 3 | Motor de reglas de riesgo sobre agregados ya publicados (`riesgo.fn_evaluar_unidad`) |
+| `8110` | `consent-service` | Python | Integrante 1 | Aviso de privacidad, otorgamiento y revocación de consentimiento sin borrado |
+| `8111` | `privacy-service` | Python | Integrante 1 | Seudonimización y consulta de umbral mínimo $k$ (sin calcular ruido Laplace) |
+| `8112` | `survey-service` | **Node.js** | **Integrante 2** | Cuestionarios versionados, borradores en MongoDB y registro de respuesta única por campaña |
+| `8113` | `indicators-service` | **Node.js** | **Integrante 2** | Indicadores de bienestar agregados protegidos ($k \ge 5$) e histórico organizacional |
+| `8114` | `trends-service` | Python | Integrante 3 | Análisis longitudinal entre campañas filtrando señal real contra ruido ($b\sqrt{2}$) |
+| `8115` | `interventions-service` | Python | Integrante 3 | Planes de intervención organizacional, aprobaciones, seguimiento y evaluación |
+| `8116` | `support-service` | **Node.js** | **Integrante 2** | Ciclo de vida confidencial de solicitudes de apoyo emocional contra seudónimo |
+| `8117` | `organizational-service` | **Node.js** | **Integrante 2** | Organigrama empresarial, árbol jerárquico con CTE recursivo y plantilla mínima $\ge 5$ |
+| `8118` | `audit-service` | Python | Integrante 1 | Consulta de bitácora inmutable y trazabilidad por `correlacion_id` |
+| `8119` | `data-governance-service` | Python | Integrante 1 | Minimización, políticas de retención, verificación de garantías y baja lógica |
+| `8120` | `sync-service` | Python | Integrante 4 | Sincronización idempotente de lotes capturados sin red (aplicación renglón por renglón) |
+| `8121` | `export-service` | Python | Integrante 3 | Egreso controlado de agregados protegidos con verificación de fuga y bitácora |
+| `8122` | `configuration-service` | Python | Integrante 4 | Administración de parámetros de privacidad, umbral $k$ y presupuestos épsilon |
+| `8123` | `monitoring-service` | Python | Integrante 4 | Sondas agregadas de salud, latencia interna, alertas y supervisión de reinicios (`instancia`) |
+| `8124` | `integration-service` | Python | Integrante 4 | Puerta todo-o-nada hacia sistema corporativo con validación XSD (`integracion.xsd`) |
 
 ### 1.2 Detalle técnico de los 6 microservicios en Node.js (Integrante 2)
 
-Los seis servicios bajo responsabilidad de Ricardo Arath Sánchez Aguirre utilizan **Express** (ESM) sobre la biblioteca compartida `@bienestar/comun` (`apps/microservicios/comun-node/`):
+Los seis servicios bajo responsabilidad de Integrante 2 utilizan **Express** (ESM) sobre la biblioteca compartida `@bienestar/comun` (`apps/microservicios/comun-node/`):
 
 1. **`catalog-service` (`apps/microservicios/catalog-service/`, puerto `8103`):**
    - **Rutas (`/api/v1/catalogos/...`):** CRUD lógico de unidades (`/unidades`), instrumentos (`/instrumentos`), versiones (`/instrumentos/:id/versiones`), reactivos (`/reactivos` y asociación a versiones), campañas (`/campanias`) y lectura de `/dimensiones`, `/fuentes`, `/parametros` definidos en `src/rutas/catalogo.rutas.js`.

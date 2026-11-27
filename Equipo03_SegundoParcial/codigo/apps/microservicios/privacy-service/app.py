@@ -1,7 +1,7 @@
 """
 privacy-service — seudonimización y umbral mínimo k.
 
-Puerto 8111. Equipo 03.
+Puerto 8111. Integrante 1.
 
 Este servicio NO calcula ruido de Laplace y NO descuenta épsilon.
 Eso vive en agregado.fn_ruido_laplace, y solo lo llama

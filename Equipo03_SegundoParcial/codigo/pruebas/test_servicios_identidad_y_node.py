@@ -1,5 +1,5 @@
 """
-Los ocho servicios de Equipo 03 y Ricardo abren, documentan y exigen token.
+Los ocho servicios de Integrante 1 y Integrante 2 abren, documentan y exigen token.
 
 No necesitan PostgreSQL ni Redis: /health/live y /docs no tocan la base,
 y una ruta protegida sin Authorization responde 401 antes de consultar

@@ -1,6 +1,6 @@
 # Capítulos del Expediente — Seguridad Avanzada y Diseño de Redis
 
-**Autor:** Ricardo Arath Sánchez Aguirre (#583928) — Integrante 2  
+**Autor:** Integrante 2 — Integrante 2  
 **Proyecto:** Bienestar Nexum · Equipo 03 · UDEM  
 **Alcance:** Apartados de **Seguridad Avanzada** y **Diseño de Redis** del expediente final, basados en la implementación verificada en `auth-service`, `comun/`, `comun-node/`, `documents-service`, `apps/web/` y las migraciones `001`–`022`.
 

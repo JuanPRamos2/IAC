@@ -520,7 +520,7 @@ ETIQUETAS_CATALOGO = [
 
 DESCRIPCION_CATALOGO = """\
 CRUD de unidades organizacionales, instrumentos, versiones, reactivos y
-campañas sobre PostgreSQL. **Integrante 2 (Ricardo Arath Sánchez Aguirre).**
+campañas sobre PostgreSQL. **Integrante 2 (Integrante 2).**
 
 Tres decisiones que recorren todo el servicio:
 
@@ -852,7 +852,7 @@ ETIQUETAS_PROCESO = [
 
 DESCRIPCION_PROCESO = """\
 Proceso principal del negocio: responder una campaña y pedir apoyo.
-**Integrante 2 (Ricardo Arath Sánchez Aguirre).**
+**Integrante 2 (Integrante 2).**
 
 **Regla D-01, que es la razón de ser del servicio:** ninguna operación
 acepta `empleado_id` ni ningún otro identificador directo de persona. Las

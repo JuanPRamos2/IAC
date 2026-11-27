@@ -3,7 +3,7 @@ info:
   title: Main Process Service API - Bienestar Nexum (Integrante 2)
   description: |
     Microservicio del Proceso Principal de Evaluaciones y Solicitudes de Apoyo.
-    Responsable: Integrante 2 (Ricardo Arath Sánchez Aguirre #583928).
+    Responsable: Integrante 2.
     Persistencia: MongoDB 7 con estricto cumplimiento de regla D-01 (sin empleado_id).
     Formatos soportados: JSON (por defecto) y XML mediante cabecera Accept o parámetro ?format=xml.
   version: 1.0.0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ensayo automatizado de seguridad, tokens, RBAC, datos invalidos y salud Node.
 
-Disenado para los ensayos en vivo de Integrante 2 (Ricardo Sanchez #583928).
+Disenado para los ensayos en vivo de Integrante 2 (Integrante 2 Sanchez ).
 Incluye guarda explicita para NUNCA ejecutar la prueba de 5 fallos contra
 cuentas de demostracion reales (como carlos.ramirez@nexum.com.mx).
 """
@@ -122,7 +122,7 @@ def ejecutar_ensayo(args):
     if correo_bloqueo in CUENTAS_DEMO_PROTEGIDAS:
         raise SystemExit(
             f"ABORTADO: '{correo_bloqueo}' es una cuenta demo protegida. "
-            "Usa una cuenta ficticia (ej. prueba.bloqueo.ricardo@nexum.com.mx)."
+            "Usa una cuenta ficticia (ej. prueba.bloqueo@nexum.com.mx)."
         )
     print(f"\n[5/6] Probando 5 intentos fallidos y bloqueo de 15 min con '{correo_bloqueo}'...")
     ultimo = 0
@@ -159,7 +159,7 @@ def main():
                         help="URL opcional del portal web (ej. http://localhost:8000 o https://34.41.26.94.sslip.io)")
     parser.add_argument("--demo-pass", default="demo123",
                         help="Contrasena de demo para ana.perez (defecto demo123)")
-    parser.add_argument("--correo-bloqueo", default="prueba.bloqueo.ricardo@nexum.com.mx",
+    parser.add_argument("--correo-bloqueo", default="prueba.bloqueo@nexum.com.mx",
                         help="Correo ficticio para la prueba de bloqueo de 5 intentos")
     args = parser.parse_args()
     ejecutar_ensayo(args)

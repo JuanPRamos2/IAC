@@ -3,7 +3,7 @@ info:
   title: Catalog Service API - Bienestar Nexum (Integrante 2)
   description: |
     Microservicio de Catálogos Organizacionales y Psicométricos.
-    Responsable: Integrante 2 (Ricardo Arath Sánchez Aguirre #583928).
+    Responsable: Integrante 2.
     Persistencia: PostgreSQL 15 con baja lógica e invalidación de caché Redis.
     Formatos soportados: JSON (por defecto) y XML mediante cabecera Accept o parámetro ?format=xml.
   version: 1.0.0

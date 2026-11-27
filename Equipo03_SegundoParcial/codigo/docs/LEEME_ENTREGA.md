@@ -1,14 +1,14 @@
-# Correcciones del segundo parcial — Emiliano y Gerardo
+# Correcciones del segundo parcial — Integrante 3 y Integrante 4
 
 Proyecto 4. Plataforma de Bienestar Laboral y Prevención de Burnout
 Integración de Aplicaciones Computacionales · UDEM · Equipo 03
 
 | | |
 |---|---|
-| Emiliano Pascual Piñales Sánchez | #657657 |
-| Gerardo Quiroga Ramírez | #650313 |
+| Integrante 3 |
+| Integrante 4 |
 
-Este paquete trae **solo la parte de Emiliano y Gerardo**. Los componentes
+Este paquete trae **solo la parte de Integrante 3 y Integrante 4**. Los componentes
 de los integrantes 1 y 2 están tal como los entregaron, sin modificar.
 
 ---
@@ -62,8 +62,8 @@ servicio contestaba que todo salió bien y no había guardado nada.
 
 | Integrante | Microservicios | Puertos |
 |---|---|---|
-| **Emiliano** #657657 | queries, reports, algorithms, trends, interventions, export | 8107, 8108, 8109, 8114, 8115, 8121 |
-| **Gerardo** #650313 | documents, notifications, sync, configuration, monitoring, integration | 8105, 8106, 8120, 8122, 8123, 8124 |
+| **Integrante 3**  | queries, reports, algorithms, trends, interventions, export | 8107, 8108, 8109, 8114, 8115, 8121 |
+| **Integrante 4**  | documents, notifications, sync, configuration, monitoring, integration | 8105, 8106, 8120, 8122, 8123, 8124 |
 
 Los de los integrantes 1 y 2 (auth, users, catalog, main-process) siguen
 como estaban.
@@ -103,13 +103,13 @@ Seis microservicios, con sus migraciones y sus pruebas:
 
 | Servicio | Puerto | De quién | Qué resuelve |
 |---|---|---|---|
-| `trends-service` | 8114 | Emiliano | Si un cambio entre campañas es real o cabe dentro del ruido de Laplace |
-| `interventions-service` | 8115 | Emiliano | Planes **organizacionales**, su ciclo de aprobación y su evaluación |
-| `export-service` | 8121 | Emiliano | Egreso controlado de agregados, con control de fuga antes de escribir |
-| `sync-service` | 8120 | Gerardo | Que reenviar un lote con red intermitente sea inofensivo |
-| `configuration-service` | 8122 | Gerardo | Umbrales k, límites de consulta y presupuestos de privacidad |
-| `monitoring-service` | 8123 | Gerardo | Salud, latencia, errores, **alertas** y **supervisión de reinicios** de los demás |
-| `integration-service` | 8124 | Gerardo | La puerta hacia el sistema corporativo, con validación XSD |
+| `trends-service` | 8114 | Integrante 3 | Si un cambio entre campañas es real o cabe dentro del ruido de Laplace |
+| `interventions-service` | 8115 | Integrante 3 | Planes **organizacionales**, su ciclo de aprobación y su evaluación |
+| `export-service` | 8121 | Integrante 3 | Egreso controlado de agregados, con control de fuga antes de escribir |
+| `sync-service` | 8120 | Integrante 4 | Que reenviar un lote con red intermitente sea inofensivo |
+| `configuration-service` | 8122 | Integrante 4 | Umbrales k, límites de consulta y presupuestos de privacidad |
+| `monitoring-service` | 8123 | Integrante 4 | Salud, latencia, errores, **alertas** y **supervisión de reinicios** de los demás |
+| `integration-service` | 8124 | Integrante 4 | La puerta hacia el sistema corporativo, con validación XSD |
 
 ### Dos de ellos deciden al contrario, y conviene saber por qué
 

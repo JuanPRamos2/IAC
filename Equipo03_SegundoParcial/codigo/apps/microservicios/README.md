@@ -1,34 +1,34 @@
 # Módulo de microservicios — segundo parcial
 
 Veinticuatro servicios, puertos 8101 a 8124, seis por integrante.
-Dieciocho están en Python y seis en Node: los de Ricardo (8103, 8104, 8112, 8113, 8116 y 8117).
+Dieciocho están en Python y seis en Node: los de Integrante 2 (8103, 8104, 8112, 8113, 8116 y 8117).
 
 | Servicio | Responsable | Lenguaje | Responsabilidad | Puerto en developer |
 |---|---|---|---|---|
-| `auth-service` | Equipo 03 | Python | Emitir, renovar, validar y revocar tokens | 8101 |
-| `users-service` | Equipo 03 | Python | Usuarios, perfiles, permisos y alcance | 8102 |
-| `catalog-service` | Ricardo (2) | Node | Unidades, instrumentos, versiones, reactivos y campañas | 8103 |
-| `main-process-service` | Ricardo (2) | Node | Responder una campaña y pedir apoyo | 8104 |
-| `documents-service` | Gerardo (4) | Python | Evidencias, avisos versionados y archivos | 8105 |
-| `notifications-service` | Gerardo (4) | Python | Notificaciones internas | 8106 |
-| `queries-service` | Emiliano (3) | Python | Lectura de resultados publicados, con caché | 8107 |
-| `reports-service` | Emiliano (3) | Python | Generar, sellar y entregar reportes | 8108 |
-| `algorithms-service` | Emiliano (3) | Python | Motor de reglas de riesgo sobre lo ya publicado | 8109 |
-| `consent-service` | Equipo 03 | Python | Aviso, otorgamiento y revocación sin borrar el anterior | 8110 |
-| `privacy-service` | Equipo 03 | Python | Seudonimización y umbral k. No calcula el ruido | 8111 |
-| `survey-service` | Ricardo (2) | Node | Cuestionario versionado y una respuesta por campaña | 8112 |
-| `indicators-service` | Ricardo (2) | Node | Indicadores ya publicados, sin promedio crudo | 8113 |
-| `trends-service` | Emiliano (3) | Python | Análisis longitudinal: cambio real contra ruido | 8114 |
-| `interventions-service` | Emiliano (3) | Python | Planes organizacionales, seguimiento y evaluación | 8115 |
-| `support-service` | Ricardo (2) | Node | Solicitudes de apoyo contra el seudónimo | 8116 |
-| `organizational-service` | Ricardo (2) | Node | Árbol organizacional y tamaño mínimo | 8117 |
-| `audit-service` | Equipo 03 | Python | Bitácora de accesos y correlación | 8118 |
-| `data-governance-service` | Equipo 03 | Python | Minimización, retención y baja sin borrado inmediato | 8119 |
-| `sync-service` | Gerardo (4) | Python | Sincronización idempotente con red intermitente | 8120 |
-| `export-service` | Emiliano (3) | Python | Egreso controlado de agregados, con bitácora | 8121 |
-| `configuration-service` | Gerardo (4) | Python | Parámetros, umbrales k y presupuestos de privacidad | 8122 |
-| `monitoring-service` | Gerardo (4) | Python | Salud, latencia, errores, alertas y supervisión de reinicios | 8123 |
-| `integration-service` | Gerardo (4) | Python | Puerta controlada hacia el sistema corporativo | 8124 |
+| `auth-service` | Integrante 1 | Python | Emitir, renovar, validar y revocar tokens | 8101 |
+| `users-service` | Integrante 1 | Python | Usuarios, perfiles, permisos y alcance | 8102 |
+| `catalog-service` | Integrante 2 | Node | Unidades, instrumentos, versiones, reactivos y campañas | 8103 |
+| `main-process-service` | Integrante 2 | Node | Responder una campaña y pedir apoyo | 8104 |
+| `documents-service` | Integrante 4 | Python | Evidencias, avisos versionados y archivos | 8105 |
+| `notifications-service` | Integrante 4 | Python | Notificaciones internas | 8106 |
+| `queries-service` | Integrante 3 | Python | Lectura de resultados publicados, con caché | 8107 |
+| `reports-service` | Integrante 3 | Python | Generar, sellar y entregar reportes | 8108 |
+| `algorithms-service` | Integrante 3 | Python | Motor de reglas de riesgo sobre lo ya publicado | 8109 |
+| `consent-service` | Integrante 1 | Python | Aviso, otorgamiento y revocación sin borrar el anterior | 8110 |
+| `privacy-service` | Integrante 1 | Python | Seudonimización y umbral k. No calcula el ruido | 8111 |
+| `survey-service` | Integrante 2 | Node | Cuestionario versionado y una respuesta por campaña | 8112 |
+| `indicators-service` | Integrante 2 | Node | Indicadores ya publicados, sin promedio crudo | 8113 |
+| `trends-service` | Integrante 3 | Python | Análisis longitudinal: cambio real contra ruido | 8114 |
+| `interventions-service` | Integrante 3 | Python | Planes organizacionales, seguimiento y evaluación | 8115 |
+| `support-service` | Integrante 2 | Node | Solicitudes de apoyo contra el seudónimo | 8116 |
+| `organizational-service` | Integrante 2 | Node | Árbol organizacional y tamaño mínimo | 8117 |
+| `audit-service` | Integrante 1 | Python | Bitácora de accesos y correlación | 8118 |
+| `data-governance-service` | Integrante 1 | Python | Minimización, retención y baja sin borrado inmediato | 8119 |
+| `sync-service` | Integrante 4 | Python | Sincronización idempotente con red intermitente | 8120 |
+| `export-service` | Integrante 3 | Python | Egreso controlado de agregados, con bitácora | 8121 |
+| `configuration-service` | Integrante 4 | Python | Parámetros, umbrales k y presupuestos de privacidad | 8122 |
+| `monitoring-service` | Integrante 4 | Python | Salud, latencia, errores, alertas y supervisión de reinicios | 8123 |
+| `integration-service` | Integrante 4 | Python | Puerta controlada hacia el sistema corporativo | 8124 |
 
 Dos de ellos resuelven el mismo problema —recibir datos de fuera— y toman
 la decisión **contraria** sobre si aplicar un lote a medias:

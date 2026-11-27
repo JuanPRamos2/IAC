@@ -1,7 +1,7 @@
 """
 audit-service — bitácora de accesos, con el identificador de correlación.
 
-Puerto 8118. Equipo 03.
+Puerto 8118. Integrante 1.
 
 La bitácora no guarda el contenido de una respuesta. Guarda quién, qué
 acción, sobre qué recurso, con qué resultado y con qué correlación. Con

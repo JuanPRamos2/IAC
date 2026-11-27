@@ -1,11 +1,11 @@
-# Guion de Ensayo de Fallos, Seguridad y Checklist de Capturas — Ricardo (#583928)
+# Guion de Ensayo de Fallos, Seguridad y Checklist de Capturas — Integrante 2 ()
 
 **Ambientes:**
 - **Nube (VM `nexum-equipo03`):** https://34.41.26.94.sslip.io
 - **Laptop (Docker local):** http://localhost:8000 (`PG_PUERTO_HOST=5433` si Postgres local ocupa `5432`)
 
 > **REGLA DE ORO DEL ENSAYO DE BLOQUEO:**
-> **NUNCA** hagas los 5 intentos fallidos de login contra `carlos.ramirez@nexum.com.mx` (ni contra `ana.perez`, `lucia.hernandez`, `mariana.solis` o `roberto.garcia`). Bloquearías tu propia cuenta demo durante 15 minutos en plena demostración. Usa **siempre** el correo de prueba `prueba.bloqueo.ricardo@nexum.com.mx` (igual dispara `intentos:{correo}` y bloquea con `429` al 5.º intento sin afectar ninguna cuenta real).
+> **NUNCA** hagas los 5 intentos fallidos de login contra `carlos.ramirez@nexum.com.mx` (ni contra `ana.perez`, `lucia.hernandez`, `mariana.solis` o `roberto.garcia`). Bloquearías tu propia cuenta demo durante 15 minutos en plena demostración. Usa **siempre** el correo de prueba `prueba.bloqueo@nexum.com.mx` (igual dispara `intentos:{correo}` y bloquea con `429` al 5.º intento sin afectar ninguna cuenta real).
 
 ---
 
@@ -25,10 +25,10 @@ En cada escena de falla del ensayo, recuerda verbalizar estos **5 puntos**:
 Desde `Equipo03_SegundoParcial/codigo/`:
 ```bash
 # Contra tu Docker local (puertos 8101..8117 abiertos):
-python scripts/ensayo_seguridad_ricardo.py
+python scripts/ensayo_seguridad.py
 
 # Si estás dentro de la VM por SSH (donde 8101..8117 viven en 127.0.0.1 / red Docker):
-python3 scripts/ensayo_seguridad_ricardo.py --web-url https://34.41.26.94.sslip.io
+python3 scripts/ensayo_seguridad.py --web-url https://34.41.26.94.sslip.io
 ```
 *(Si corres desde tu laptop sin entrar por SSH a la VM, recuerda que el firewall `nexum-https` cierra `8101..8124` al exterior; las pruebas HTTP directas a `8101..8117` o Swagger `/docs` se ejecutan ya sea en tu Docker local o dentro de la VM tras `ssh`, mientras que los ensayos del portal web y el panel **Servicios** se prueban directo en `https://34.41.26.94.sslip.io`).*
 
@@ -40,10 +40,10 @@ python3 scripts/ensayo_seguridad_ricardo.py --web-url https://34.41.26.94.sslip.
 1. En https://34.41.26.94.sslip.io/entrar inicia sesión como `carlos.ramirez@nexum.com.mx` / `demo123`.
    - **Toma CAPTURA 1 (Login correcto dentro del portal).**
    - Cierra sesión (`Salir`) o abre una ventana privada para la siguiente prueba.
-2. En una ventana privada ve a `/entrar`, escribe `prueba.bloqueo.ricardo@nexum.com.mx` con contraseña incorrecta `malaclave1` e intenta entrar.
+2. En una ventana privada ve a `/entrar`, escribe `prueba.bloqueo@nexum.com.mx` con contraseña incorrecta `malaclave1` e intenta entrar.
    - El portal responde mensaje genérico de credenciales inválidas (anti-enumeración).
    - **Toma CAPTURA 2 (Login rechazado).**
-3. Repite el envío incorrecto con `prueba.bloqueo.ricardo@nexum.com.mx` hasta completar **5 intentos**.
+3. Repite el envío incorrecto con `prueba.bloqueo@nexum.com.mx` hasta completar **5 intentos**.
    - Al 5.º/6.º intento aparece el bloqueo de 15 minutos (`Demasiados intentos fallidos...` / `429 CUENTA_BLOQUEADA`).
    - **Toma CAPTURA 3 (Bloqueo de 15 minutos).**
 
@@ -56,7 +56,7 @@ python3 scripts/ensayo_seguridad_ricardo.py --web-url https://34.41.26.94.sslip.
    - **Toma CAPTURA 4 (Swagger UI mostrando `/api/v1/auth/renovar` y `/api/v1/auth/logout` con respuesta `200`).**
 
 ### Escena C — Entrar sin permiso (`403`) + Dato mal formado (`400`/`422`) + Bitácora (Captura 5)
-1. Ejecuta `python scripts/ensayo_seguridad_ricardo.py` (envía colaborador sin permiso a `catalog-service` -> `403`, payload XML XXE -> `400`, y payload D-01 con `empleado_id` -> `400`/`422`).
+1. Ejecuta `python scripts/ensayo_seguridad.py` (envía colaborador sin permiso a `catalog-service` -> `403`, payload XML XXE -> `400`, y payload D-01 con `empleado_id` -> `400`/`422`).
 2. Consulta en PostgreSQL una fila reciente de `auditoria.bitacora`:
    ```sql
    SELECT bitacora_id, fecha_evento, actor_perfil, accion, tipo_recurso,
@@ -92,12 +92,12 @@ python3 scripts/ensayo_seguridad_ricardo.py --web-url https://34.41.26.94.sslip.
 
 ---
 
-## 4. Checklist Final de las 6 Capturas de Ricardo
+## 4. Checklist Final de las 6 Capturas de Integrante 2
 
 | # | Captura requerida | Dónde se toma | Estado |
 |---:|---|---|---|
 | 1 | Login correcto | Portal https://34.41.26.94.sslip.io (sesión de `carlos.ramirez`) | [ ] |
-| 2 | Login rechazado | Pantalla `/entrar` con `prueba.bloqueo.ricardo@nexum.com.mx` | [ ] |
+| 2 | Login rechazado | Pantalla `/entrar` con `prueba.bloqueo@nexum.com.mx` | [ ] |
 | 3 | Bloqueo de 15 minutos | Pantalla `/entrar` al 5.º intento fallido con el correo de prueba | [ ] |
 | 4 | Swagger de renovar y revocar | `http://localhost:8101/docs` (endpoints `/renovar` y `/logout`) | [ ] |
 | 5 | Una fila de `auditoria.bitacora` | Consola `psql` sobre contenedor `datos` (o pantalla Auditoría en portal) | [ ] |

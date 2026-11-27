@@ -2,7 +2,7 @@
 
 **Proyecto:** Plataforma de Bienestar Laboral y Prevención de Burnout (Bienestar Nexum — EQUIPO 03)  
 **Materia:** Integración de Aplicaciones Computacionales (IAC) — Universidad de Monterrey (UDEM)  
-**Responsable:** Ricardo Arath Sánchez Aguirre (#583928)  
+**Responsable:** Integrante 2  
 **Rol asignado:** Integrante 2 — Lógica de negocio y persistencia de datos (Proceso Principal + Catálogos, PostgreSQL + MongoDB)  
 **Rama de trabajo:** `feature/integrante2-proceso-principal-mongo` (aislada de `main`, sin merge preventivo)
 
@@ -14,7 +14,7 @@ De acuerdo con el documento oficial de **División del Trabajo – Segundo Parci
 
 | Integrante | Responsabilidad Principal | Microservicios Asignados | Responsabilidad Adicional |
 |---|---|---|---|
-| **Integrante 2 (Ricardo Sánchez)** | **Lógica de negocio y datos** | **`main-process-service` y `catalog-service`** | **PostgreSQL + MongoDB** |
+| **Integrante 2** | **Lógica de negocio y datos** | **`main-process-service` y `catalog-service`** | **PostgreSQL + MongoDB** |
 
 El Integrante 2 tiene la encomienda de entregar la columna vertebral del negocio: la persistencia estructurada y no estructurada, las operaciones transaccionales de catálogos y el proceso principal de captura de respuestas/solicitudes bajo el principio de no revinculación de identidad.
 
@@ -90,7 +90,7 @@ Estamos construyendo e independizando los componentes de negocio y persistencia 
 
 ---
 
-## 5. Trazabilidad de Artefactos Producidos por Ricardo
+## 5. Trazabilidad de Artefactos Producidos por Integrante 2
 
 | Artefacto / Archivo | Tipo | Propósito y Contenido |
 |---|---|---|
@@ -106,7 +106,7 @@ Estamos construyendo e independizando los componentes de negocio y persistencia 
 | [`scripts/evidencia/mongo-02-agregaciones.js`](../../scripts/evidencia/mongo-02-agregaciones.js) | JS / Mongosh | Demostración reproducible de pipelines analíticos de agregación en Mongo. |
 | [`docs/integrante2/postgresql.md`](postgresql.md) | Markdown / Doc Técnica | Especificación de diseño de base de datos relacional y guía para el CRUD. |
 | [`docs/integrante2/mongodb.md`](mongodb.md) | Markdown / Doc Técnica | Especificación de esquemas documentales, índices y justificación de colecciones. |
-| [`docs/integrante2/BITACORA_APORTACIONES_RICARDO.md`](BITACORA_APORTACIONES_RICARDO.md) | Markdown / Evidencia | Bitácora integral que responde qué, por qué y cómo se construyó la solución. |
+| [`docs/integrante2/BITACORA_APORTACIONES.md`](BITACORA_APORTACIONES.md) | Markdown / Evidencia | Bitácora integral que responde qué, por qué y cómo se construyó la solución. |
 | [`services/catalog-service/`](../../services/catalog-service/) | Microservicio | Microservicio independiente de catálogos con PostgreSQL, Dockerfile, Swagger y tests. |
 | [`services/catalog-service/openapi.yaml`](../../services/catalog-service/openapi.yaml) | OpenAPI 3.0 | Contrato de API de catálogos con ejemplos en JSON y XML. |
 | [`services/catalog-service/Dockerfile`](../../services/catalog-service/Dockerfile) | Dockerfile | Imagen de contenedor Node 20-alpine con healthcheck para catalog-service. |

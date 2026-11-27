@@ -1,8 +1,8 @@
-# Láminas de Presentación — Bloques de Ricardo Arath Sánchez Aguirre (#583928)
+# Láminas de Presentación — Bloques de Integrante 2
 
 **Proyecto:** Bienestar Nexum · Equipo 03 · UDEM  
 **Responsable:** Integrante 2 — Seguridad y los 6 Microservicios en Node.js  
-**Nota de armado:** Texto conciso listo para pasar a PowerPoint / Google Slides junto con las 6 capturas indicadas en [GUION_ENSAYO_Y_CAPTURAS_RICARDO.md](GUION_ENSAYO_Y_CAPTURAS_RICARDO.md).
+**Nota de armado:** Texto conciso listo para pasar a PowerPoint / Google Slides junto con las 6 capturas indicadas en [GUION_ENSAYO_Y_CAPTURAS.md](GUION_ENSAYO_Y_CAPTURAS.md).
 
 ---
 

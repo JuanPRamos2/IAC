@@ -5,7 +5,7 @@ Integración de Aplicaciones Computacionales · UDEM · Equipo 03 · Tercer parc
 
 | | |
 |---|---|
-| Gerardo Quiroga Ramírez | #650313 |
+| Integrante 4 |
 | Rol en este parcial | Integrante 4 — aplicaciones cliente e integración completa |
 
 Pruebas: `pruebas/test_procesos_integrales.py` (8 casos),

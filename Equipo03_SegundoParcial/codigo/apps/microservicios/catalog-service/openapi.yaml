@@ -12,7 +12,7 @@ info:
   title: catalog-service — Bienestar Nexum
   version: 1.0.0
   description: "CRUD de unidades organizacionales, instrumentos, versiones, reactivos y\ncampañas sobre\
-    \ PostgreSQL. **Integrante 2 (Ricardo Arath Sánchez Aguirre).**\n\nTres decisiones que recorren todo\
+    \ PostgreSQL. **Integrante 2.**\n\nTres decisiones que recorren todo\
     \ el servicio:\n\n1. **La baja es lógica.** `DELETE` marca la entidad inactiva y la devuelve;\n  \
     \ nunca borra. Un borrado real rompería las llaves foráneas de las\n   respuestas ya registradas,\
     \ o dejaría huérfano el histórico de agregados.\n   Las únicas excepciones son las tablas de relación\

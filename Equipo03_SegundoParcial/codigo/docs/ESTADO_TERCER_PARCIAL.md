@@ -3,7 +3,7 @@
 Integración de Aplicaciones Computacionales · UDEM  
 Fecha: 26 de noviembre de 2026, hora del centro de México  
 Repositorio del equipo: https://github.com/JuanPRamos2/IAC  
-Rama que ya junta el tercer parcial: `Ricardo`  
+Rama que ya junta el tercer parcial: `Integrante 2`  
 Pull request: https://github.com/JuanPRamos2/IAC/pull/6 (contra `Ricardo`, prueba de GitHub en verde, sin mezclar)  
 Portal en la nube: https://34.41.26.94.sslip.io
 
@@ -13,9 +13,9 @@ Este documento dice, requisito por requisito, qué ya tenemos, qué está a medi
 
 | Lugar | Qué tiene |
 |---|---|
-| Rama `Ricardo` | Seguridad de Ricardo y los archivos de Google Cloud de Equipo 03. No trae el algoritmo ni Locust de Emiliano y Gerardo. |
-| `main` | El paquete de Emiliano y Gerardo comprimido en `Parcial3_Emiliano_Gerardo.zip`. No trae la carpeta `Equipo03_SegundoParcial` ni el despliegue. |
-| `Ricardo` | Las tres partes juntas. Parte de `Ricardo` y encima entra el zip. La migración de análisis se renombró a `021_analisis_complejo_y_rendimiento.sql` para no pisar la `018` de Ricardo. |
+| Rama `Integrante 2` | Seguridad de Integrante 2 y los archivos de Google Cloud de Equipo 03. No trae el algoritmo ni Locust de Integrante 3 y Integrante 4. |
+| `main` | El paquete de Integrante 3 y Integrante 4 comprimido en `paquete del tercer parcial`. No trae la carpeta `Equipo03_SegundoParcial` ni el despliegue. |
+| `Integrante 2` | Las tres partes juntas. Parte de `Integrante 2` y encima entra el zip. La migración de análisis se renombró a `021_analisis_complejo_y_rendimiento.sql` para no pisar la `018` de Integrante 2. |
 | Máquina `nexum-equipo03` | Portal HTTPS, 24 servicios, PostgreSQL, MongoDB, Redis, bucket y una URL firmada de prueba (`evidencia-1.txt`). Corre el código anterior a esta rama. |
 
 La integración de código ya se hizo en esa rama. No hay otro merge manual pendiente entre los cuatro. Lo que falta de “bajarlo” es que las laptops y la máquina virtual usen esa rama.
@@ -75,7 +75,7 @@ Fallos que hay que poder mostrar:
 | Escena | Estado |
 |---|---|
 | Se detiene un microservicio | El panel lo marca CAIDO. El portal sigue. Hay prueba `test_degradacion_web.py`. |
-| Redis no responde | Probado en la VM. Varios servicios pasan a degradado. `catalog-service` y `main-process-service` pueden quedarse degradados después de que Redis vuelve, porque su cliente de Node deja de reintentar. Se recuperan reiniciando esos dos contenedores. La rama de Ricardo trae la reconexión; la VM todavía no corre esa rama. |
+| Redis no responde | Probado en la VM. Varios servicios pasan a degradado. `catalog-service` y `main-process-service` pueden quedarse degradados después de que Redis vuelve, porque su cliente de Node deja de reintentar. Se recuperan reiniciando esos dos contenedores. La rama de Integrante 2 trae la reconexión; la VM todavía no corre esa rama. |
 | MongoDB no responde | En código, Mongo es opcional para documentos, notificaciones y algoritmos: siguen en `degradado` y atienden. Hay `test_sonda_de_salud.py`. Falta hacerlo en vivo en la VM. |
 | PostgreSQL no responde | La sonda esencial responde 503 `no_listo`. Falta la pasada en vivo. |
 | El servicio de archivos no está | `documents-service` queda degradado por `almacen` y la carga falla con el error del almacén. Metadatos siguen consultables. |
@@ -94,7 +94,7 @@ Resuelve qué unidades merecen atención sin leer a una persona. Trabaja sobre a
 
 El documento cubre problema, entradas, salidas, variables, restricciones, complejidad, pseudocódigo, casos de prueba, métricas, limitaciones y tiempo de ejecución.
 
-Esto está solo en la rama integrada. `Ricardo` y la VM no lo tienen. `main` lo tiene dentro del zip, separado del resto de la aplicación.
+Esto está solo en la rama integrada. `Integrante 2` y la VM no lo tienen. `main` lo tiene dentro del zip, separado del resto de la aplicación.
 
 ## 5. Grandes volúmenes y rendimiento
 
@@ -216,7 +216,7 @@ Nada de esta lista hay que volver a programarlo ni que volver a juntarlo a mano.
 - Contratos JSON de análisis, tendencia y unidad priorizada.
 - Pruebas de analítica, procesos integrales, sonda de salud e índices.
 - `docs/Algoritmo_Complejo_Equipo03.md`, `docs/Clientes_e_Integracion_Equipo03.md`, `docs/Rendimiento_y_Carga_Equipo03.md`.
-- Seguridad, renovación, revocación y migración `018_tercer_parcial_seguridad_y_buckets.sql` (ya venían de `Ricardo` y siguen en esta rama).
+- Seguridad, renovación, revocación y migración `018_tercer_parcial_seguridad_y_buckets.sql` (ya venían de `Integrante 2` y siguen en esta rama).
 
 En la laptop, dentro de la carpeta del repositorio IAC:
 

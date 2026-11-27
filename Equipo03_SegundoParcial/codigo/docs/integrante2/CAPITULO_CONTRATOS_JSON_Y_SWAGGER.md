@@ -1,6 +1,6 @@
 # Capítulos del Expediente — Contratos JSON y Swagger (OpenAPI 3.0.3)
 
-**Autor:** Ricardo Arath Sánchez Aguirre (#583928) — Integrante 2  
+**Autor:** Integrante 2 — Integrante 2  
 **Proyecto:** Bienestar Nexum · Equipo 03 · UDEM  
 **Alcance:** Apartados de **Contratos JSON** y **Swagger / OpenAPI** del expediente de 32 secciones, alineados al código vigente en la rama integrada (`24` microservicios, `109` esquemas JSON Schema y `16` esquemas XSD).
 
