@@ -236,7 +236,20 @@ def ping_bucket():
     """Sonda de salud del almacen de archivos (local o GCS)."""
     if modo_almacen() == "gcs":
         bucket = _bucket_cliente_gcs()
-        if not bucket.exists():
+        try:
+            existe = bucket.exists()
+        except Exception as exc:
+            if (
+                getattr(exc, "code", None) == 403
+                or "storage.buckets.get" in str(exc)
+                or "403" in str(exc)
+            ):
+                # Cuentas de menor privilegio (ej. roles/storage.objectAdmin) no tienen
+                # storage.buckets.get pero si pueden leer, escribir y firmar objetos.
+                bucket.blob("__healthcheck_probe__").exists()
+                return
+            raise
+        if not existe:
             raise RuntimeError(f"Bucket GCS no accesible: {bucket_gcs()}")
         return
     carpeta = almacen()

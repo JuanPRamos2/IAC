@@ -13,6 +13,8 @@ import time
 import types
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "comun"))
 
@@ -204,6 +206,60 @@ def test_documents_archivos_modo_gcs_mock(monkeypatch):
     url_info = archivos.generar_url_firmada("DOC-111", sha, "http://localhost:8105", ttl=120)
     assert url_info["modo"] == "gcs"
     assert url_info["url"].startswith("https://storage.googleapis.com/bienestar-evidencias-test/")
+
+
+def test_documents_ping_bucket_gcs_con_permiso_solo_objetos(monkeypatch):
+    monkeypatch.setenv("ALMACEN_MODO", "gcs")
+    monkeypatch.setenv("GCS_BUCKET_NAME", "bienestar-evidencias-solo-objetos")
+    archivos = _cargar_modulo("docs_archivos_gcs_403", ROOT / "documents-service" / "archivos.py")
+
+    class Error403(Exception):
+        code = 403
+
+    blob_consultado = []
+
+    class FakeBlob:
+        def __init__(self, key):
+            self.key = key
+
+        def exists(self):
+            blob_consultado.append(self.key)
+            return False
+
+    class FakeBucketSoloObjetos:
+        def exists(self):
+            raise Error403("403 GET does not have storage.buckets.get access to the Google Cloud Storage bucket.")
+
+        def blob(self, key):
+            return FakeBlob(key)
+
+    class FakeBucketInexistente:
+        def exists(self):
+            return False
+
+    estado = {"modo": "solo_objetos"}
+
+    class FakeStorageModule:
+        class Client:
+            def bucket(self, name):
+                assert name == "bienestar-evidencias-solo-objetos"
+                if estado["modo"] == "solo_objetos":
+                    return FakeBucketSoloObjetos()
+                return FakeBucketInexistente()
+
+    google_mod = types.ModuleType("google")
+    cloud_mod = types.ModuleType("google.cloud")
+    cloud_mod.storage = FakeStorageModule
+    google_mod.cloud = cloud_mod
+    monkeypatch.setitem(sys.modules, "google", google_mod)
+    monkeypatch.setitem(sys.modules, "google.cloud", cloud_mod)
+
+    archivos.ping_bucket()
+    assert blob_consultado == ["__healthcheck_probe__"]
+
+    estado["modo"] = "no_existe"
+    with pytest.raises(RuntimeError, match="Bucket GCS no accesible"):
+        archivos.ping_bucket()
 
 
 def test_notifications_evento_interno_hmac_y_privacidad(monkeypatch):

@@ -241,7 +241,19 @@ def _ping_bucket():
             if llave and os.path.isfile(llave)
             else storage.Client()
         )
-        if not cliente.bucket(nombre).exists():
+        bucket = cliente.bucket(nombre)
+        try:
+            existe = bucket.exists()
+        except Exception as exc:
+            if (
+                getattr(exc, "code", None) == 403
+                or "storage.buckets.get" in str(exc)
+                or "403" in str(exc)
+            ):
+                bucket.blob("__healthcheck_probe__").exists()
+                return
+            raise
+        if not existe:
             raise RuntimeError(f"Bucket GCS no accesible: {nombre}")
         return
     carpeta = os.environ.get("ALMACEN_EVIDENCIAS", "/var/lib/bienestar/evidencias")
